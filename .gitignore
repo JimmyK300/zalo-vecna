@@ -1,0 +1,59 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Competition Data & Raw Archives (Heavy files)
+train/
+public_test/
+*.zip
+*.tar.gz
+*.7z
+
+# Model weights & Large Artifacts
+weights/
+models/
+checkpoints/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# Submission outputs & Result logs
+result/
+/result/
+/results/
+submission.jsonl
+*.log
+
+# Databases & Cache
+*.sqlite3
+*.db
+.duckdb/
+*.duckdb
+
+# IDEs & OS specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Scratch & temporary testing files
+scratch/
+tmp/
+temp/

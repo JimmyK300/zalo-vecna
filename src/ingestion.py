@@ -2,29 +2,117 @@ import os
 import re
 import sqlite3
 import pandas as pd
+import numpy as np
 import duckdb
-from typing import Dict, List, Tuple
+from unidecode import unidecode
+from typing import Dict, List, Tuple, Any
 
 class DataIngestionEngine:
     """
     Unified Ingestion Engine:
     Loads CSV, Excel (.xlsx, multi-sheet), and SQLite tables into an in-memory DuckDB database.
-    Provides smart header detection for messy Excel banners and extracts schema profiles.
+    - Smart Header Detection (handles banners & headers on row 0, 1, 2, 3...)
+    - Currency & Numeric Shorthand Cleaning (converts '29k', '43.000đ', '1,01tr' to float)
+    - Column Name Sanitization (clean snake_case for robust SQL queries without space/diacritic errors)
     """
     def __init__(self):
         pass
 
     @staticmethod
-    def sanitize_table_name(name: str) -> str:
-        """Sanitizes file / sheet names to valid SQL table names."""
-        clean = re.sub(r'[^\w]+', '_', name.strip().lower())
-        return clean.strip('_')
+    def sanitize_name(name: str) -> str:
+        """Sanitizes names to valid ASCII snake_case SQL identifiers."""
+        s = unidecode(str(name)).lower().strip()
+        s = re.sub(r'[^a-z0-9]+', '_', s)
+        return s.strip('_')
+
+    @staticmethod
+    def clean_currency_value(val: Any) -> Any:
+        """Converts Vietnamese currency/number strings to float (e.g. '29k', '43.000đ', '1,01tr')."""
+        if pd.isna(val):
+            return np.nan
+        if isinstance(val, (int, float, np.integer, np.floating)):
+            return float(val)
+        s = str(val).strip().lower()
+        if not s or s in ['-', 'none', 'nan', 'null']:
+            return np.nan
+
+        is_neg = '-' in s
+        if 'tr' in s:
+            num_str = re.sub(r'[^\d,\.]', '', s).replace(',', '.')
+            try:
+                res = float(num_str) * 1_000_000
+                return -abs(res) if is_neg else res
+            except ValueError:
+                pass
+
+        if 'k' in s:
+            num_str = re.sub(r'[^\d,\.]', '', s).replace(',', '.')
+            try:
+                res = float(num_str) * 1_000
+                return -abs(res) if is_neg else res
+            except ValueError:
+                pass
+
+        s_clean = re.sub(r'[^\d,\.]', '', s)
+        if not s_clean:
+            return np.nan
+
+        if '.' in s_clean and ',' not in s_clean:
+            parts = s_clean.split('.')
+            if len(parts[-1]) == 3 or len(parts) > 2:
+                s_clean = s_clean.replace('.', '')
+        elif ',' in s_clean and '.' not in s_clean:
+            parts = s_clean.split(',')
+            if len(parts[-1]) == 3 or len(parts) > 2:
+                s_clean = s_clean.replace(',', '')
+            else:
+                s_clean = s_clean.replace(',', '.')
+        elif '.' in s_clean and ',' in s_clean:
+            s_clean = s_clean.replace('.', '').replace(',', '.')
+
+        try:
+            res = float(s_clean)
+            return -abs(res) if is_neg else res
+        except ValueError:
+            return np.nan
+
+    @classmethod
+    def clean_dataframe(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Cleans columns and auto-converts currency/number strings to float."""
+        clean_cols = []
+        seen_cols = {}
+        for idx, c in enumerate(df.columns):
+            c_clean = cls.sanitize_name(c)
+            if not c_clean or c_clean.startswith("unnamed"):
+                c_clean = f"col_{idx}"
+            if c_clean in seen_cols:
+                seen_cols[c_clean] += 1
+                c_clean = f"{c_clean}_{seen_cols[c_clean]}"
+            else:
+                seen_cols[c_clean] = 0
+            clean_cols.append(c_clean)
+        df.columns = clean_cols
+
+        # Auto-convert numeric/currency columns
+        numeric_keywords = ['tien', 'tong', 'gia', 'so_luong', 'sl', 'thanh_tien', 'chi_phi', 'quy_doi', 'don_gia', 'no']
+        for col in df.columns:
+            # Check if column name strongly indicates numeric
+            is_num_name = any(kw in col for kw in numeric_keywords)
+            # Sample column to check if values are parseable as currency/number
+            non_null = df[col].dropna()
+            if len(non_null) > 0:
+                sample = non_null.head(50)
+                parsed_sample = [cls.clean_currency_value(v) for v in sample]
+                valid_num_count = sum(1 for v in parsed_sample if not np.isnan(v))
+                if is_num_name or (valid_num_count / len(sample) >= 0.7):
+                    # Convert whole column
+                    df[col] = df[col].apply(cls.clean_currency_value)
+
+        return df
 
     @staticmethod
     def find_header_row(df_raw: pd.DataFrame, max_search: int = 8) -> int:
-        """
-        Detects the real column header row in messy Excel sheets that have title banners at the top.
-        """
+        """Detects the real column header row in messy Excel sheets with title banners."""
         best_row = 0
         max_score = -1
         for r in range(min(max_search, len(df_raw))):
@@ -39,8 +127,8 @@ class DataIngestionEngine:
 
     def load_business_data(self, biz_dir: str) -> Tuple[duckdb.DuckDBPyConnection, str]:
         """
-        Loads all data files (.csv, .xlsx, .sqlite) of a business into an in-memory DuckDB connection.
-        Returns the DuckDB connection and a textual schema summary.
+        Loads all data files (.csv, .xlsx, .sqlite) of a business into DuckDB.
+        Returns connection and clean schema summary.
         """
         con = duckdb.connect(database=':memory:')
         schema_lines = []
@@ -54,45 +142,35 @@ class DataIngestionEngine:
             base_name = os.path.splitext(filename)[0]
 
             if ext == '.csv':
-                tbl_name = self.sanitize_table_name(base_name)
-                # Load CSV via DuckDB's native fast scanner
-                con.execute(f"CREATE TABLE \"{tbl_name}\" AS SELECT * FROM read_csv_auto('{file_path.replace(os.sep, '/')}', header=True)")
-                cols = [desc[0] for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
-                schema_lines.append(f"Table '{tbl_name}' (from {filename}): columns = {cols}")
+                tbl_name = self.sanitize_name(base_name)
+                df = pd.read_csv(file_path, low_memory=False)
+                df = self.clean_dataframe(df)
+                con.register(f"temp_{tbl_name}", df)
+                con.execute(f"CREATE TABLE \"{tbl_name}\" AS SELECT * FROM temp_{tbl_name}")
+                con.unregister(f"temp_{tbl_name}")
+                
+                # Describe column types
+                col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
+                schema_lines.append(f"Table '{tbl_name}' (from {filename}):\n  Columns: {', '.join(col_types)}")
 
             elif ext == '.xlsx':
-                # Read all sheets from Excel file with smart header detection
                 xls = pd.ExcelFile(file_path)
                 for sheet_name in xls.sheet_names:
-                    # Sample top rows without header to detect real header position
                     df_sample = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=10)
                     h_idx = self.find_header_row(df_sample)
                     
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=h_idx)
-                    # Clean column names (strip whitespace and handle duplicates)
-                    clean_cols = []
-                    seen_cols = {}
-                    for idx, c in enumerate(df.columns):
-                        c_str = str(c).strip()
-                        if not c_str or c_str.startswith("Unnamed:"):
-                            c_str = f"col_{idx}"
-                        if c_str in seen_cols:
-                            seen_cols[c_str] += 1
-                            c_str = f"{c_str}_{seen_cols[c_str]}"
-                        else:
-                            seen_cols[c_str] = 0
-                        clean_cols.append(c_str)
-                    df.columns = clean_cols
-
-                    tbl_name = self.sanitize_table_name(f"{base_name}_{sheet_name}")
+                    df = self.clean_dataframe(df)
+                    
+                    tbl_name = self.sanitize_name(f"{base_name}_{sheet_name}")
                     con.register(f"temp_{tbl_name}", df)
                     con.execute(f"CREATE TABLE \"{tbl_name}\" AS SELECT * FROM temp_{tbl_name}")
                     con.unregister(f"temp_{tbl_name}")
-                    cols = list(df.columns)
-                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> sheet '{sheet_name}'): columns = {cols}")
+                    
+                    col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
+                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> sheet '{sheet_name}'):\n  Columns: {', '.join(col_types)}")
 
             elif ext == '.sqlite':
-                # Attach or copy tables from SQLite
                 sql_conn = sqlite3.connect(file_path)
                 cursor = sql_conn.cursor()
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
@@ -101,12 +179,14 @@ class DataIngestionEngine:
                     if t_name.startswith("sqlite_"):
                         continue
                     df = pd.read_sql_query(f"SELECT * FROM \"{t_name}\"", sql_conn)
-                    tbl_name = self.sanitize_table_name(f"sqlite_{t_name}")
+                    df = self.clean_dataframe(df)
+                    tbl_name = self.sanitize_name(f"sqlite_{t_name}")
                     con.register(f"temp_{tbl_name}", df)
                     con.execute(f"CREATE TABLE \"{tbl_name}\" AS SELECT * FROM temp_{tbl_name}")
                     con.unregister(f"temp_{tbl_name}")
-                    cols = list(df.columns)
-                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> table '{t_name}'): columns = {cols}")
+                    
+                    col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
+                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> table '{t_name}'):\n  Columns: {', '.join(col_types)}")
                 sql_conn.close()
 
         schema_summary = "\n".join(schema_lines)

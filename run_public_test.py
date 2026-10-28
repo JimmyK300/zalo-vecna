@@ -324,9 +324,15 @@ def main():
     print(f"=== Starting DataMate Inference ===")
     # Auto-resolve data_dir if running from subfolder like zalo-vecna
     if not os.path.exists(args.data_dir):
-        parent_candidate = os.path.join("..", args.data_dir)
-        if os.path.exists(parent_candidate):
-            args.data_dir = parent_candidate
+        candidates = [
+            os.path.join("..", args.data_dir),
+            f"/content/drive/MyDrive/ZALO_AI_Challenge/{args.data_dir}",
+            f"/content/{args.data_dir}"
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                args.data_dir = c
+                break
     print(f"[*] Using data directory: {os.path.abspath(args.data_dir)}")
 
     calendar_path = os.path.join(args.data_dir, "calendar.csv")

@@ -49,12 +49,10 @@ Nhiệm vụ của bạn:
 QUY TẮC BẮT BUỘC KHI VIẾT CODE:
 - Chỉ trả về duy nhất khối mã Python trong cặp dấu ```python ... ```. Không giải thích dông dài.
 - Kết nối DuckDB đã được mở sẵn và lưu trong biến `con`. KHÔNG gọi `duckdb.connect()` mới.
-- Lưu kết quả vào biến `result`. Ví dụ:
-  ```python
-  df = con.execute("SELECT sum(thanh_tien) FROM ban_hang").df()
-  val = float(df.iloc[0, 0])
-  result = {"type": "number", "answer": round(val, 2)}
-  ```
+- Lưu kết quả vào biến `result`.
+- DÙNG `ILIKE '%...%'` khi so khớp tên hàng hoá / sản phẩm để không phân biệt hoa thường.
+- Cột ngày tháng (thoi_gian, ngay, ngay_dat_hang) đã được chuẩn hóa về định dạng chuỗi 'YYYY-MM-DD'. So khớp trực tiếp bằng `'YYYY-MM-DD'` hoặc `BETWEEN '...' AND '...'`.
+- Khi câu hỏi hỏi về 1 tháng cụ thể (ví dụ: tháng 5/2026, tháng 11/2025), hãy chọn đúng bảng tương ứng trong Cấu Trúc Dữ Liệu (ví dụ: `sobanhang_t05_2026`, `banhang_t11_2025_...`).
 """
 
 PROMPT_TEMPLATE = """### THÔNG TIN CỬA HÀNG ({biz_id})
@@ -161,14 +159,22 @@ class PublicTestRunner:
         import pandas as pd
         import numpy as np
 
+        if val is None or pd.isna(val):
+            return {"type": "abstain"}
+
         if isinstance(val, (bool, np.bool_)):
             return {"type": "boolean", "answer": bool(val)}
 
         if isinstance(val, (int, float, np.integer, np.floating)):
+            if np.isnan(val):
+                return {"type": "abstain"}
             # Check if question asks about percentage
             if any(w in question_text.lower() for w in ["%", "phần trăm", "tỉ lệ", "tỷ lệ"]):
                 return {"type": "percent", "answer": round(float(val), 2)}
-            return {"type": "number", "answer": round(float(val), 2)}
+            num = float(val)
+            if num.is_integer():
+                return {"type": "number", "answer": int(num)}
+            return {"type": "number", "answer": round(num, 2)}
 
         if isinstance(val, (list, tuple)):
             return {"type": "list", "answer": list(val)}

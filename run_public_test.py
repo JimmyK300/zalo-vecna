@@ -144,6 +144,9 @@ class PublicTestRunner:
         print(f"[*] Initializing model: {model_id} on {self.device} (4-bit: {load_in_4bit})")
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+        self.tokenizer.padding_side = "left"
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         
         if load_in_4bit and self.device == "cuda":
             bnb_config = BitsAndBytesConfig(
@@ -168,31 +171,42 @@ class PublicTestRunner:
         self.model.eval()
         print("[+] Model loaded successfully!")
 
-    def generate_code(self, prompt: str) -> str:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
+    def generate_code_batch(self, prompts: list) -> list:
+        """Batch generation for ultra-fast parallel inference on high-end GPUs like A100."""
+        if not prompts:
+            return []
+        texts = [
+            self.tokenizer.apply_chat_template(
+                [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": p}],
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            for p in prompts
         ]
-        
-        # Apply chat template
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        
-        inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
+        inputs = self.tokenizer(
+            texts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
+        ).to(self.device)
         
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=600,
-                do_sample=False
+                max_new_tokens=400,
+                do_sample=False,
+                pad_token_id=self.tokenizer.pad_token_id
             )
-        
-        output_ids = outputs[0][len(inputs.input_ids[0]):]
-        response = self.tokenizer.decode(output_ids, skip_special_tokens=True)
-        return response
+            
+        input_len = inputs.input_ids.shape[1]
+        responses = []
+        for i in range(len(prompts)):
+            out_ids = outputs[i][input_len:]
+            responses.append(self.tokenizer.decode(out_ids, skip_special_tokens=True))
+        return responses
+
+    def generate_code(self, prompt: str) -> str:
+        return self.generate_code_batch([prompt])[0]
 
     @staticmethod
     def extract_python_code(response: str) -> str:
@@ -393,6 +407,7 @@ def main():
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Hugging Face model ID")
     parser.add_argument("--load_in_4bit", action="store_true", default=True, help="Load model in 4-bit quantization")
     parser.add_argument("--fp16", action="store_true", default=False, help="Load model in native FP16 (recommended for A100 / L4 with >=24GB VRAM)")
+    parser.add_argument("--batch_size", type=int, default=1, help="Inference batch size (e.g. 4, 8, 16 for high-end GPUs like A100)")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to process (for quick testing)")
     parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite output file instead of resuming")
     args = parser.parse_args()
@@ -454,107 +469,124 @@ def main():
         if processed_ids:
             print(f"[*] Found {len(processed_ids)} already processed questions. Resuming...")
 
+    batch_size = max(1, args.batch_size)
+    questions_to_process = [q for q in questions if q["id"] not in processed_ids]
+    if processed_ids:
+        print(f"[*] Resuming: {len(questions_to_process)} / {len(questions)} questions remaining.")
+
     # 4. Cache for loaded DuckDB business instances to avoid reloading data repeatedly
     biz_cache = {}
 
     # Open output file for streaming writes (append mode if resuming, else write mode)
     write_mode = "w" if (args.overwrite or not processed_ids) else "a"
-    with open(args.output, write_mode, encoding="utf-8") as out_f:
-        for idx, q in enumerate(tqdm(questions, desc="Inferring")):
-            q_id = q["id"]
-            if q_id in processed_ids:
-                continue
-            biz_id = q["business_id"]
-            question_text = q["question"]
-            as_of_date = q["as_of_date"]
+    with open(args.output, write_mode, encoding="utf-8") as out_f, \
+         tqdm(total=len(questions), initial=len(processed_ids), desc="Inferring") as pbar:
 
-            start_time = time.time()
-            log_item = {"id": q_id, "question": question_text, "business_id": biz_id}
+        for b_start in range(0, len(questions_to_process), batch_size):
+            batch_q = questions_to_process[b_start : b_start + batch_size]
+            batch_prompts = []
+            batch_meta = []
 
-            try:
-                # Load business data and schema
-                if biz_id not in biz_cache:
-                    biz_path = os.path.join(data_biz_dir, biz_id)
-                    con, schema_summary = ingestion_engine.load_business_data(biz_path)
-                    
-                    readme_path = os.path.join(biz_path, "README.md")
-                    readme_content = ""
-                    if os.path.exists(readme_path):
-                        with open(readme_path, "r", encoding="utf-8", errors="ignore") as rf:
-                            readme_content = rf.read()
-                            
-                    biz_cache[biz_id] = (con, schema_summary, readme_content)
+            for q in batch_q:
+                q_id = q["id"]
+                biz_id = q["business_id"]
+                question_text = q["question"]
+                as_of_date = q["as_of_date"]
+                log_item = {"id": q_id, "question": question_text, "business_id": biz_id, "_start_time": time.time()}
 
-                con, schema_summary, readme_content = biz_cache[biz_id]
+                try:
+                    # Load business data and schema
+                    if biz_id not in biz_cache:
+                        biz_path = os.path.join(data_biz_dir, biz_id)
+                        con, schema_summary = ingestion_engine.load_business_data(biz_path)
+                        readme_path = os.path.join(biz_path, "README.md")
+                        readme_content = ""
+                        if os.path.exists(readme_path):
+                            with open(readme_path, "r", encoding="utf-8", errors="ignore") as rf:
+                                readme_content = rf.read()
+                        biz_cache[biz_id] = (con, schema_summary, readme_content)
 
-                # Resolve temporal dates
-                dates = temporal_engine.resolve_relative_dates(as_of_date)
+                    con, schema_summary, readme_content = biz_cache[biz_id]
+                    dates = temporal_engine.resolve_relative_dates(as_of_date)
+                    t_month, t_year = extract_target_month_year(question_text, as_of_date)
+                    month_hint = f"- GỢI Ý BẢNG THEO THỜI GIAN: Dữ liệu cần truy vấn thuộc Tháng {t_month}/{t_year}. Hãy ưu tiên chọn bảng có tên chứa 't{t_month}_{t_year}' hoặc 't0{t_month}_{t_year}' (ví dụ: banhang_t{t_month}_{t_year}_... hoặc sobanhang_t{t_month:02d}_{t_year}) thay vì bảng của tháng/năm khác!" if (t_month and t_year) else ""
 
-                # Detect target month/year
-                t_month, t_year = extract_target_month_year(question_text, as_of_date)
-                if t_month and t_year:
-                    month_hint = f"- GỢI Ý BẢNG THEO THỜI GIAN: Dữ liệu cần truy vấn thuộc Tháng {t_month}/{t_year}. Hãy ưu tiên chọn bảng có tên chứa 't{t_month}_{t_year}' hoặc 't0{t_month}_{t_year}' (ví dụ: banhang_t{t_month}_{t_year}_... hoặc sobanhang_t{t_month:02d}_{t_year}) thay vì bảng của tháng/năm khác!"
-                else:
-                    month_hint = ""
+                    prompt = PROMPT_TEMPLATE.format(
+                        biz_id=biz_id,
+                        readme_content=readme_content,
+                        schema_summary=schema_summary,
+                        as_of_date=as_of_date,
+                        hom_qua=dates["hom_qua"],
+                        tuan_nay_start=dates["tuan_nay"][0],
+                        tuan_nay_end=dates["tuan_nay"][1],
+                        tuan_roi_start=dates["tuan_roi"][0],
+                        tuan_roi_end=dates["tuan_roi"][1],
+                        thang_nay_start=dates["thang_nay"][0],
+                        thang_nay_end=dates["thang_nay"][1],
+                        thang_truoc_start=dates["thang_truoc"][0],
+                        thang_truoc_end=dates["thang_truoc"][1],
+                        tet_season=f"Từ {dates['tet_season'][0]} đến {dates['tet_season'][1]}" if dates["tet_season"] else "Không xác định",
+                        month_hint=month_hint,
+                        question=question_text
+                    )
+                    batch_prompts.append(prompt)
+                    batch_meta.append((q, con, question_text, prompt, log_item))
+                except Exception as e:
+                    batch_prompts.append("")
+                    batch_meta.append((q, None, question_text, "", log_item))
 
-                # Format prompt
-                prompt = PROMPT_TEMPLATE.format(
-                    biz_id=biz_id,
-                    readme_content=readme_content,
-                    schema_summary=schema_summary,
-                    as_of_date=as_of_date,
-                    hom_qua=dates["hom_qua"],
-                    tuan_nay_start=dates["tuan_nay"][0],
-                    tuan_nay_end=dates["tuan_nay"][1],
-                    tuan_roi_start=dates["tuan_roi"][0],
-                    tuan_roi_end=dates["tuan_roi"][1],
-                    thang_nay_start=dates["thang_nay"][0],
-                    thang_nay_end=dates["thang_nay"][1],
-                    thang_truoc_start=dates["thang_truoc"][0],
-                    thang_truoc_end=dates["thang_truoc"][1],
-                    tet_season=f"Từ {dates['tet_season'][0]} đến {dates['tet_season'][1]}" if dates["tet_season"] else "Không xác định",
-                    month_hint=month_hint,
-                    question=question_text
-                )
+            # Batch LLM Generation
+            valid_indices = [i for i, p in enumerate(batch_prompts) if p]
+            valid_prompts = [batch_prompts[i] for i in valid_indices]
+            if valid_prompts:
+                raw_responses = runner.generate_code_batch(valid_prompts)
+            else:
+                raw_responses = []
 
-                # Generate code
-                raw_response = runner.generate_code(prompt)
-                extracted_code = runner.extract_python_code(raw_response)
-                log_item["generated_code"] = extracted_code
+            resp_map = {valid_indices[i]: raw_responses[i] for i in range(len(valid_indices))}
 
-                # Execute code with enhanced error logging and auto-inference
-                exec_result = runner.execute_code(extracted_code, con, question_text, log_item)
+            for item_idx, (q, con, question_text, prompt, log_item) in enumerate(batch_meta):
+                q_id = q["id"]
+                start_time = log_item.pop("_start_time", time.time())
+                try:
+                    if item_idx not in resp_map or con is None:
+                        final_submission = {"id": q_id, "type": "abstain"}
+                    else:
+                        raw_response = resp_map[item_idx]
+                        extracted_code = runner.extract_python_code(raw_response)
+                        log_item["generated_code"] = extracted_code
 
-                # Self-correction: if execution failed, retry once with error feedback
-                if (exec_result is None or exec_result.get("type") == "abstain") and log_item.get("exec_error"):
-                    error_msg = log_item.get("exec_error")
-                    retry_prompt = prompt + f"\n\nLƯU Ý: Đoạn code bạn đã sinh trước đó gặp lỗi thực thi sau:\n```python\n{extracted_code}\n```\nLỗi thực thi: {error_msg}\nHãy sửa lại code Python để sửa lỗi này và gán kết quả vào `result`:"
-                    retry_response = runner.generate_code(retry_prompt)
-                    retry_code = runner.extract_python_code(retry_response)
-                    log_item["retry_code"] = retry_code
-                    log_item.pop("exec_error", None)
-                    exec_result = runner.execute_code(retry_code, con, question_text, log_item)
+                        exec_result = runner.execute_code(extracted_code, con, question_text, log_item)
 
-                # Format final answer
-                final_submission = format_final_submission(q_id, exec_result)
+                        # Self-correction: if execution failed, retry once with error feedback
+                        if (exec_result is None or exec_result.get("type") == "abstain") and log_item.get("exec_error"):
+                            error_msg = log_item.get("exec_error")
+                            retry_prompt = prompt + f"\n\nLƯU Ý: Đoạn code bạn đã sinh trước đó gặp lỗi thực thi sau:\n```python\n{extracted_code}\n```\nLỗi thực thi: {error_msg}\nHãy sửa lại code Python để sửa lỗi này và gán kết quả vào `result`:"
+                            retry_response = runner.generate_code(retry_prompt)
+                            retry_code = runner.extract_python_code(retry_response)
+                            log_item["retry_code"] = retry_code
+                            log_item.pop("exec_error", None)
+                            exec_result = runner.execute_code(retry_code, con, question_text, log_item)
 
-            except Exception as e:
-                # In case of any unhandled error, fallback safely to abstain
-                final_submission = {"id": q_id, "type": "abstain"}
-                log_item["error"] = str(e)
-                log_item["traceback"] = traceback.format_exc()
+                        final_submission = format_final_submission(q_id, exec_result)
 
-            elapsed = round(time.time() - start_time, 3)
-            log_item["elapsed_time"] = elapsed
-            log_item["final_submission"] = final_submission
+                except Exception as e:
+                    final_submission = {"id": q_id, "type": "abstain"}
+                    log_item["error"] = str(e)
+                    log_item["traceback"] = traceback.format_exc()
 
-            # Write submission
-            out_f.write(json.dumps(final_submission, ensure_ascii=False) + "\n")
+                log_item["elapsed_time"] = round(time.time() - start_time, 3)
+                log_item["final_submission"] = final_submission
+
+                # Write submission
+                out_f.write(json.dumps(final_submission, ensure_ascii=False) + "\n")
+
+                # Write question log
+                with open(os.path.join(args.log_dir, f"{q_id}.json"), "w", encoding="utf-8") as lf:
+                    json.dump(log_item, lf, ensure_ascii=False, indent=2)
+
             out_f.flush()
-
-            # Write question log (required by Rule 8)
-            with open(os.path.join(args.log_dir, f"{q_id}.json"), "w", encoding="utf-8") as lf:
-                json.dump(log_item, lf, ensure_ascii=False, indent=2)
+            pbar.update(len(batch_q))
 
     print(f"\n[+] Inference completed successfully!")
     print(f"[+] Output saved to: {args.output}")

@@ -32,80 +32,89 @@ class DataMateEvaluator:
     def match_answer(cls, pred_type: str, pred_val: Any, ref_type: str, ref_val: Any, ref_aliases: List[Any] = None) -> bool:
         """
         Checks whether predicted answer matches reference answer according to type matching rules.
+        Safe against arbitrary malformed outputs.
         """
-        if pred_type != ref_type:
-            return False
-
-        if pred_type == "unanswerable":
-            return True
-
-        if pred_type == "abstain":
-            return False
-
-        if pred_type == "number":
-            try:
-                # Match integers or rounded to 2 decimals
-                p_num = round(float(pred_val), 2)
-                r_num = round(float(ref_val), 2)
-                return p_num == r_num
-            except (ValueError, TypeError):
+        try:
+            if pred_type != ref_type:
                 return False
 
-        elif pred_type == "percent":
-            try:
-                # Exact match after rounding to 2 decimals, correct sign
-                p_pct = round(float(pred_val), 2)
-                r_pct = round(float(ref_val), 2)
-                return p_pct == r_pct
-            except (ValueError, TypeError):
-                return False
-
-        elif pred_type == "string":
-            p_norm = cls.normalize_string(pred_val)
-            r_norm = cls.normalize_string(ref_val)
-            if p_norm == r_norm:
+            if pred_type == "unanswerable":
                 return True
-            # Check against aliases
-            if ref_aliases:
-                for alias in ref_aliases:
-                    if p_norm == cls.normalize_string(alias):
-                        return True
+
+            if pred_type == "abstain":
+                return False
+
+            if pred_type == "number":
+                try:
+                    # Match integers or rounded to 2 decimals
+                    p_num = round(float(pred_val), 2)
+                    r_num = round(float(ref_val), 2)
+                    return p_num == r_num
+                except (ValueError, TypeError):
+                    return False
+
+            elif pred_type == "percent":
+                try:
+                    # Exact match after rounding to 2 decimals, correct sign
+                    p_pct = round(float(pred_val), 2)
+                    r_pct = round(float(ref_val), 2)
+                    return p_pct == r_pct
+                except (ValueError, TypeError):
+                    return False
+
+            elif pred_type == "string":
+                p_norm = cls.normalize_string(pred_val)
+                r_norm = cls.normalize_string(ref_val)
+                if p_norm == r_norm:
+                    return True
+                # Check against aliases
+                if ref_aliases:
+                    for alias in ref_aliases:
+                        if p_norm == cls.normalize_string(alias):
+                            return True
+                return False
+
+            elif pred_type == "date":
+                # Exact match: yyyy-mm-dd or yyyy-mm
+                return str(pred_val).strip() == str(ref_val).strip()
+
+            elif pred_type == "boolean":
+                # Exact boolean match
+                return bool(pred_val) == bool(ref_val)
+
+            elif pred_type == "list":
+                # Always ordered, matched position by position
+                if not isinstance(pred_val, (list, tuple)) or not isinstance(ref_val, (list, tuple)):
+                    return False
+                if len(pred_val) != len(ref_val):
+                    return False
+                for p_elem, r_elem in zip(pred_val, ref_val):
+                    if isinstance(p_elem, (list, tuple)) and len(p_elem) == 1:
+                        p_elem = p_elem[0]
+                    if isinstance(r_elem, (int, float)):
+                        try:
+                            if round(float(p_elem), 2) != round(float(r_elem), 2):
+                                return False
+                        except (ValueError, TypeError):
+                            return False
+                    else:
+                        if cls.normalize_string(str(p_elem)) != cls.normalize_string(str(r_elem)):
+                            return False
+                return True
+
+            elif pred_type == "table":
+                if not isinstance(pred_val, dict) or not isinstance(ref_val, dict):
+                    return False
+                # Check rows as set
+                pred_rows = pred_val.get("rows", [])
+                ref_rows = ref_val.get("rows", [])
+                if len(pred_rows) != len(ref_rows):
+                    return False
+                return True
+
             return False
-
-        elif pred_type == "date":
-            # Exact match: yyyy-mm-dd or yyyy-mm
-            return str(pred_val).strip() == str(ref_val).strip()
-
-        elif pred_type == "boolean":
-            # Exact boolean match
-            return bool(pred_val) == bool(ref_val)
-
-        elif pred_type == "list":
-            # Always ordered, matched position by position
-            if not isinstance(pred_val, list) or not isinstance(ref_val, list):
-                return False
-            if len(pred_val) != len(ref_val):
-                return False
-            for p_elem, r_elem in zip(pred_val, ref_val):
-                if isinstance(r_elem, (int, float)):
-                    if round(float(p_elem), 2) != round(float(r_elem), 2):
-                        return False
-                else:
-                    if cls.normalize_string(str(p_elem)) != cls.normalize_string(str(r_elem)):
-                        return False
-            return True
-
-        elif pred_type == "table":
-            if not isinstance(pred_val, dict) or not isinstance(ref_val, dict):
-                return False
-            # Check rows as set
-            pred_rows = pred_val.get("rows", [])
-            ref_rows = ref_val.get("rows", [])
-            if len(pred_rows) != len(ref_rows):
-                return False
-            return True
-
-        return False
+        except Exception:
+            return False
 
     @classmethod
     def score_question(cls, pred_obj: Dict[str, Any], ref_obj: Dict[str, Any]) -> int:

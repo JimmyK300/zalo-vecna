@@ -171,13 +171,16 @@ def main():
                 pred_type = exec_result.get("type")
                 pred_val = exec_result.get("answer")
 
-                is_correct = DataMateEvaluator.match_answer(
-                    pred_type=pred_type,
-                    pred_val=pred_val,
-                    ref_type=ref_type,
-                    ref_val=ref_val,
-                    ref_aliases=ref_aliases
-                )
+                try:
+                    is_correct = DataMateEvaluator.match_answer(
+                        pred_type=pred_type,
+                        pred_val=pred_val,
+                        ref_type=ref_type,
+                        ref_val=ref_val,
+                        ref_aliases=ref_aliases
+                    )
+                except Exception:
+                    is_correct = False
 
                 if is_correct:
                     golden_samples += 1

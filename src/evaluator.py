@@ -88,7 +88,7 @@ class DataMateEvaluator:
                     return False
                 if len(pred_val) != len(ref_val):
                     return False
-                for p_elem, r_elem in zip(pred_val, ref_val):
+                for idx, (p_elem, r_elem) in enumerate(zip(pred_val, ref_val)):
                     if isinstance(p_elem, (list, tuple)) and len(p_elem) == 1:
                         p_elem = p_elem[0]
                     if isinstance(r_elem, (int, float)):
@@ -98,19 +98,44 @@ class DataMateEvaluator:
                         except (ValueError, TypeError):
                             return False
                     else:
-                        if cls.normalize_string(str(p_elem)) != cls.normalize_string(str(r_elem)):
-                            return False
+                        p_norm = cls.normalize_string(str(p_elem))
+                        r_norm = cls.normalize_string(str(r_elem))
+                        if p_norm != r_norm:
+                            matched_alias = False
+                            if ref_aliases and idx < len(ref_aliases) and isinstance(ref_aliases[idx], (list, tuple)):
+                                for al in ref_aliases[idx]:
+                                    if p_norm == cls.normalize_string(str(al)):
+                                        matched_alias = True
+                                        break
+                            if not matched_alias:
+                                return False
                 return True
 
             elif pred_type == "table":
                 if not isinstance(pred_val, dict) or not isinstance(ref_val, dict):
                     return False
-                # Check rows as set
                 pred_rows = pred_val.get("rows", [])
                 ref_rows = ref_val.get("rows", [])
+                if not isinstance(pred_rows, (list, tuple)) or not isinstance(ref_rows, (list, tuple)):
+                    return False
                 if len(pred_rows) != len(ref_rows):
                     return False
-                return True
+
+                def norm_row(row):
+                    if not isinstance(row, (list, tuple)):
+                        return (cls.normalize_string(str(row)),)
+                    out = []
+                    for cell in row:
+                        if isinstance(cell, (int, float)):
+                            out.append(str(round(float(cell), 2)))
+                        else:
+                            try:
+                                out.append(str(round(float(cell), 2)))
+                            except (ValueError, TypeError):
+                                out.append(cls.normalize_string(str(cell)))
+                    return tuple(out)
+
+                return sorted(norm_row(r) for r in pred_rows) == sorted(norm_row(r) for r in ref_rows)
 
             return False
         except Exception:

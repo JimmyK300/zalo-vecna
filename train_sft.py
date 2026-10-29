@@ -11,7 +11,6 @@ import sys
 import json
 import argparse
 import torch
-from datasets import Dataset
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
@@ -19,20 +18,51 @@ from transformers import (
     Trainer,
     DataCollatorForSeq2Seq
 )
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    prepare_model_for_kbit_training,
-    TaskType
-)
 
-def format_chatml(entry: dict, tokenizer) -> str:
-    messages = [
-        {"role": "system", "content": "Bạn là chuyên gia phân tích dữ liệu kinh doanh và lập trình viên DuckDB Python cao cấp cho cuộc thi Zalo AI Challenge 2026. Hãy viết mã Python chính xác để trả lời câu hỏi."},
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from run_public_test import SYSTEM_PROMPT
+
+
+def tokenize_sft_entry(entry: dict, tokenizer, max_seq_length: int) -> dict:
+    prompt_messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": entry["prompt"]},
+    ]
+    full_messages = prompt_messages + [
         {"role": "assistant", "content": entry["completion"]}
     ]
-    return tokenizer.apply_chat_template(messages, tokenize=False)
+
+    prompt_text = tokenizer.apply_chat_template(
+        prompt_messages, tokenize=False, add_generation_prompt=True
+    )
+    full_text = tokenizer.apply_chat_template(
+        full_messages, tokenize=False, add_generation_prompt=False
+    )
+
+    prompt_ids = tokenizer(
+        prompt_text, truncation=True, max_length=max_seq_length, add_special_tokens=False
+    )["input_ids"]
+    full_tokens = tokenizer(
+        full_text, truncation=True, max_length=max_seq_length, add_special_tokens=False
+    )
+    input_ids = full_tokens["input_ids"]
+    attention_mask = full_tokens["attention_mask"]
+
+    # Mask prompt tokens with -100 so loss is computed strictly on assistant code completion
+    prompt_len = min(len(prompt_ids), len(input_ids))
+    labels = [-100] * prompt_len + input_ids[prompt_len:]
+
+    # Safety fallback: ensure at least the final tokens have valid labels to avoid NaN loss
+    if all(l == -100 for l in labels) and len(input_ids) > 0:
+        keep_tail = min(64, len(input_ids))
+        labels[-keep_tail:] = input_ids[-keep_tail:]
+
+    return {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        "labels": labels,
+    }
+
 
 def main():
     parser = argparse.ArgumentParser(description="Supervised Fine-Tuning with LoRA")
@@ -46,7 +76,7 @@ def main():
     parser.add_argument("--lora_r", type=int, default=16, help="LoRA rank")
     parser.add_argument("--lora_alpha", type=int, default=32, help="LoRA alpha")
     parser.add_argument("--lora_dropout", type=float, default=0.05, help="LoRA dropout")
-    parser.add_argument("--max_seq_length", type=int, default=2048, help="Maximum sequence length")
+    parser.add_argument("--max_seq_length", type=int, default=4096, help="Maximum sequence length")
     parser.add_argument("--load_in_4bit", action="store_true", help="Use 4-bit QLoRA")
     parser.add_argument("--bf16", action="store_true", help="Use BF16 (recommended for A100)")
     parser.add_argument("--fp16", action="store_true", help="Use FP16 (for T4)")
@@ -70,25 +100,20 @@ def main():
         return
 
     # Initialize Tokenizer
+    from datasets import Dataset
+    from peft import (
+        LoraConfig,
+        get_peft_model,
+        prepare_model_for_kbit_training,
+        TaskType
+    )
     tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Format texts
-    formatted_texts = [format_chatml(entry, tokenizer) for entry in raw_data]
-    dataset = Dataset.from_dict({"text": formatted_texts})
-
-    def tokenize_func(examples):
-        tokens = tokenizer(
-            examples["text"],
-            truncation=True,
-            max_length=args.max_seq_length,
-            padding=False
-        )
-        tokens["labels"] = tokens["input_ids"].copy()
-        return tokens
-
-    tokenized_dataset = dataset.map(tokenize_func, batched=True, remove_columns=["text"])
+    # Tokenize dataset with completion-only label masking
+    tokenized_rows = [tokenize_sft_entry(entry, tokenizer, args.max_seq_length) for entry in raw_data]
+    tokenized_dataset = Dataset.from_list(tokenized_rows)
 
     # Load Base Model
     print(f"[*] Loading base model: {args.model_id}")
@@ -107,9 +132,13 @@ def main():
         model_kwargs["torch_dtype"] = torch.float16
 
     model = AutoModelForCausalLM.from_pretrained(args.model_id, device_map="auto", **model_kwargs)
+    model.config.use_cache = False
 
     if args.load_in_4bit:
         model = prepare_model_for_kbit_training(model)
+    else:
+        if hasattr(model, "enable_input_require_grads"):
+            model.enable_input_require_grads()
 
     # Configure LoRA
     peft_config = LoraConfig(
@@ -131,7 +160,7 @@ def main():
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
         warmup_ratio=0.05,
-        logging_steps=10,
+        logging_steps=5,
         save_strategy="epoch",
         bf16=args.bf16,
         fp16=args.fp16 and not args.bf16,
@@ -144,7 +173,12 @@ def main():
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset,
-        data_collator=DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8, return_tensors="pt")
+        data_collator=DataCollatorForSeq2Seq(
+            tokenizer,
+            pad_to_multiple_of=8,
+            return_tensors="pt",
+            label_pad_token_id=-100
+        )
     )
 
     print("[*] Starting SFT Training...")

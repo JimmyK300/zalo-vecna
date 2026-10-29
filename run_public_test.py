@@ -54,7 +54,7 @@ QUY TẮC BẮT BUỘC KHI VIẾT CODE:
 - DÙNG `ILIKE '%...%'` khi so khớp tên hàng hoá / sản phẩm để không phân biệt hoa thường.
 - Cột ngày tháng (thoi_gian, ngay, ngay_dat_hang) đã được chuẩn hóa về định dạng chuỗi 'YYYY-MM-DD'. So khớp trực tiếp bằng `'YYYY-MM-DD'` hoặc `BETWEEN '...' AND '...'`.
 - Chọn đúng bảng tháng/năm: BẮT BUỘC chọn đúng bảng tháng/năm tương ứng với câu hỏi hoặc as_of_date (xem phần Gợi ý bảng bên dưới).
-- Xử lý đơn huỷ / trạng thái đơn: CHỈ lọc trạng thái đơn huỷ NẾU bảng thực sự có cột trạng thái/ghi chú trong danh sách Columns (như `trang_thai`, `tt_don`, hoặc `trang_thai_giao`). Khi lọc trên cột có thể NULL, BẮT BUỘC dùng COALESCE: `COALESCE(col, '') NOT ILIKE '%huỷ%'`. Nếu bảng KHÔNG có cột trạng thái/ghi chú nào, TUYỆT ĐỐI KHÔNG tự thêm điều kiện lọc vào WHERE kẻo lỗi Binder Error!
+- Xử lý đơn huỷ / trạng thái đơn: CHỈ lọc trạng thái đơn huỷ NẾU bảng thực sự có cột trạng thái/ghi chú trong danh sách Columns (như `trang_thai`, `tt_don`, `trang_thai_don_hang`, `status`, hoặc `trang_thai_giao`). Chú ý tiếng Việt có 2 kiểu bỏ dấu (`hủy` và `huỷ`), nên khi lọc BẮT BUỘC kiểm tra cả hai: `(COALESCE(col, '') NOT ILIKE '%hủy%' AND COALESCE(col, '') NOT ILIKE '%huỷ%')` (hoặc khi đếm đơn huỷ thì dùng `(col ILIKE '%hủy%' OR col ILIKE '%huỷ%')`). Nếu bảng KHÔNG có cột trạng thái/ghi chú nào, TUYỆT ĐỐI KHÔNG tự thêm điều kiện lọc vào WHERE kẻo lỗi Binder Error!
 - Phân biệt nhóm hàng vs mặt hàng cụ thể:
   + Khi câu hỏi hỏi MẶT HÀNG CỤ THỂ hoặc MẶT HÀNG BÁN CHẠY TRONG NHÓM (ví dụ: 'Trà đào', 'nhóm trà mặt hàng nào bán nhiều nhất'):
     * Với quán đồ uống / F&B: Lọc trực tiếp trên bảng bán hàng: `WHERE ten_san_pham ILIKE '%trà%'` (hoặc `%cà phê%`). Chọn tên sản phẩm: `SELECT ten_san_pham`, GROUP BY `ten_san_pham`, ORDER BY `SUM(...) DESC LIMIT 1`. TUYỆT ĐỐI KHÔNG JOIN bảng danh_sach_quy_doi vì bảng đó là bảng quy đổi đơn vị, KHÔNG CÓ cột nhóm!
@@ -190,7 +190,7 @@ class PublicTestRunner:
         self.model.eval()
         print("[+] Model loaded successfully!")
 
-    def generate_code_batch(self, prompts: list) -> list:
+    def generate_code_batch(self, prompts: list, temperature: float = 0.0, do_sample: bool = False) -> list:
         """Batch generation for ultra-fast parallel inference on high-end GPUs like A100."""
         if not prompts:
             return []
@@ -209,12 +209,19 @@ class PublicTestRunner:
             truncation=True
         ).to(self.device)
         
+        gen_kwargs = {
+            "max_new_tokens": 400,
+            "do_sample": do_sample,
+            "pad_token_id": self.tokenizer.pad_token_id
+        }
+        if do_sample and temperature > 0:
+            gen_kwargs["temperature"] = temperature
+            gen_kwargs["top_p"] = 0.9
+
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=400,
-                do_sample=False,
-                pad_token_id=self.tokenizer.pad_token_id
+                **gen_kwargs
             )
             
         input_len = inputs.input_ids.shape[1]
@@ -294,8 +301,9 @@ class PublicTestRunner:
         if isinstance(val, (int, float, np.integer, np.floating)):
             if np.isnan(val):
                 return {"type": "abstain"}
-            # Check if question asks about percentage
-            if any(w in question_text.lower() for w in ["%", "phần trăm", "tỉ lệ", "tỷ lệ"]):
+            # Check if question asks about percentage (exclude product concentrations like 'Otrivin 0,1%', 'Povidine 10%')
+            q_no_conc = re.sub(r'\d+(?:[.,]\d+)?\s*%', '', question_text.lower())
+            if any(w in q_no_conc for w in ["%", "phần trăm", "tỉ lệ", "tỷ lệ"]):
                 return {"type": "percent", "answer": round(float(val), 2)}
             num = float(val)
             if num.is_integer():
@@ -331,6 +339,32 @@ class PublicTestRunner:
 
         code_sanitized = re.sub(r'con\s*=\s*duckdb\.connect\s*\([^)]*\)', '# [AUTO] con already connected', code)
         code_sanitized = re.sub(r'conn\s*=\s*duckdb\.connect\s*\([^)]*\)', 'conn = con', code_sanitized)
+
+        # Auto-normalize Vietnamese tone variations (hủy vs huỷ) in SQL conditions
+        code_sanitized = re.sub(
+            r'(\bCOALESCE\s*\([^)]+\)|\b[a-zA-Z0-9_.]+\b)\s+NOT\s+I?LIKE\s+\'%([^%\']*?)[Hh][uủ][ỷy]([^%\']*?)%\'',
+            r'(\1 NOT ILIKE \'%\2hủy\3%\' AND \1 NOT ILIKE \'%\2huỷ\3%\')',
+            code_sanitized,
+            flags=re.IGNORECASE
+        )
+        code_sanitized = re.sub(
+            r'(\bCOALESCE\s*\([^)]+\)|\b[a-zA-Z0-9_.]+\b)\s+(?<!NOT\s)I?LIKE\s+\'%([^%\']*?)[Hh][uủ][ỷy]([^%\']*?)%\'',
+            r'(\1 ILIKE \'%\2hủy\3%\' OR \1 ILIKE \'%\2huỷ\3%\')',
+            code_sanitized,
+            flags=re.IGNORECASE
+        )
+        code_sanitized = re.sub(
+            r'(\b[a-zA-Z0-9_.]+\b)\s*=\s*\'Đã\s+hu[ỷy]\'',
+            r"(\1 IN ('Đã hủy', 'Đã huỷ'))",
+            code_sanitized,
+            flags=re.IGNORECASE
+        )
+        code_sanitized = re.sub(
+            r'(\b[a-zA-Z0-9_.]+\b)\s*(?:!=|<>)\s*\'Đã\s+hu[ỷy]\'',
+            r"(\1 NOT IN ('Đã hủy', 'Đã huỷ'))",
+            code_sanitized,
+            flags=re.IGNORECASE
+        )
 
         old_stdout = sys.stdout
         sys.stdout = stdout_capture
@@ -373,6 +407,11 @@ class PublicTestRunner:
                         elif bad_tbl.startswith("sqlite_") and bad_tbl[7:] in all_tables:
                             code_sanitized = re.sub(rf'\b{bad_tbl}\b', bad_tbl[7:], code_sanitized)
                             healed = True
+                        else:
+                            suffix_matches = [t for t in all_tables if t.endswith(f"_{bad_tbl}") or t.endswith(f"_{bad_tbl}_sheet1") or t == f"{bad_tbl}_sheet1"]
+                            if suffix_matches:
+                                code_sanitized = re.sub(rf'\b{bad_tbl}\b', suffix_matches[0], code_sanitized)
+                                healed = True
 
                     # Heal 3: Candidate column binding suggested by DuckDB
                     if not healed:
@@ -481,7 +520,7 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
     if not raw_result or not isinstance(raw_result, dict):
         return {"id": q_id, "type": "abstain"}
     
-    ans_type = raw_result.get("type", "abstain").lower().strip()
+    ans_type = str(raw_result.get("type", "abstain")).lower().strip()
     val = raw_result.get("answer")
     
     if ans_type == "abstain":
@@ -492,10 +531,20 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
         if "reason" in raw_result:
             res["reason"] = str(raw_result["reason"])
         return res
+
+    # Unwrap 1-element tuple/list/ndarray for scalar types
+    if ans_type not in ["list", "table"]:
+        import numpy as np
+        while isinstance(val, (list, tuple, np.ndarray)) and len(val) == 1:
+            val = val[0]
     
     if ans_type in ["number", "integer", "int", "float", "double", "numeric"]:
         try:
+            if val is None:
+                return {"id": q_id, "type": "abstain"}
             num = float(val)
+            if num != num:  # NaN check
+                return {"id": q_id, "type": "abstain"}
             if num.is_integer():
                 return {"id": q_id, "type": "number", "answer": int(num)}
             return {"id": q_id, "type": "number", "answer": round(num, 2)}
@@ -504,27 +553,42 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
             
     elif ans_type in ["percent", "percentage"]:
         try:
+            if val is None:
+                return {"id": q_id, "type": "abstain"}
             pct = round(float(val), 2)
+            if pct != pct:
+                return {"id": q_id, "type": "abstain"}
             return {"id": q_id, "type": "percent", "answer": pct}
         except (ValueError, TypeError):
             return {"id": q_id, "type": "abstain"}
             
     elif ans_type in ["string", "str", "text"]:
-        if val is None:
+        if val is None or str(val).strip().lower() in ["", "none", "nan", "null"]:
             return {"id": q_id, "type": "abstain"}
         return {"id": q_id, "type": "string", "answer": str(val).strip()}
         
     elif ans_type == "date":
-        if not val:
+        if not val or str(val).strip().lower() in ["none", "nan", "null"]:
             return {"id": q_id, "type": "abstain"}
         return {"id": q_id, "type": "date", "answer": str(val).strip()}
         
     elif ans_type in ["boolean", "bool"]:
+        if val is None:
+            return {"id": q_id, "type": "abstain"}
         return {"id": q_id, "type": "boolean", "answer": bool(val)}
         
     elif ans_type == "list":
-        if isinstance(val, list):
-            return {"id": q_id, "type": "list", "answer": val}
+        import numpy as np
+        if isinstance(val, np.ndarray):
+            val = val.tolist()
+        if isinstance(val, (list, tuple)):
+            clean_list = []
+            for item in val:
+                if isinstance(item, (list, tuple)) and len(item) == 1:
+                    clean_list.append(item[0])
+                else:
+                    clean_list.append(item)
+            return {"id": q_id, "type": "list", "answer": clean_list}
         return {"id": q_id, "type": "abstain"}
         
     elif ans_type == "table":

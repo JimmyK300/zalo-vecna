@@ -18,7 +18,10 @@ def main():
         print(f"[!] Directory not found: {biz_base}")
         return
 
-    businesses = sorted([d for d in os.listdir(biz_base) if os.path.isdir(os.path.join(biz_base, d))])
+    businesses = sorted([
+        d for d in os.listdir(biz_base)
+        if os.path.isdir(os.path.join(biz_base, d)) and not d.startswith(".")
+    ])
     print(f"[*] Found {len(businesses)} businesses in {biz_base}.")
     print("[*] Pre-building high-speed DuckDB disk cache (.duckdb)...")
 

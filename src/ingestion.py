@@ -57,6 +57,13 @@ def generate_table_aliases(tbl_name: str) -> List[str]:
         raw_sqlite = tbl_name[7:]
         aliases.add(raw_sqlite)
         aliases.add(raw_sqlite.replace('_', ''))
+
+    for prefix in ("du_lieu_ban_hang_", "du_lieu_xuat_", "ban_hang_"):
+        if no_sheet.startswith(prefix):
+            stripped = no_sheet[len(prefix):]
+            if stripped:
+                aliases.add(stripped)
+                aliases.add(stripped.replace('_', ''))
         
     compact_common = tbl_name.replace('so_ban_hang', 'sobanhang').replace('ban_hang', 'banhang') \
                              .replace('chi_tiet', 'chitiet').replace('hoa_don', 'hoadon') \
@@ -187,7 +194,10 @@ class DataIngestionEngine:
             else:
                 s_digits = s_digits.replace(',', '.')
         elif '.' in s_digits and ',' in s_digits:
-            s_digits = s_digits.replace('.', '').replace(',', '.')
+            if s_digits.rfind('.') > s_digits.rfind(','):
+                s_digits = s_digits.replace(',', '')
+            else:
+                s_digits = s_digits.replace('.', '').replace(',', '.')
 
         try:
             res = float(s_digits)
@@ -321,6 +331,85 @@ class DataIngestionEngine:
                 best_row = r
         return best_row
 
+    @staticmethod
+    def _repair_cached_db(con: duckdb.DuckDBPyConnection, schema_summary: str, cached_schema_path: Optional[str] = None) -> str:
+        """Auto-repairs existing cached .duckdb files (merges split unified views, fixes 1000x US currency scaling, and adds prefix aliases)."""
+        import ast
+        schema_changed = False
+
+        # 1. Fix 1000x US currency scaling (e.g. "29,000.0000" parsed as 29.0 in so_chi_tiet_ban_hang)
+        try:
+            base_tables = [
+                r[0] for r in con.execute(
+                    "SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'"
+                ).fetchall()
+            ]
+            for tbl in base_tables:
+                cols = {r[0] for r in con.execute(f'DESCRIBE "{tbl}"').fetchall()}
+                if "don_gia" in cols and "thanh_tien" in cols:
+                    max_dg = con.execute(f'SELECT MAX(don_gia) FROM "{tbl}"').fetchone()[0]
+                    if max_dg is not None and 0 < float(max_dg) < 500:
+                        con.execute(f'UPDATE "{tbl}" SET don_gia = don_gia * 1000.0, thanh_tien = thanh_tien * 1000.0')
+                for alias in generate_table_aliases(tbl):
+                    try:
+                        con.execute(f'CREATE VIEW IF NOT EXISTS "{alias}" AS SELECT * FROM "{tbl}"')
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        # 2. Merge duplicate 'View hợp nhất toàn bộ' blocks that overwrote each other
+        try:
+            pattern = re.compile(
+                r"View hợp nhất toàn bộ '([^']+)' \(hợp nhất từ (\d+) bảng: (\[[^\]]+\])\):\n  Columns: ([^\n]+)\n  \* LƯU Ý:[^\n]+"
+            )
+            matches = list(pattern.finditer(schema_summary))
+            view_groups: Dict[str, List[Tuple[List[str], str]]] = {}
+            for m in matches:
+                vname = m.group(1)
+                tlist = ast.literal_eval(m.group(3))
+                cols_str = m.group(4)
+                view_groups.setdefault(vname, []).append((tlist, cols_str))
+
+            for vname, groups in view_groups.items():
+                if len(groups) > 1:
+                    all_tbls = []
+                    for tlist, _ in groups:
+                        for t in tlist:
+                            if t not in all_tbls:
+                                all_tbls.append(t)
+                    union_sql = " UNION ALL BY NAME ".join([f'SELECT * FROM "{t}"' for t in all_tbls])
+                    con.execute(f'CREATE OR REPLACE VIEW "{vname}" AS {union_sql}')
+                    col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f'DESCRIBE "{vname}"').fetchall()]
+                    merged_block = (
+                        f"View hợp nhất toàn bộ '{vname}' (hợp nhất từ {len(all_tbls)} bảng: {all_tbls}):\n"
+                        f"  Columns: {', '.join(col_types)}\n"
+                        f"  * LƯU Ý: Khuyên dùng view '{vname}' này để truy vấn toàn bộ thời gian không lo thiếu bảng!"
+                    )
+                    first_replaced = False
+                    def repl(m_obj):
+                        nonlocal first_replaced
+                        if m_obj.group(1) != vname:
+                            return m_obj.group(0)
+                        if not first_replaced:
+                            first_replaced = True
+                            return merged_block
+                        return ""
+                    schema_summary = pattern.sub(repl, schema_summary)
+                    schema_summary = re.sub(r'\n{2,}', '\n', schema_summary).strip()
+                    schema_changed = True
+        except Exception:
+            pass
+
+        if schema_changed and cached_schema_path:
+            try:
+                with open(cached_schema_path, "w", encoding="utf-8") as f:
+                    f.write(schema_summary)
+            except Exception:
+                pass
+
+        return schema_summary
+
     def load_business_data(self, biz_dir: str, cache_dir: Optional[str] = None, overwrite: bool = False) -> Tuple[duckdb.DuckDBPyConnection, str]:
         """
         Loads all data files (.csv, .xlsx, .sqlite) of a business into DuckDB.
@@ -351,6 +440,7 @@ class DataIngestionEngine:
                 con.execute("PRAGMA preserve_insertion_order=false;")
                 with open(cached_schema_path, "r", encoding="utf-8") as f:
                     schema_summary = f.read()
+                schema_summary = self._repair_cached_db(con, schema_summary, cached_schema_path)
                 return con, schema_summary
             except Exception:
                 pass
@@ -461,11 +551,12 @@ class DataIngestionEngine:
                     table_meta.append((tbl_name, ', '.join(col_types), f"{filename} -> table '{t_name}'"))
                 sql_conn.close()
 
-        # Group tables with identical columns to drastically reduce prompt token footprint
+        # Group tables with identical column names (ignoring minor BIGINT vs DOUBLE differences)
         from collections import defaultdict
         schema_groups = defaultdict(list)
         for tbl_name, col_str, src in table_meta:
-            schema_groups[col_str].append((tbl_name, src))
+            col_names_key = tuple(c.split(" (")[0].strip() for c in col_str.split(", "))
+            schema_groups[col_names_key].append((tbl_name, col_str, src))
 
         def derive_unified_name(table_names: List[str]) -> Optional[str]:
             clean_names = []
@@ -483,17 +574,20 @@ class DataIngestionEngine:
             return s1.rstrip('_') if len(s1.rstrip('_')) >= 3 else None
 
         schema_lines = []
-        for col_str, items in schema_groups.items():
+        for col_names_key, items in schema_groups.items():
             if len(items) == 1:
-                tbl_name, src = items[0]
+                tbl_name, col_str, src = items[0]
                 schema_lines.append(f"Table '{tbl_name}' ({src}):\n  Columns: {col_str}")
             else:
                 names = [t[0] for t in items]
+                col_str = items[0][1]
                 uname = derive_unified_name(names)
                 if uname and uname not in names:
                     try:
-                        union_sql = " UNION ALL ".join([f'SELECT * FROM "{tbl}"' for tbl in names])
+                        union_sql = " UNION ALL BY NAME ".join([f'SELECT * FROM "{tbl}"' for tbl in names])
                         con.execute(f'CREATE OR REPLACE VIEW "{uname}" AS {union_sql}')
+                        col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f'DESCRIBE "{uname}"').fetchall()]
+                        col_str = ", ".join(col_types)
                         # Generate all common alias variations
                         aliases = {uname, uname.replace('_', '')}
                         m = re.sub(r'_(ban_hang|banhang)$', '', uname)

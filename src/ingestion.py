@@ -298,6 +298,8 @@ class DataIngestionEngine:
         con = duckdb.connect(database=':memory:')
         schema_lines = []
 
+        table_meta = []
+
         files = sorted(os.listdir(biz_dir))
         for filename in files:
             if filename == "README.md":
@@ -316,7 +318,7 @@ class DataIngestionEngine:
                 
                 # Describe column types
                 col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
-                schema_lines.append(f"Table '{tbl_name}' (from {filename}):\n  Columns: {', '.join(col_types)}")
+                table_meta.append((tbl_name, ', '.join(col_types), f"{filename}"))
 
                 # Create table aliases
                 for alias in generate_table_aliases(tbl_name):
@@ -347,7 +349,7 @@ class DataIngestionEngine:
                     con.unregister(f"temp_{tbl_name}")
                     
                     col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
-                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> sheet '{sheet_name}'):\n  Columns: {', '.join(col_types)}")
+                    table_meta.append((tbl_name, ', '.join(col_types), f"{filename} -> sheet '{sheet_name}'"))
 
                     # Create table aliases (e.g. t5 vs t05, without duplicated year)
                     for alias in generate_table_aliases(tbl_name):
@@ -372,8 +374,23 @@ class DataIngestionEngine:
                     con.unregister(f"temp_{tbl_name}")
                     
                     col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
-                    schema_lines.append(f"Table '{tbl_name}' (from {filename} -> table '{t_name}'):\n  Columns: {', '.join(col_types)}")
+                    table_meta.append((tbl_name, ', '.join(col_types), f"{filename} -> table '{t_name}'"))
                 sql_conn.close()
+
+        # Group tables with identical columns to drastically reduce prompt token footprint
+        from collections import defaultdict
+        schema_groups = defaultdict(list)
+        for tbl_name, col_str, src in table_meta:
+            schema_groups[col_str].append((tbl_name, src))
+
+        schema_lines = []
+        for col_str, items in schema_groups.items():
+            if len(items) == 1:
+                tbl_name, src = items[0]
+                schema_lines.append(f"Table '{tbl_name}' ({src}):\n  Columns: {col_str}")
+            else:
+                names = [t[0] for t in items]
+                schema_lines.append(f"Tables ({len(names)} bảng cùng cấu trúc cột): {names}\n  Columns: {col_str}")
 
         schema_summary = "\n".join(schema_lines)
         return con, schema_summary

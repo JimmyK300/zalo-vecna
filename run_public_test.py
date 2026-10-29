@@ -50,9 +50,19 @@ QUY TẮC BẮT BUỘC KHI VIẾT CODE:
 - Chỉ trả về duy nhất khối mã Python trong cặp dấu ```python ... ```. Không giải thích dông dài.
 - Kết nối DuckDB đã được mở sẵn và lưu trong biến `con`. KHÔNG gọi `duckdb.connect()` mới.
 - Lưu kết quả vào biến `result`.
+- TUYỆT ĐỐI CHỈ SỬ DỤNG CÁC CỘT CÓ TRONG DANH SÁCH COLUMNS CỦA BẢNG ĐƯỢC LIỆT KÊ TRONG PHẦN CẤU TRÚC DỮ LIỆU. Không tự đoán tên cột (ví dụ: nếu bảng không có cột `trang_thai_xu_ly`, tuyệt đối không viết `WHERE trang_thai_xu_ly...` kẻo lỗi Binder Error).
 - DÙNG `ILIKE '%...%'` khi so khớp tên hàng hoá / sản phẩm để không phân biệt hoa thường.
 - Cột ngày tháng (thoi_gian, ngay, ngay_dat_hang) đã được chuẩn hóa về định dạng chuỗi 'YYYY-MM-DD'. So khớp trực tiếp bằng `'YYYY-MM-DD'` hoặc `BETWEEN '...' AND '...'`.
-- Khi câu hỏi hỏi về 1 tháng cụ thể (ví dụ: tháng 5/2026, tháng 11/2025), hãy chọn đúng bảng tương ứng trong Cấu Trúc Dữ Liệu (ví dụ: `sobanhang_t05_2026`, `banhang_t11_2025_...`).
+- Chọn đúng bảng tháng/năm: BẮT BUỘC chọn đúng bảng tháng/năm tương ứng với câu hỏi hoặc as_of_date (xem phần Gợi ý bảng bên dưới).
+- Xử lý đơn huỷ / trạng thái đơn: Khi loại bỏ đơn huỷ trên cột có thể chứa NULL (như ghi_chu hay trang_thai_xu_ly), BẮT BUỘC dùng COALESCE để không loại nhầm các dòng có giá trị NULL: `COALESCE(ghi_chu, '') NOT ILIKE '%huỷ%'`. Nếu bảng KHÔNG có cột trạng thái/ghi chú nào, không cần lọc!
+- Phân biệt nhóm hàng vs mặt hàng cụ thể:
+  + Khi câu hỏi hỏi MẶT HÀNG CỤ THỂ (ví dụ: 'Ống PVC Bình Minh D50 cây 4m' hay 'Trà đào'): Lọc trực tiếp trên bảng bán hàng theo tên hàng (ví dụ: `hang_ban ILIKE '%D50%'` hoặc `ten_san_pham ILIKE '%trà đào%'`). KHÔNG JOIN bảng danh mục nếu mặt hàng không có trong danh mục.
+  + Khi câu hỏi hỏi theo NHÓM HÀNG (ví dụ: 'nhóm đồ dùng', 'nhóm trà'):
+    * Nếu trong bảng bán hàng hoặc tên mặt hàng đã thể hiện nhóm (ví dụ: quán nước có tên sản phẩm như 'Trà đào...', 'Hồng trà...'), có thể lọc trực tiếp: `ten_san_pham ILIKE '%trà%'`.
+    * Nếu bảng bán hàng không có tên nhóm nhưng bảng danh mục (ví dụ `quanly_danhmuc`) có cột `nhom`, hãy JOIN bảng danh mục qua tên hàng (`ON banhang.ten_hang = quanly_danhmuc.ten_hang`) và lọc cột `nhom`. LƯU Ý: Bỏ chữ "nhóm" khi so khớp (ví dụ câu hỏi hỏi "nhóm đồ dùng" thì lọc `nhom ILIKE '%đồ dùng%'`, KHÔNG lọc '%nhóm đồ dùng%').
+- Đơn vị tính và Quy đổi: Đọc kỹ phần Quy ước trong THÔNG TIN CỬA HÀNG (README.md).
+  * Ví dụ Ống PVC bán theo bó (1 bó = 10 cây): Khi tính số cây, nếu đơn vị `dvt` là 'bó' thì nhân 10, nếu là 'cây' thì giữ nguyên:
+    `CASE WHEN dvt ILIKE '%bó%' THEN sl_ban * 10 ELSE sl_ban END` (chú ý: nhân 10 với 'bó', KHÔNG nhân với 'cây').
 """
 
 PROMPT_TEMPLATE = """### THÔNG TIN CỬA HÀNG ({biz_id})
@@ -69,17 +79,59 @@ PROMPT_TEMPLATE = """### THÔNG TIN CỬA HÀNG ({biz_id})
 - Tháng này: Từ {thang_nay_start} đến {thang_nay_end}
 - Tháng trước: Từ {thang_truoc_start} đến {thang_truoc_end}
 - Khoảng thời gian Tết năm nay: {tet_season}
+{month_hint}
 
 ### QUY TẮC MẶC ĐỊNH QUAN TRỌNG:
 - Doanh thu: Chỉ tính đơn không huỷ và không trả hàng. Đơn có trả hàng (kể cả trả 1 phần) loại bỏ CẢ ĐƠN.
 - Doanh thu = tổng thành tiền từng dòng hàng sau giảm giá dòng. Không trừ voucher cả đơn, không cộng VAT, không gồm phí ship.
 - Bán chạy mặc định = theo SỐ LƯỢNG (không phải theo doanh thu).
 - Đơn thuộc kỳ nào = theo ngày đặt đơn.
+- Không lọc cứng trang_thai_xu_ly = 'Đã giao' nếu bảng không có.
 
 ### CÂU HỎI CỦA NGƯỜI DÙNG:
 "{question}"
 
 Hãy viết đoạn mã Python (trong ```python ... ```) để tính toán và gán vào biến `result`:"""
+
+
+def extract_target_month_year(question_text: str, as_of_date: str):
+    """
+    Detects target month and year from question text or as_of_date.
+    Returns (month, year) as ints, or None.
+    """
+    # Check question text first for explicit month/year
+    # Matches: 'tháng 5/2026', 'tháng 05/2026', 'tháng 5 năm 2026', 't05-2026', 't5/2026'
+    m = re.search(r'(?:tháng|t)\s*(\d{1,2})[\s/_\-nen]*(?:năm\s*)?(\d{4})', question_text, re.IGNORECASE)
+    if m:
+        try:
+            month = int(m.group(1))
+            year = int(m.group(2))
+            if 1 <= month <= 12 and 2020 <= year <= 2030:
+                return month, year
+        except ValueError:
+            pass
+
+    # Next check question text for just month e.g. "tháng 11"
+    m_month_only = re.search(r'(?:tháng|t)\s*(\d{1,2})\b', question_text, re.IGNORECASE)
+    if m_month_only and as_of_date:
+        try:
+            month = int(m_month_only.group(1))
+            year = int(as_of_date.split("-")[0])
+            if 1 <= month <= 12:
+                return month, year
+        except ValueError:
+            pass
+
+    # Fallback to as_of_date if question asks about today / yesterday / this week / this month
+    if as_of_date:
+        parts = as_of_date.split("-")
+        if len(parts) >= 2:
+            try:
+                return int(parts[1]), int(parts[0])
+            except ValueError:
+                pass
+
+    return None, None
 
 
 # =====================================================================
@@ -212,10 +264,18 @@ class PublicTestRunner:
             "result": None
         }
 
+        # Safeguard: prevent model code from calling duckdb.connect() and wiping out preloaded tables
+        import duckdb
+        old_duckdb_connect = duckdb.connect
+        duckdb.connect = lambda *args, **kwargs: con
+
+        code_sanitized = re.sub(r'con\s*=\s*duckdb\.connect\s*\([^)]*\)', '# [AUTO] con already connected', code)
+        code_sanitized = re.sub(r'conn\s*=\s*duckdb\.connect\s*\([^)]*\)', 'conn = con', code_sanitized)
+
         old_stdout = sys.stdout
         sys.stdout = stdout_capture
         try:
-            exec(code, exec_globals)
+            exec(code_sanitized, exec_globals)
         except Exception as e:
             sys.stdout = old_stdout
             log_item["exec_error"] = str(e)
@@ -223,25 +283,38 @@ class PublicTestRunner:
             return None
         finally:
             sys.stdout = old_stdout
+            duckdb.connect = old_duckdb_connect
 
         captured_output = stdout_capture.getvalue().strip()
         if captured_output:
             log_item["captured_stdout"] = captured_output
 
         res = exec_globals.get("result")
+        if isinstance(res, (tuple, list)) and len(res) == 1:
+            res = res[0]
+
         if isinstance(res, dict) and "type" in res:
             return res
-        elif res is not None:
+        elif res is not None and not pd.isna(res):
             return cls.infer_type_from_raw_value(res, question_text)
         elif captured_output:
             # If model printed result instead of assigning
             try:
                 # Try parsing as JSON or float
-                return cls.infer_type_from_raw_value(captured_output, question_text)
+                parsed = cls.infer_type_from_raw_value(captured_output, question_text)
+                if parsed.get("type") != "abstain":
+                    return parsed
             except Exception:
                 pass
 
-        log_item["exec_error"] = "Variable 'result' was not assigned"
+        log_item["exec_error"] = (
+            "Kết quả 'result' là None hoặc chưa được gán (truy vấn DuckDB trả về NULL/không có dòng nào khớp). "
+            "GỢI Ý SỬA LỖI: "
+            "1. Nếu câu hỏi hỏi theo 'nhóm hàng', hãy JOIN bảng danh mục (ví dụ: quanly_danhmuc) qua ten_hang để lọc cột nhom ILIKE '%...%'. "
+            "2. Nếu câu hỏi hỏi mặt hàng cụ thể (ví dụ Ống PVC), hãy lọc trực tiếp trên bảng bán hàng và KHÔNG JOIN bảng danh mục nếu mặt hàng không có trong danh mục. "
+            "3. Không lọc cứng 'Đã giao' nếu bảng không có giá trị này (chỉ loại bỏ đơn huỷ/không giao). "
+            "4. Đọc kỹ phần Quy ước trong README để áp dụng quy đổi đơn vị (ví dụ 1 bó = 10 cây)."
+        )
         return None
 
 
@@ -266,7 +339,7 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
             res["reason"] = str(raw_result["reason"])
         return res
     
-    if ans_type == "number":
+    if ans_type in ["number", "integer", "int", "float", "double", "numeric"]:
         try:
             num = float(val)
             if num.is_integer():
@@ -275,14 +348,14 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
         except (ValueError, TypeError):
             return {"id": q_id, "type": "abstain"}
             
-    elif ans_type == "percent":
+    elif ans_type in ["percent", "percentage"]:
         try:
             pct = round(float(val), 2)
             return {"id": q_id, "type": "percent", "answer": pct}
         except (ValueError, TypeError):
             return {"id": q_id, "type": "abstain"}
             
-    elif ans_type == "string":
+    elif ans_type in ["string", "str", "text"]:
         if val is None:
             return {"id": q_id, "type": "abstain"}
         return {"id": q_id, "type": "string", "answer": str(val).strip()}
@@ -292,7 +365,7 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
             return {"id": q_id, "type": "abstain"}
         return {"id": q_id, "type": "date", "answer": str(val).strip()}
         
-    elif ans_type == "boolean":
+    elif ans_type in ["boolean", "bool"]:
         return {"id": q_id, "type": "boolean", "answer": bool(val)}
         
     elif ans_type == "list":
@@ -393,6 +466,13 @@ def main():
                 # Resolve temporal dates
                 dates = temporal_engine.resolve_relative_dates(as_of_date)
 
+                # Detect target month/year
+                t_month, t_year = extract_target_month_year(question_text, as_of_date)
+                if t_month and t_year:
+                    month_hint = f"- GỢI Ý BẢNG THEO THỜI GIAN: Dữ liệu cần truy vấn thuộc Tháng {t_month}/{t_year}. Hãy ưu tiên chọn bảng có tên chứa 't{t_month}_{t_year}' hoặc 't0{t_month}_{t_year}' (ví dụ: banhang_t{t_month}_{t_year}_... hoặc sobanhang_t{t_month:02d}_{t_year}) thay vì bảng của tháng/năm khác!"
+                else:
+                    month_hint = ""
+
                 # Format prompt
                 prompt = PROMPT_TEMPLATE.format(
                     biz_id=biz_id,
@@ -409,6 +489,7 @@ def main():
                     thang_truoc_start=dates["thang_truoc"][0],
                     thang_truoc_end=dates["thang_truoc"][1],
                     tet_season=f"Từ {dates['tet_season'][0]} đến {dates['tet_season'][1]}" if dates["tet_season"] else "Không xác định",
+                    month_hint=month_hint,
                     question=question_text
                 )
 

@@ -393,6 +393,7 @@ def main():
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Hugging Face model ID")
     parser.add_argument("--load_in_4bit", action="store_true", default=True, help="Load model in 4-bit quantization")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to process (for quick testing)")
+    parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite output file instead of resuming")
     args = parser.parse_args()
 
     os.makedirs(args.log_dir, exist_ok=True)
@@ -433,13 +434,32 @@ def main():
     else:
         print(f"[*] Processing all {len(questions)} questions.")
 
-    # 3. Cache for loaded DuckDB business instances to avoid reloading data repeatedly
+    # 3. Check existing completed question IDs for auto-resume
+    processed_ids = set()
+    if os.path.exists(args.output) and not args.overwrite:
+        with open(args.output, "r", encoding="utf-8") as f:
+            for line in f:
+                line_str = line.strip()
+                if line_str:
+                    try:
+                        d = json.loads(line_str)
+                        if "id" in d:
+                            processed_ids.add(d["id"])
+                    except Exception:
+                        pass
+        if processed_ids:
+            print(f"[*] Found {len(processed_ids)} already processed questions. Resuming...")
+
+    # 4. Cache for loaded DuckDB business instances to avoid reloading data repeatedly
     biz_cache = {}
 
-    # Open output file for streaming writes
-    with open(args.output, "w", encoding="utf-8") as out_f:
+    # Open output file for streaming writes (append mode if resuming, else write mode)
+    write_mode = "w" if (args.overwrite or not processed_ids) else "a"
+    with open(args.output, write_mode, encoding="utf-8") as out_f:
         for idx, q in enumerate(tqdm(questions, desc="Inferring")):
             q_id = q["id"]
+            if q_id in processed_ids:
+                continue
             biz_id = q["business_id"]
             question_text = q["question"]
             as_of_date = q["as_of_date"]

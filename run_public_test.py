@@ -218,11 +218,22 @@ class PublicTestRunner:
             gen_kwargs["temperature"] = temperature
             gen_kwargs["top_p"] = 0.9
 
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                **gen_kwargs
-            )
+        try:
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    **gen_kwargs
+                )
+        except torch.OutOfMemoryError:
+            del inputs
+            torch.cuda.empty_cache()
+            if len(prompts) > 1:
+                mid = len(prompts) // 2
+                return (
+                    self.generate_code_batch(prompts[:mid], temperature=temperature, do_sample=do_sample)
+                    + self.generate_code_batch(prompts[mid:], temperature=temperature, do_sample=do_sample)
+                )
+            raise
             
         input_len = inputs.input_ids.shape[1]
         responses = []

@@ -194,6 +194,33 @@ def main():
             if line.strip():
                 questions.append(json.loads(line))
 
+    # Prioritize hard questions (not yet solved in sft_dataset.jsonl) for maximum GRPO advantage variance
+    sft_file = os.path.join(args.data_dir, "sft_dataset.jsonl")
+    if os.path.exists(sft_file):
+        try:
+            solved_ids = {
+                json.loads(l)["id"]
+                for l in open(sft_file, "r", encoding="utf-8")
+                if l.strip()
+            }
+            hard_qs = [q for q in questions if q["id"] not in solved_ids]
+            easy_qs = [q for q in questions if q["id"] in solved_ids]
+            # Interleave 3 hard questions per 1 solved question so model learns hard cases without forgetting
+            prioritized = []
+            hi, ei = 0, 0
+            while hi < len(hard_qs) or ei < len(easy_qs):
+                for _ in range(3):
+                    if hi < len(hard_qs):
+                        prioritized.append(hard_qs[hi])
+                        hi += 1
+                if ei < len(easy_qs):
+                    prioritized.append(easy_qs[ei])
+                    ei += 1
+            questions = prioritized
+            print(f"[*] Prioritized {len(hard_qs)} hard questions + {len(easy_qs)} solved questions for GRPO.")
+        except Exception:
+            pass
+
     if args.limit:
         questions = questions[:args.limit]
 
@@ -336,7 +363,9 @@ def main():
         "max_completion_length": args.max_completion_length,
         "temperature": 0.8,
         "logging_steps": 5,
-        "save_strategy": "epoch",
+        "save_strategy": "steps",
+        "save_steps": 100,
+        "save_total_limit": 2,
         "bf16": args.bf16,
         "fp16": args.fp16 and not args.bf16,
         "gradient_checkpointing": True,
@@ -360,7 +389,25 @@ def main():
     elif "tokenizer" in trainer_sig:
         trainer_kwargs["tokenizer"] = tokenizer
 
+    from transformers import TrainerCallback
+
+    class AutoSaveAdapterCallback(TrainerCallback):
+        def __init__(self, out_dir: str, tok):
+            self.out_dir = out_dir
+            self.tok = tok
+
+        def on_step_end(self, args_cb, state, control, **kwargs):
+            if state.global_step > 0 and state.global_step % 50 == 0:
+                model_obj = kwargs.get("model")
+                if model_obj is not None:
+                    try:
+                        model_obj.save_pretrained(self.out_dir)
+                        self.tok.save_pretrained(self.out_dir)
+                    except Exception:
+                        pass
+
     trainer = GRPOTrainer(**trainer_kwargs)
+    trainer.add_callback(AutoSaveAdapterCallback(args.output_dir, tokenizer))
 
     print("[*] Starting GRPO Reinforcement Learning...")
     trainer.train()

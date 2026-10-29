@@ -68,7 +68,7 @@ def main():
 
     runner = PublicTestRunner(
         model_id=args.model_id,
-        torch_dtype="float16" if args.fp16 else "bfloat16"
+        load_in_4bit=not args.fp16
     )
 
     calendar_path = os.path.join(args.data_dir, "calendar.csv")

@@ -147,8 +147,10 @@ def extract_target_month_year(question_text: str, as_of_date: str):
 # =====================================================================
 
 class PublicTestRunner:
-    def __init__(self, model_id: str, load_in_4bit: bool = True, device: str = "cuda", adapter_path: Optional[str] = None):
+    def __init__(self, model_id: str, load_in_4bit: bool = True, device: str = "cuda", adapter_path: Optional[str] = None, torch_dtype: Optional[str] = None):
         self.device = device if torch.cuda.is_available() else "cpu"
+        if torch_dtype in ("float16", "bfloat16", "fp16"):
+            load_in_4bit = False
         print(f"[*] Initializing model: {model_id} on {self.device} (4-bit: {load_in_4bit})")
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)

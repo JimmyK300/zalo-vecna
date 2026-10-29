@@ -147,7 +147,7 @@ def extract_target_month_year(question_text: str, as_of_date: str):
 # =====================================================================
 
 class PublicTestRunner:
-    def __init__(self, model_id: str, load_in_4bit: bool = True, device: str = "cuda"):
+    def __init__(self, model_id: str, load_in_4bit: bool = True, device: str = "cuda", adapter_path: Optional[str] = None):
         self.device = device if torch.cuda.is_available() else "cpu"
         print(f"[*] Initializing model: {model_id} on {self.device} (4-bit: {load_in_4bit})")
         
@@ -176,6 +176,15 @@ class PublicTestRunner:
                 device_map="auto" if self.device == "cuda" else None,
                 trust_remote_code=True
             )
+
+        if adapter_path and os.path.exists(adapter_path):
+            try:
+                from peft import PeftModel
+                print(f"[*] Loading fine-tuned LoRA adapter from: {adapter_path}")
+                self.model = PeftModel.from_pretrained(self.model, adapter_path)
+            except Exception as e:
+                print(f"[!] Warning: Failed to load adapter from {adapter_path}: {e}")
+
         self.model.eval()
         print("[+] Model loaded successfully!")
 
@@ -534,6 +543,7 @@ def main():
     parser.add_argument("--output", type=str, default="submission.jsonl", help="Output submission JSONL file path")
     parser.add_argument("--log_dir", type=str, default="result/logs", help="Directory to save question logs")
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Hugging Face model ID")
+    parser.add_argument("--adapter_path", type=str, default=None, help="Path to fine-tuned LoRA adapter (from SFT or GRPO)")
     parser.add_argument("--load_in_4bit", action="store_true", default=True, help="Load model in 4-bit quantization")
     parser.add_argument("--fp16", action="store_true", default=False, help="Load model in native FP16 (recommended for A100 / L4 with >=24GB VRAM)")
     parser.add_argument("--batch_size", type=int, default=1, help="Inference batch size (e.g. 4, 8, 16 for high-end GPUs like A100)")
@@ -570,7 +580,7 @@ def main():
     # 1. Initialize Engines
     temporal_engine = TemporalEngine(calendar_path)
     ingestion_engine = DataIngestionEngine()
-    runner = PublicTestRunner(model_id=args.model_id, load_in_4bit=use_4bit)
+    runner = PublicTestRunner(model_id=args.model_id, load_in_4bit=use_4bit, adapter_path=args.adapter_path)
 
     # 2. Load questions
     with open(questions_path, "r", encoding="utf-8") as f:

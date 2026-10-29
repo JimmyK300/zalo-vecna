@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import duckdb
 from unidecode import unidecode
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 
 # Strict pattern for numbers/currency values
 CURRENCY_PATTERN = re.compile(
@@ -102,8 +102,11 @@ class DataIngestionEngine:
 
     @staticmethod
     def sanitize_name(name: str) -> str:
-        """Sanitizes names to valid ASCII snake_case SQL identifiers."""
-        s = unidecode(str(name)).lower().strip()
+        """Sanitizes names to valid ASCII snake_case SQL identifiers, preserving CamelCase transitions."""
+        s_raw = str(name)
+        s_camel = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s_raw)
+        s_camel = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', s_camel)
+        s = unidecode(s_camel).lower().strip()
         s = re.sub(r'[^a-z0-9]+', '_', s)
         return s.strip('_')
 
@@ -188,11 +191,19 @@ class DataIngestionEngine:
         if isinstance(val, (datetime.datetime, datetime.date, pd.Timestamp)):
             return val.strftime("%Y-%m-%d")
         
-        # Check Excel serial date (e.g. 45658)
+        # Check Excel serial date (e.g. 45658 or "45658")
         if isinstance(val, (int, float, np.integer, np.floating)):
             if 30000 <= val <= 60000:
                 try:
                     dt = pd.to_datetime(val, unit='D', origin='1899-12-30')
+                    return dt.strftime("%Y-%m-%d")
+                except Exception:
+                    pass
+        elif isinstance(val, str) and val.strip().isdigit():
+            val_int = int(val.strip())
+            if 30000 <= val_int <= 60000:
+                try:
+                    dt = pd.to_datetime(val_int, unit='D', origin='1899-12-30')
                     return dt.strftime("%Y-%m-%d")
                 except Exception:
                     pass
@@ -245,10 +256,15 @@ class DataIngestionEngine:
         df.columns = clean_cols
 
         # Auto-fill missing date from timestamp column if available
-        if 'thoi_gian' in df.columns and 'gio' in df.columns:
-            thoi_gian_norm = df['thoi_gian'].apply(cls.normalize_date_value)
-            gio_norm = df['gio'].apply(cls.normalize_date_value)
-            df['thoi_gian'] = thoi_gian_norm.fillna(gio_norm)
+        date_candidates = ['thoi_gian', 'thoi_gian_lap', 'gio', 'gio_ban', 'gio_tao_don']
+        for d_col in ['ngay', 'ngay_lap', 'ngay_xuat', 'ngay_hd']:
+            if d_col in df.columns:
+                for t_col in date_candidates:
+                    if t_col in df.columns and t_col != d_col:
+                        d_norm = df[d_col].apply(cls.normalize_date_value)
+                        t_norm = df[t_col].apply(cls.normalize_date_value)
+                        df[d_col] = d_norm.fillna(t_norm)
+                        break
 
         for col in df.columns:
             # 1. Date column
@@ -383,6 +399,21 @@ class DataIngestionEngine:
         for tbl_name, col_str, src in table_meta:
             schema_groups[col_str].append((tbl_name, src))
 
+        def derive_unified_name(table_names: List[str]) -> Optional[str]:
+            clean_names = []
+            for t in table_names:
+                c = re.sub(r'_(sheet\d+|t\d{1,2}_\d{4}|\d{4}|\d+)', '', t)
+                c = re.sub(r'_+', '_', c).strip('_')
+                clean_names.append(c)
+            if len(set(clean_names)) == 1 and clean_names[0]:
+                return clean_names[0]
+            s1, s2 = min(table_names), max(table_names)
+            for i, c in enumerate(s1):
+                if i >= len(s2) or c != s2[i]:
+                    prefix = s1[:i].rstrip('_')
+                    return prefix if len(prefix) >= 3 else None
+            return s1.rstrip('_') if len(s1.rstrip('_')) >= 3 else None
+
         schema_lines = []
         for col_str, items in schema_groups.items():
             if len(items) == 1:
@@ -390,7 +421,36 @@ class DataIngestionEngine:
                 schema_lines.append(f"Table '{tbl_name}' ({src}):\n  Columns: {col_str}")
             else:
                 names = [t[0] for t in items]
-                schema_lines.append(f"Tables ({len(names)} bảng cùng cấu trúc cột): {names}\n  Columns: {col_str}")
+                uname = derive_unified_name(names)
+                if uname and uname not in names:
+                    try:
+                        union_sql = " UNION ALL ".join([f'SELECT * FROM "{tbl}"' for tbl in names])
+                        con.execute(f'CREATE OR REPLACE VIEW "{uname}" AS {union_sql}')
+                        # Generate all common alias variations
+                        aliases = {uname, uname.replace('_', '')}
+                        m = re.sub(r'_(ban_hang|banhang)$', '', uname)
+                        if m != uname:
+                            aliases.add(m)
+                            aliases.add(m.replace('_', ''))
+                        sub = uname.replace('ban_hang', 'banhang').replace('tong_hop', 'tonghop').replace('hoa_don', 'hoadon').replace('chi_tiet', 'chitiet')
+                        aliases.add(sub)
+                        if sub.endswith('_banhang'):
+                            aliases.add(sub[:-8])
+                        for a in aliases:
+                            if a and a != uname:
+                                try:
+                                    con.execute(f'CREATE OR REPLACE VIEW "{a}" AS SELECT * FROM "{uname}"')
+                                except Exception:
+                                    pass
+                        schema_lines.append(
+                            f"View hợp nhất toàn bộ '{uname}' (hợp nhất từ {len(names)} bảng: {names}):\n"
+                            f"  Columns: {col_str}\n"
+                            f"  * LƯU Ý: Khuyên dùng view '{uname}' này để truy vấn toàn bộ thời gian không lo thiếu bảng!"
+                        )
+                    except Exception:
+                        schema_lines.append(f"Tables ({len(names)} bảng cùng cấu trúc cột): {names}\n  Columns: {col_str}")
+                else:
+                    schema_lines.append(f"Tables ({len(names)} bảng cùng cấu trúc cột): {names}\n  Columns: {col_str}")
 
         schema_summary = "\n".join(schema_lines)
         return con, schema_summary

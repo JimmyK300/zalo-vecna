@@ -63,6 +63,14 @@ QUY TẮC BẮT BUỘC KHI VIẾT CODE:
 - Đơn vị tính và Quy đổi: Đọc kỹ phần Quy ước trong THÔNG TIN CỬA HÀNG (README.md).
   * Ví dụ Ống PVC bán theo bó (1 bó = 10 cây): Khi tính số cây, nếu đơn vị `dvt` là 'bó' thì nhân 10, nếu là 'cây' thì giữ nguyên:
     `CASE WHEN dvt ILIKE '%bó%' THEN sl_ban * 10 ELSE sl_ban END` (chú ý: nhân 10 với 'bó', KHÔNG nhân với 'cây').
+- Tên thợ / nhân viên và Huê hồng:
+  * Trong các bảng ghi chép công việc (ví dụ `sosuaxe`), thợ thường được ghi theo tên gọi / biệt danh (như 'A.Phúc', 'a Phúc', 'Phúc'). Khi tính huê hồng cho thợ (ví dụ 'Đoàn Bảo Phúc'), hãy so khớp cột thợ với tên gọi: `tho ILIKE '%Phúc%'`. Tuyệt đối không dùng dấu bằng tuyệt đối `=` với cả họ tên kẻo không khớp.
+- Doanh thu trung bình mỗi đơn:
+  * Công thức tính: `SUM(thanh_tien) * 1.0 / COUNT(DISTINCT don_so)`. TUYỆT ĐỐI KHÔNG gán số giả định / ví dụ mẫu (như 1234567.89).
+- Tính tỷ lệ phần trăm (%):
+  * BẮT BUỘC nhân 100.0 trước khi chia: `COUNT(...) * 100.0 / COUNT(...)` để tránh lỗi integer division ra 0.0.
+- Ưu tiên dùng VIEW hợp nhất toàn bộ:
+  * Nếu phần CẤU TRÚC DỮ LIỆU có 'View hợp nhất toàn bộ' (như `chitiethoadon`, `sobanhang`, `banhang_tonghop_banhang`, `sosuaxe`), hãy ƯU TIÊN truy vấn từ View này để bao quát toàn bộ thời gian 2025-2026, không bị thiếu dữ liệu hay chọn nhầm file/sheet/năm.
 """
 
 PROMPT_TEMPLATE = """### THÔNG TIN CỬA HÀNG ({biz_id})
@@ -225,8 +233,46 @@ class PublicTestRunner:
         import pandas as pd
         import numpy as np
 
-        if val is None or pd.isna(val):
+        if val is None:
             return {"type": "abstain"}
+
+        if isinstance(val, (list, tuple)):
+            if len(val) == 0:
+                return {"type": "abstain"}
+            # Flatten 1-element tuples / lists: [(x,), (y,)] -> [x, y]
+            flattened = []
+            for item in val:
+                if isinstance(item, (list, tuple)) and len(item) == 1:
+                    flattened.append(item[0])
+                else:
+                    flattened.append(item)
+            
+            # Check if this was a scalar query returning [(scalar,)]
+            is_list_q = any(w in question_text.lower() for w in ["nhung mon", "những món", "danh sách", "top ", "cac ", "các "])
+            if len(flattened) == 1 and not is_list_q:
+                return cls.infer_type_from_raw_value(flattened[0], question_text)
+            
+            # Clean elements (strip strings)
+            clean_list = [x.strip() if isinstance(x, str) else x for x in flattened]
+            return {"type": "list", "answer": clean_list}
+
+        if isinstance(val, pd.DataFrame):
+            if val.empty:
+                return {"type": "abstain"}
+            if val.shape == (1, 1):
+                raw_elem = val.iloc[0, 0]
+                return cls.infer_type_from_raw_value(raw_elem, question_text)
+            elif val.shape[0] == 1 or val.shape[1] == 1:
+                return {"type": "list", "answer": val.values.flatten().tolist()}
+            else:
+                return {"type": "table", "answer": {"columns": list(val.columns), "rows": val.values.tolist()}}
+
+        # For scalar values: check if NaN
+        try:
+            if pd.isna(val):
+                return {"type": "abstain"}
+        except Exception:
+            pass
 
         if isinstance(val, (bool, np.bool_)):
             return {"type": "boolean", "answer": bool(val)}
@@ -241,20 +287,6 @@ class PublicTestRunner:
             if num.is_integer():
                 return {"type": "number", "answer": int(num)}
             return {"type": "number", "answer": round(num, 2)}
-
-        if isinstance(val, (list, tuple)):
-            return {"type": "list", "answer": list(val)}
-
-        if isinstance(val, pd.DataFrame):
-            if val.empty:
-                return {"type": "abstain"}
-            if val.shape == (1, 1):
-                raw_elem = val.iloc[0, 0]
-                return cls.infer_type_from_raw_value(raw_elem, question_text)
-            elif val.shape[0] == 1 or val.shape[1] == 1:
-                return {"type": "list", "answer": val.values.flatten().tolist()}
-            else:
-                return {"type": "table", "answer": {"columns": list(val.columns), "rows": val.values.tolist()}}
 
         val_str = str(val).strip()
         # Check if date format YYYY-MM-DD or YYYY-MM

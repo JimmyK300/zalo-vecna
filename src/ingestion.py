@@ -17,6 +17,7 @@ CURRENCY_PATTERN = re.compile(
 # Text columns that must NEVER be converted to numeric
 TEXT_KEYWORDS = [
     'ten', 'name', 'hang', 'san_pham', 'product', 'item', 'mon',
+    'dien_giai', 'mo_ta', 'desc', 'description',
     'ma_', 'so_don', 'so_phieu', 'hd', 'code', 'id',
     'khach', 'customer', 'dien_thoai', 'sdt', 'phone', 'dia_chi',
     'ghi_chu', 'note', 'trang_thai', 'status', 'kenh', 'channel',
@@ -44,6 +45,45 @@ def is_numeric_column(col: str) -> bool:
     ]
     return any(sub in col for sub in numeric_substrings)
 
+def generate_table_aliases(tbl_name: str) -> List[str]:
+    """Generates common variations of month names and abbreviations to prevent Catalog Errors."""
+    aliases = set()
+    # 1. Month padding: _t01_ to _t1_, _t05_ to _t5_ and vice versa
+    m_pad = re.search(r'_t0([1-9])_', tbl_name)
+    if m_pad:
+        alt = re.sub(r'_t0([1-9])_', r'_t\1_', tbl_name)
+        aliases.add(alt)
+    m_unpad = re.search(r'_t([1-9])_', tbl_name)
+    if m_unpad:
+        alt = re.sub(r'_t([1-9])_', r'_t0\1_', tbl_name)
+        aliases.add(alt)
+
+    # 2. Year duplication e.g. banhang_2026_t06_2026 -> banhang_t06_2026, banhang_t6_2026
+    m_dup = re.search(r'^(.*?)_\d{4}_(t\d{1,2}_\d{4})$', tbl_name)
+    if m_dup:
+        base, month_yr = m_dup.group(1), m_dup.group(2)
+        aliases.add(f"{base}_{month_yr}")
+        if '_t0' in month_yr:
+            unpadded = month_yr.replace('_t0', '_t')
+            aliases.add(f"{base}_{unpadded}")
+        elif '_t' in month_yr:
+            padded = re.sub(r'_t([1-9])', r'_t0\1', month_yr)
+            aliases.add(f"{base}_{padded}")
+
+    # 3. Short sheet name e.g. t05_2026, t5_2026
+    m_sheet = re.search(r'(t\d{1,2}_\d{4})$', tbl_name)
+    if m_sheet:
+        s_name = m_sheet.group(1)
+        aliases.add(s_name)
+        if 't0' in s_name:
+            aliases.add(s_name.replace('t0', 't'))
+        else:
+            padded = re.sub(r't([1-9])', r't0\1', s_name)
+            aliases.add(padded)
+
+    aliases.discard(tbl_name)
+    return list(aliases)
+
 
 class DataIngestionEngine:
     """
@@ -54,6 +94,7 @@ class DataIngestionEngine:
     - Safe Column Type Guard: Text/product/order columns are protected from numeric conversion
     - Date Normalization: Unifies mixed dates to ISO 'YYYY-MM-DD' strings
     - Column Name Sanitization (clean snake_case for robust SQL queries without space/diacritic errors)
+    - Auto Table Aliasing: Creates views for common table/sheet variations (t5 vs t05)
     """
 
     def __init__(self):
@@ -277,8 +318,14 @@ class DataIngestionEngine:
                 col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
                 schema_lines.append(f"Table '{tbl_name}' (from {filename}):\n  Columns: {', '.join(col_types)}")
 
+                # Create table aliases
+                for alias in generate_table_aliases(tbl_name):
+                    try:
+                        con.execute(f'CREATE OR REPLACE VIEW "{alias}" AS SELECT * FROM "{tbl_name}"')
+                    except Exception:
+                        pass
+
             elif ext == '.xlsx':
-                # Use calamine engine if available for 10x-50x faster Excel parsing
                 engine = None
                 try:
                     import python_calamine
@@ -301,6 +348,13 @@ class DataIngestionEngine:
                     
                     col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
                     schema_lines.append(f"Table '{tbl_name}' (from {filename} -> sheet '{sheet_name}'):\n  Columns: {', '.join(col_types)}")
+
+                    # Create table aliases (e.g. t5 vs t05, without duplicated year)
+                    for alias in generate_table_aliases(tbl_name):
+                        try:
+                            con.execute(f'CREATE OR REPLACE VIEW "{alias}" AS SELECT * FROM "{tbl_name}"')
+                        except Exception:
+                            pass
 
             elif ext == '.sqlite':
                 sql_conn = sqlite3.connect(file_path)

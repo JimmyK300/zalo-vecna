@@ -384,7 +384,7 @@ def main():
                     readme_content = ""
                     if os.path.exists(readme_path):
                         with open(readme_path, "r", encoding="utf-8", errors="ignore") as rf:
-                            readme_content = rf.read()[:1000] # truncate if too long
+                            readme_content = rf.read()
                             
                     biz_cache[biz_id] = (con, schema_summary, readme_content)
 
@@ -419,6 +419,16 @@ def main():
 
                 # Execute code with enhanced error logging and auto-inference
                 exec_result = runner.execute_code(extracted_code, con, question_text, log_item)
+
+                # Self-correction: if execution failed, retry once with error feedback
+                if (exec_result is None or exec_result.get("type") == "abstain") and log_item.get("exec_error"):
+                    error_msg = log_item.get("exec_error")
+                    retry_prompt = prompt + f"\n\nLƯU Ý: Đoạn code bạn đã sinh trước đó gặp lỗi thực thi sau:\n```python\n{extracted_code}\n```\nLỗi thực thi: {error_msg}\nHãy sửa lại code Python để sửa lỗi này và gán kết quả vào `result`:"
+                    retry_response = runner.generate_code(retry_prompt)
+                    retry_code = runner.extract_python_code(retry_response)
+                    log_item["retry_code"] = retry_code
+                    log_item.pop("exec_error", None)
+                    exec_result = runner.execute_code(retry_code, con, question_text, log_item)
 
                 # Format final answer
                 final_submission = format_final_submission(q_id, exec_result)

@@ -53,6 +53,11 @@ def generate_table_aliases(tbl_name: str) -> List[str]:
         aliases.add(no_sheet)
         aliases.add(no_sheet.replace('_', ''))
         
+    if tbl_name.startswith("sqlite_"):
+        raw_sqlite = tbl_name[7:]
+        aliases.add(raw_sqlite)
+        aliases.add(raw_sqlite.replace('_', ''))
+        
     compact_common = tbl_name.replace('so_ban_hang', 'sobanhang').replace('ban_hang', 'banhang') \
                              .replace('chi_tiet', 'chitiet').replace('hoa_don', 'hoadon') \
                              .replace('danh_muc', 'danhmuc').replace('quan_ly', 'quanly') \
@@ -446,6 +451,11 @@ class DataIngestionEngine:
                     con.register(f"temp_{tbl_name}", df)
                     con.execute(f"CREATE TABLE \"{tbl_name}\" AS SELECT * FROM temp_{tbl_name}")
                     con.unregister(f"temp_{tbl_name}")
+
+                    # Also create view without sqlite_ prefix for natural queries
+                    raw_tbl = self.sanitize_name(t_name)
+                    if raw_tbl != tbl_name:
+                        con.execute(f"CREATE VIEW IF NOT EXISTS \"{raw_tbl}\" AS SELECT * FROM \"{tbl_name}\"")
                     
                     col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f"DESCRIBE \"{tbl_name}\"").fetchall()]
                     table_meta.append((tbl_name, ', '.join(col_types), f"{filename} -> table '{t_name}'"))

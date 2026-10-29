@@ -10,6 +10,7 @@ from src.ingestion import DataIngestionEngine
 def main():
     parser = argparse.ArgumentParser(description="Pre-build DuckDB cache for all businesses")
     parser.add_argument("--data_dir", type=str, default="public_test", help="Path to public_test or test directory")
+    parser.add_argument("--overwrite", action="store_true", help="Force rebuild all cache files even if existing")
     args = parser.parse_args()
 
     biz_base = os.path.join(args.data_dir, "data")
@@ -27,7 +28,7 @@ def main():
     for biz_id in tqdm(businesses, desc="Caching businesses"):
         biz_dir = os.path.join(biz_base, biz_id)
         t0 = time.time()
-        con, schema = engine.load_business_data(biz_dir)
+        con, schema = engine.load_business_data(biz_dir, overwrite=args.overwrite)
         # Verify and close
         table_count = len(con.execute("SHOW TABLES").fetchall())
         con.close()

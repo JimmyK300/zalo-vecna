@@ -54,17 +54,18 @@ QUY TẮC BẮT BUỘC KHI VIẾT CODE:
 - DÙNG `ILIKE '%...%'` khi so khớp tên hàng hoá / sản phẩm để không phân biệt hoa thường.
 - Cột ngày tháng (thoi_gian, ngay, ngay_dat_hang) đã được chuẩn hóa về định dạng chuỗi 'YYYY-MM-DD'. So khớp trực tiếp bằng `'YYYY-MM-DD'` hoặc `BETWEEN '...' AND '...'`.
 - Chọn đúng bảng tháng/năm: BẮT BUỘC chọn đúng bảng tháng/năm tương ứng với câu hỏi hoặc as_of_date (xem phần Gợi ý bảng bên dưới).
-- Xử lý đơn huỷ / trạng thái đơn: Khi loại bỏ đơn huỷ trên cột có thể chứa NULL (như ghi_chu hay trang_thai_xu_ly), BẮT BUỘC dùng COALESCE để không loại nhầm các dòng có giá trị NULL: `COALESCE(ghi_chu, '') NOT ILIKE '%huỷ%'`. Nếu bảng KHÔNG có cột trạng thái/ghi chú nào, không cần lọc!
+- Xử lý đơn huỷ / trạng thái đơn: CHỈ lọc trạng thái đơn huỷ NẾU bảng thực sự có cột trạng thái/ghi chú trong danh sách Columns (như `trang_thai`, `tt_don`, hoặc `trang_thai_giao`). Khi lọc trên cột có thể NULL, BẮT BUỘC dùng COALESCE: `COALESCE(col, '') NOT ILIKE '%huỷ%'`. Nếu bảng KHÔNG có cột trạng thái/ghi chú nào, TUYỆT ĐỐI KHÔNG tự thêm điều kiện lọc vào WHERE kẻo lỗi Binder Error!
 - Phân biệt nhóm hàng vs mặt hàng cụ thể:
   + Khi câu hỏi hỏi MẶT HÀNG CỤ THỂ (ví dụ: 'Ống PVC Bình Minh D50 cây 4m' hay 'Trà đào'): Lọc trực tiếp trên bảng bán hàng theo tên hàng (ví dụ: `hang_ban ILIKE '%D50%'` hoặc `ten_san_pham ILIKE '%trà đào%'`). KHÔNG JOIN bảng danh mục nếu mặt hàng không có trong danh mục.
   + Khi câu hỏi hỏi theo NHÓM HÀNG (ví dụ: 'nhóm đồ dùng', 'nhóm trà'):
     * Nếu trong bảng bán hàng hoặc tên mặt hàng đã thể hiện nhóm (ví dụ: quán nước có tên sản phẩm như 'Trà đào...', 'Hồng trà...'), có thể lọc trực tiếp: `ten_san_pham ILIKE '%trà%'`.
-    * Nếu bảng bán hàng không có tên nhóm nhưng bảng danh mục (ví dụ `quanly_danhmuc`) có cột `nhom`, hãy JOIN bảng danh mục qua tên hàng (`ON banhang.ten_hang = quanly_danhmuc.ten_hang`) và lọc cột `nhom`. LƯU Ý: Bỏ chữ "nhóm" khi so khớp (ví dụ câu hỏi hỏi "nhóm đồ dùng" thì lọc `nhom ILIKE '%đồ dùng%'`, KHÔNG lọc '%nhóm đồ dùng%').
+    * Nếu bảng bán hàng không có tên nhóm nhưng có bảng danh mục hàng hoá (xem đúng tên bảng danh mục trong phần CẤU TRÚC DỮ LIỆU), hãy JOIN bảng danh mục qua tên hàng để lọc cột `nhom`. LƯU Ý: Bỏ chữ "nhóm" khi so khớp (ví dụ câu hỏi hỏi "nhóm đồ dùng" thì lọc `nhom ILIKE '%đồ dùng%'`, KHÔNG lọc '%nhóm đồ dùng%').
 - Đơn vị tính và Quy đổi: Đọc kỹ phần Quy ước trong THÔNG TIN CỬA HÀNG (README.md).
   * Ví dụ Ống PVC bán theo bó (1 bó = 10 cây): Khi tính số cây, nếu đơn vị `dvt` là 'bó' thì nhân 10, nếu là 'cây' thì giữ nguyên:
     `CASE WHEN dvt ILIKE '%bó%' THEN sl_ban * 10 ELSE sl_ban END` (chú ý: nhân 10 với 'bó', KHÔNG nhân với 'cây').
 - Tên thợ / nhân viên và Huê hồng:
-  * Trong các bảng ghi chép công việc (ví dụ `sosuaxe`), thợ thường được ghi theo tên gọi / biệt danh (như 'A.Phúc', 'a Phúc', 'Phúc'). Khi tính huê hồng cho thợ (ví dụ 'Đoàn Bảo Phúc'), hãy so khớp cột thợ với tên gọi: `tho ILIKE '%Phúc%'`. Tuyệt đối không dùng dấu bằng tuyệt đối `=` với cả họ tên kẻo không khớp.
+  * Trong các bảng ghi chép công việc (ví dụ `so_sua_xe`), thợ thường được ghi theo tên gọi / biệt danh (như 'A.Phúc', 'a Phúc', 'Phúc'). Khi tính huê hồng cho thợ (ví dụ 'Đoàn Bảo Phúc'), hãy so khớp cột thợ với tên gọi: `tho ILIKE '%Phúc%'`.
+  * Khi tính tiền huê hồng: BẮT BUỘC dùng hàm gộp cho hoa_hong khi có SUM: `SUM(s.tien) * ANY_VALUE(d.hoa_hong) / 100.0` (hoặc `MAX(d.hoa_hong)`) để không bị lỗi DuckDB GROUP BY. Cột ngày tháng nằm ở bảng sổ sửa xe, bảng thợ chỉ có họ tên và tỷ lệ huê hồng.
 - Doanh thu trung bình mỗi đơn:
   * Công thức tính: `SUM(thanh_tien) * 1.0 / COUNT(DISTINCT don_so)`. TUYỆT ĐỐI KHÔNG gán số giả định / ví dụ mẫu (như 1234567.89).
 - Tính tỷ lệ phần trăm (%):
@@ -236,6 +237,9 @@ class PublicTestRunner:
         if val is None:
             return {"type": "abstain"}
 
+        if isinstance(val, np.ndarray):
+            val = val.tolist()
+
         if isinstance(val, (list, tuple)):
             if len(val) == 0:
                 return {"type": "abstain"}
@@ -323,10 +327,59 @@ class PublicTestRunner:
         try:
             exec(code_sanitized, exec_globals)
         except Exception as e:
-            sys.stdout = old_stdout
-            log_item["exec_error"] = str(e)
-            log_item["exec_traceback"] = traceback.format_exc()
-            return None
+            err_msg = str(e)
+            healed = False
+            # Self-healing 1: Catalog Error Did you mean "yyy"?
+            m_cat = re.search(r'Table with name ([a-zA-Z0-9_]+) does not exist!.*?Did you mean "([a-zA-Z0-9_]+)"\?', err_msg, re.DOTALL)
+            if m_cat:
+                bad_tbl, good_tbl = m_cat.group(1), m_cat.group(2)
+                code_sanitized = re.sub(rf'\b{bad_tbl}\b', good_tbl, code_sanitized)
+                healed = True
+
+            # Self-healing 2: Binder Error non-existent column in WHERE filter
+            m_ref = re.search(r'Referenced column "([a-zA-Z0-9_]+)" not found in FROM clause', err_msg)
+            if m_ref:
+                missing_col = m_ref.group(1)
+                pattern = rf'(?:AND|OR)?\s*(?:COALESCE\s*\(\s*{missing_col}\b[^)]*\)|{missing_col}\b)\s*(?:NOT\s+)?(?:I?LIKE|=|!=)\s*\'[^\']*\'\s*'
+                new_code = re.sub(pattern, ' ', code_sanitized, flags=re.IGNORECASE)
+                if new_code != code_sanitized:
+                    code_sanitized = new_code
+                    healed = True
+
+            # Self-healing 3: column must appear in GROUP BY
+            m_grp = re.search(r'column "([a-zA-Z0-9_.]+)" must appear in the GROUP BY clause', err_msg)
+            if m_grp:
+                col = m_grp.group(1).split('.')[-1]
+                pattern = rf'(?<!AS\s)(?<!ANY_VALUE\()(?:\b[a-zA-Z0-9_]+\.)?\b({col})\b'
+                new_code = re.sub(pattern, r'ANY_VALUE(\g<0>)', code_sanitized, flags=re.IGNORECASE)
+                if new_code != code_sanitized:
+                    code_sanitized = new_code
+                    healed = True
+
+            # Retry healed code if fixes were applied
+            if healed:
+                try:
+                    exec(code_sanitized, exec_globals)
+                    err_msg = None
+                except Exception as e2:
+                    err_msg = str(e2)
+                    # Attempt second healing pass if another column is missing
+                    m_ref2 = re.search(r'Referenced column "([a-zA-Z0-9_]+)" not found in FROM clause', err_msg)
+                    if m_ref2:
+                        missing_col2 = m_ref2.group(1)
+                        pattern2 = rf'(?:AND|OR)?\s*(?:COALESCE\s*\(\s*{missing_col2}\b[^)]*\)|{missing_col2}\b)\s*(?:NOT\s+)?(?:I?LIKE|=|!=)\s*\'[^\']*\'\s*'
+                        code_sanitized = re.sub(pattern2, ' ', code_sanitized, flags=re.IGNORECASE)
+                        try:
+                            exec(code_sanitized, exec_globals)
+                            err_msg = None
+                        except Exception as e3:
+                            err_msg = str(e3)
+
+            if err_msg:
+                sys.stdout = old_stdout
+                log_item["exec_error"] = err_msg
+                log_item["exec_traceback"] = traceback.format_exc()
+                return None
         finally:
             sys.stdout = old_stdout
             duckdb.connect = old_duckdb_connect
@@ -541,7 +594,16 @@ def main():
                     con, schema_summary, readme_content = biz_cache[biz_id]
                     dates = temporal_engine.resolve_relative_dates(as_of_date)
                     t_month, t_year = extract_target_month_year(question_text, as_of_date)
-                    month_hint = f"- GỢI Ý BẢNG THEO THỜI GIAN: Dữ liệu cần truy vấn thuộc Tháng {t_month}/{t_year}. Hãy ưu tiên chọn bảng có tên chứa 't{t_month}_{t_year}' hoặc 't0{t_month}_{t_year}' (ví dụ: banhang_t{t_month}_{t_year}_... hoặc sobanhang_t{t_month:02d}_{t_year}) thay vì bảng của tháng/năm khác!" if (t_month and t_year) else ""
+                    month_hint = ""
+                    if t_month and t_year and con:
+                        try:
+                            all_tables = [t[0] for t in con.execute("SHOW TABLES").fetchall()]
+                            m_keys = [f"t{t_month}_{t_year}", f"t0{t_month}_{t_year}", f"t{t_month:02d}_{t_year}"]
+                            matching = [t for t in all_tables if any(k in t for k in m_keys)]
+                            if matching:
+                                month_hint = f"- GỢI Ý BẢNG THEO THỜI GIAN: Dữ liệu câu hỏi thuộc Tháng {t_month}/{t_year}. Hãy chọn từ các bảng tháng có sẵn trong DuckDB: {matching[:4]}."
+                        except Exception:
+                            pass
 
                     prompt = PROMPT_TEMPLATE.format(
                         biz_id=biz_id,

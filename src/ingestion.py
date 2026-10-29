@@ -46,43 +46,50 @@ def is_numeric_column(col: str) -> bool:
     return any(sub in col for sub in numeric_substrings)
 
 def generate_table_aliases(tbl_name: str) -> List[str]:
-    """Generates common variations of month names and abbreviations to prevent Catalog Errors."""
+    """Generates comprehensive variations of table names (snake_case, compacted, month padding, without sheet)."""
     aliases = set()
-    # 1. Month padding: _t01_ to _t1_, _t05_ to _t5_ and vice versa
-    m_pad = re.search(r'_t0([1-9])_', tbl_name)
-    if m_pad:
-        alt = re.sub(r'_t0([1-9])_', r'_t\1_', tbl_name)
-        aliases.add(alt)
-    m_unpad = re.search(r'_t([1-9])_', tbl_name)
-    if m_unpad:
-        alt = re.sub(r'_t([1-9])_', r'_t0\1_', tbl_name)
-        aliases.add(alt)
+    no_sheet = re.sub(r'_sheet\d+$', '', tbl_name)
+    if no_sheet != tbl_name:
+        aliases.add(no_sheet)
+        aliases.add(no_sheet.replace('_', ''))
+        
+    compact_common = tbl_name.replace('so_ban_hang', 'sobanhang').replace('ban_hang', 'banhang') \
+                             .replace('chi_tiet', 'chitiet').replace('hoa_don', 'hoadon') \
+                             .replace('danh_muc', 'danhmuc').replace('quan_ly', 'quanly') \
+                             .replace('so_tay', 'sotay').replace('so_sua_xe', 'sosuaxe') \
+                             .replace('danh_sach', 'danhsach').replace('bao_cao', 'baocao')
+    aliases.add(compact_common)
+    aliases.add(re.sub(r'_sheet\d+$', '', compact_common))
+    aliases.add(tbl_name.replace('_', ''))
 
-    # 2. Year duplication e.g. banhang_2026_t06_2026 -> banhang_t06_2026, banhang_t6_2026
-    m_dup = re.search(r'^(.*?)_\d{4}_(t\d{1,2}_\d{4})$', tbl_name)
-    if m_dup:
-        base, month_yr = m_dup.group(1), m_dup.group(2)
-        aliases.add(f"{base}_{month_yr}")
-        if '_t0' in month_yr:
-            unpadded = month_yr.replace('_t0', '_t')
-            aliases.add(f"{base}_{unpadded}")
-        elif '_t' in month_yr:
-            padded = re.sub(r'_t([1-9])', r'_t0\1', month_yr)
-            aliases.add(f"{base}_{padded}")
+    cur_aliases = list(aliases) + [tbl_name]
+    for name in cur_aliases:
+        # Month padding: _t01_ to _t1_, _t05_ to _t5_ and vice versa
+        m_pad = re.search(r'_t0([1-9])_', name)
+        if m_pad:
+            aliases.add(re.sub(r'_t0([1-9])_', r'_t\1_', name))
+        m_unpad = re.search(r'_t([1-9])_', name)
+        if m_unpad:
+            aliases.add(re.sub(r'_t([1-9])_', r'_t0\1_', name))
 
-    # 3. Short sheet name e.g. t05_2026, t5_2026
-    m_sheet = re.search(r'(t\d{1,2}_\d{4})$', tbl_name)
-    if m_sheet:
-        s_name = m_sheet.group(1)
-        aliases.add(s_name)
-        if 't0' in s_name:
-            aliases.add(s_name.replace('t0', 't'))
-        else:
-            padded = re.sub(r't([1-9])', r't0\1', s_name)
-            aliases.add(padded)
+        # Year duplication e.g. banhang_2026_t06_2026 -> banhang_t06_2026
+        m_dup = re.search(r'^(.*?)_\d{4}_(t\d{1,2}_\d{4})$', name)
+        if m_dup:
+            base, month_yr = m_dup.group(1), m_dup.group(2)
+            aliases.add(f"{base}_{month_yr}")
+
+        # Short sheet name e.g. t05_2026, t5_2026
+        m_sheet = re.search(r'(t\d{1,2}_\d{4})$', name)
+        if m_sheet:
+            s_name = m_sheet.group(1)
+            aliases.add(s_name)
+            if 't0' in s_name:
+                aliases.add(s_name.replace('t0', 't'))
+            else:
+                aliases.add(re.sub(r't([1-9])', r't0\1', s_name))
 
     aliases.discard(tbl_name)
-    return list(aliases)
+    return [a for a in aliases if a]
 
 
 class DataIngestionEngine:
@@ -309,7 +316,7 @@ class DataIngestionEngine:
                 best_row = r
         return best_row
 
-    def load_business_data(self, biz_dir: str, cache_dir: Optional[str] = None) -> Tuple[duckdb.DuckDBPyConnection, str]:
+    def load_business_data(self, biz_dir: str, cache_dir: Optional[str] = None, overwrite: bool = False) -> Tuple[duckdb.DuckDBPyConnection, str]:
         """
         Loads all data files (.csv, .xlsx, .sqlite) of a business into DuckDB.
         Returns connection and clean schema summary.
@@ -332,7 +339,7 @@ class DataIngestionEngine:
             use_cache = False
 
         # Fast path: Load from pre-built cache in ~0.01s!
-        if use_cache and os.path.exists(cached_db_path) and os.path.exists(cached_schema_path):
+        if not overwrite and use_cache and os.path.exists(cached_db_path) and os.path.exists(cached_schema_path):
             try:
                 con = duckdb.connect(database=cached_db_path, read_only=False)
                 con.execute("PRAGMA threads=8;")

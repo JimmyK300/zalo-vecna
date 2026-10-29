@@ -392,9 +392,13 @@ def main():
     parser.add_argument("--log_dir", type=str, default="result/logs", help="Directory to save question logs")
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Hugging Face model ID")
     parser.add_argument("--load_in_4bit", action="store_true", default=True, help="Load model in 4-bit quantization")
+    parser.add_argument("--fp16", action="store_true", default=False, help="Load model in native FP16 (recommended for A100 / L4 with >=24GB VRAM)")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to process (for quick testing)")
     parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite output file instead of resuming")
     args = parser.parse_args()
+
+    # Determine 4-bit vs FP16
+    use_4bit = False if args.fp16 else args.load_in_4bit
 
     os.makedirs(args.log_dir, exist_ok=True)
     out_dir = os.path.dirname(args.output)
@@ -422,7 +426,7 @@ def main():
     # 1. Initialize Engines
     temporal_engine = TemporalEngine(calendar_path)
     ingestion_engine = DataIngestionEngine()
-    runner = PublicTestRunner(model_id=args.model_id, load_in_4bit=args.load_in_4bit)
+    runner = PublicTestRunner(model_id=args.model_id, load_in_4bit=use_4bit)
 
     # 2. Load questions
     with open(questions_path, "r", encoding="utf-8") as f:

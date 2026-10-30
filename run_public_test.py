@@ -462,7 +462,10 @@ class PublicTestRunner:
 
             # Heal 6: If result is None / [(None,)] and table is so_sua_xe with multi-word mechanic name
             res_check = exec_globals.get("result")
-            if (res_check is None or res_check == [(None,)] or res_check == (None,)) and "so_sua_xe" in code_sanitized:
+            if "so_sua_xe" in code_sanitized and (
+                res_check is None
+                or (isinstance(res_check, (list, tuple)) and res_check in ([(None,)], (None,)))
+            ):
                 m_tho = re.search(r"tho\s+ILIKE\s+'%([^%']+)%'", code_sanitized, re.IGNORECASE)
                 if m_tho:
                     full_name = m_tho.group(1).strip()
@@ -491,25 +494,25 @@ class PublicTestRunner:
         if captured_output:
             log_item["captured_stdout"] = captured_output
 
-        res = exec_globals.get("result")
-        if isinstance(res, (tuple, list)) and len(res) == 1:
-            res = res[0]
+        try:
+            res = exec_globals.get("result")
+            if isinstance(res, (tuple, list)) and len(res) == 1:
+                res = res[0]
 
-        if isinstance(res, dict) and "type" in res:
-            return res
-        elif res is not None:
-            ret = cls.infer_type_from_raw_value(res, question_text)
-            if ret and ret.get("type") != "abstain":
-                return ret
-        elif captured_output:
-            # If model printed result instead of assigning
-            try:
-                # Try parsing as JSON or float
+            if isinstance(res, dict) and "type" in res:
+                return res
+            elif res is not None:
+                ret = cls.infer_type_from_raw_value(res, question_text)
+                if ret and ret.get("type") != "abstain":
+                    return ret
+            elif captured_output:
+                # If model printed result instead of assigning
                 parsed = cls.infer_type_from_raw_value(captured_output, question_text)
                 if parsed.get("type") != "abstain":
                     return parsed
-            except Exception:
-                pass
+        except Exception as post_err:
+            log_item["exec_error"] = str(post_err)
+            return None
 
         log_item["exec_error"] = (
             "Kết quả 'result' là None hoặc chưa được gán (truy vấn DuckDB trả về NULL/không có dòng nào khớp). "
@@ -528,29 +531,46 @@ class PublicTestRunner:
 
 def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Ensures exact matching compliance with Zalo AI submission format."""
-    if not raw_result or not isinstance(raw_result, dict):
-        return {"id": q_id, "type": "abstain"}
-    
-    ans_type = str(raw_result.get("type", "abstain")).lower().strip()
-    val = raw_result.get("answer")
-    
-    if ans_type == "abstain":
-        return {"id": q_id, "type": "abstain"}
-    
-    if ans_type == "unanswerable":
-        res = {"id": q_id, "type": "unanswerable"}
-        if "reason" in raw_result:
-            res["reason"] = str(raw_result["reason"])
-        return res
-
-    # Unwrap 1-element tuple/list/ndarray for scalar types
-    if ans_type not in ["list", "table"]:
+    try:
+        if not raw_result or not isinstance(raw_result, dict):
+            return {"id": q_id, "type": "abstain"}
+        
+        import pandas as pd
         import numpy as np
-        while isinstance(val, (list, tuple, np.ndarray)) and len(val) == 1:
-            val = val[0]
-    
-    if ans_type in ["number", "integer", "int", "float", "double", "numeric"]:
-        try:
+
+        ans_type = str(raw_result.get("type", "abstain")).lower().strip()
+        val = raw_result.get("answer")
+        
+        if ans_type == "abstain":
+            return {"id": q_id, "type": "abstain"}
+        
+        if ans_type == "unanswerable":
+            res = {"id": q_id, "type": "unanswerable"}
+            if "reason" in raw_result:
+                res["reason"] = str(raw_result["reason"])
+            return res
+
+        # Convert DataFrame / Series assigned inside dict['answer']
+        if isinstance(val, pd.DataFrame):
+            if val.empty:
+                return {"id": q_id, "type": "abstain"}
+            if ans_type == "table":
+                val = {"columns": list(val.columns), "rows": val.values.tolist()}
+            elif ans_type == "list":
+                val = val.iloc[:, 0].tolist() if val.shape[1] >= 1 else val.values.flatten().tolist()
+            else:
+                val = val.iloc[0, 0]
+        elif isinstance(val, pd.Series):
+            if val.empty:
+                return {"id": q_id, "type": "abstain"}
+            val = val.tolist() if ans_type == "list" else val.iloc[0]
+
+        # Unwrap 1-element tuple/list/ndarray for scalar types
+        if ans_type not in ["list", "table"]:
+            while isinstance(val, (list, tuple, np.ndarray)) and len(val) == 1:
+                val = val[0]
+        
+        if ans_type in ["number", "integer", "int", "float", "double", "numeric"]:
             if val is None:
                 return {"id": q_id, "type": "abstain"}
             num = float(val)
@@ -559,55 +579,53 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
             if num.is_integer():
                 return {"id": q_id, "type": "number", "answer": int(num)}
             return {"id": q_id, "type": "number", "answer": round(num, 2)}
-        except (ValueError, TypeError):
-            return {"id": q_id, "type": "abstain"}
-            
-    elif ans_type in ["percent", "percentage"]:
-        try:
+                
+        elif ans_type in ["percent", "percentage"]:
             if val is None:
                 return {"id": q_id, "type": "abstain"}
             pct = round(float(val), 2)
             if pct != pct:
                 return {"id": q_id, "type": "abstain"}
             return {"id": q_id, "type": "percent", "answer": pct}
-        except (ValueError, TypeError):
+                
+        elif ans_type in ["string", "str", "text"]:
+            if val is None or str(val).strip().lower() in ["", "none", "nan", "null"]:
+                return {"id": q_id, "type": "abstain"}
+            return {"id": q_id, "type": "string", "answer": str(val).strip()}
+            
+        elif ans_type == "date":
+            if val is None or str(val).strip().lower() in ["", "none", "nan", "null"]:
+                return {"id": q_id, "type": "abstain"}
+            return {"id": q_id, "type": "date", "answer": str(val).strip()}
+            
+        elif ans_type in ["boolean", "bool"]:
+            if val is None:
+                return {"id": q_id, "type": "abstain"}
+            return {"id": q_id, "type": "boolean", "answer": bool(val)}
+            
+        elif ans_type == "list":
+            if isinstance(val, np.ndarray):
+                val = val.tolist()
+            if isinstance(val, (list, tuple)):
+                clean_list = []
+                for item in val:
+                    if isinstance(item, (list, tuple, np.ndarray)) and len(item) == 1:
+                        clean_list.append(item[0])
+                    elif isinstance(item, (list, tuple, np.ndarray)) and len(item) > 1:
+                        clean_list.append(item[0])
+                    else:
+                        clean_list.append(item)
+                return {"id": q_id, "type": "list", "answer": clean_list}
             return {"id": q_id, "type": "abstain"}
             
-    elif ans_type in ["string", "str", "text"]:
-        if val is None or str(val).strip().lower() in ["", "none", "nan", "null"]:
+        elif ans_type == "table":
+            if isinstance(val, dict) and "columns" in val and "rows" in val:
+                return {"id": q_id, "type": "table", "answer": val}
             return {"id": q_id, "type": "abstain"}
-        return {"id": q_id, "type": "string", "answer": str(val).strip()}
-        
-    elif ans_type == "date":
-        if not val or str(val).strip().lower() in ["none", "nan", "null"]:
-            return {"id": q_id, "type": "abstain"}
-        return {"id": q_id, "type": "date", "answer": str(val).strip()}
-        
-    elif ans_type in ["boolean", "bool"]:
-        if val is None:
-            return {"id": q_id, "type": "abstain"}
-        return {"id": q_id, "type": "boolean", "answer": bool(val)}
-        
-    elif ans_type == "list":
-        import numpy as np
-        if isinstance(val, np.ndarray):
-            val = val.tolist()
-        if isinstance(val, (list, tuple)):
-            clean_list = []
-            for item in val:
-                if isinstance(item, (list, tuple)) and len(item) == 1:
-                    clean_list.append(item[0])
-                else:
-                    clean_list.append(item)
-            return {"id": q_id, "type": "list", "answer": clean_list}
+            
         return {"id": q_id, "type": "abstain"}
-        
-    elif ans_type == "table":
-        if isinstance(val, dict) and "columns" in val and "rows" in val:
-            return {"id": q_id, "type": "table", "answer": val}
+    except Exception:
         return {"id": q_id, "type": "abstain"}
-        
-    return {"id": q_id, "type": "abstain"}
 
 
 # =====================================================================

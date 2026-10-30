@@ -45,8 +45,12 @@ def evaluate_candidate(
         log_item["exec_error"] = "No valid Python code block generated."
         return False, None, log_item
 
-    raw_exec_result = runner.execute_code(code, con, question_text, log_item)
-    norm_result = format_final_submission(q_id, raw_exec_result)
+    try:
+        raw_exec_result = runner.execute_code(code, con, question_text, log_item)
+        norm_result = format_final_submission(q_id, raw_exec_result)
+    except Exception as e:
+        log_item["exec_error"] = str(e)
+        return False, None, log_item
 
     if not norm_result or norm_result.get("type") == "abstain":
         return False, norm_result, log_item

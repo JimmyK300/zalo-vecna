@@ -156,6 +156,7 @@ def main():
     parser.add_argument("--data_dir", type=str, default="train", help="Path to train directory")
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Base model ID")
     parser.add_argument("--adapter_path", type=str, default=None, help="Optional SFT LoRA checkpoint to warm-start GRPO")
+    parser.add_argument("--sft_data_path", type=str, default=None, help="Path to sft_dataset.jsonl to prioritize unsolved questions")
     parser.add_argument("--output_dir", type=str, default="checkpoints/grpo_adapter", help="Output directory for RL adapter")
     parser.add_argument("--num_generations", type=int, default=4, help="Group size G for relative reward normalization")
     parser.add_argument("--epochs", type=int, default=1, help="Number of RL epochs")
@@ -168,6 +169,10 @@ def main():
     parser.add_argument("--bf16", action="store_true", help="Use BF16")
     parser.add_argument("--fp16", action="store_true", help="Use FP16")
     args = parser.parse_args()
+
+    if not args.bf16 and not args.fp16 and torch.cuda.is_available():
+        args.bf16 = torch.cuda.is_bf16_supported()
+        args.fp16 = not args.bf16
 
     global DATA_BASE_DIR
     DATA_BASE_DIR = os.path.join(args.data_dir, "data")
@@ -195,7 +200,7 @@ def main():
                 questions.append(json.loads(line))
 
     # Prioritize hard questions (not yet solved in sft_dataset.jsonl) for maximum GRPO advantage variance
-    sft_file = os.path.join(args.data_dir, "sft_dataset.jsonl")
+    sft_file = args.sft_data_path or os.path.join(args.data_dir, "sft_dataset.jsonl")
     if os.path.exists(sft_file):
         try:
             solved_ids = {

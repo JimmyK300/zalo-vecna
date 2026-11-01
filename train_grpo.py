@@ -171,10 +171,13 @@ def main():
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing trained adapter")
     args = parser.parse_args()
 
-    # Fast skip if already trained to save time when resuming
+    # Fast skip if already fully completed (adapter exists and no intermediate checkpoints pending)
+    from transformers.trainer_utils import get_last_checkpoint
+    last_checkpoint = get_last_checkpoint(args.output_dir) if os.path.isdir(args.output_dir) else None
+
     grpo_weights = os.path.join(args.output_dir, "adapter_model.safetensors")
-    if os.path.exists(grpo_weights) and not args.overwrite:
-        print(f"[+] Found existing trained GRPO adapter at: {args.output_dir}. Skipping GRPO training!", flush=True)
+    if os.path.exists(grpo_weights) and not last_checkpoint and not args.overwrite:
+        print(f"[+] Found completed GRPO adapter at: {args.output_dir}. Skipping GRPO training!", flush=True)
         return
 
     if not args.bf16 and not args.fp16 and torch.cuda.is_available():
@@ -431,12 +434,26 @@ def main():
     trainer = GRPOTrainer(**trainer_kwargs)
     trainer.add_callback(AutoSaveAdapterCallback(args.output_dir, tokenizer))
 
+    last_checkpoint = None
+    if os.path.isdir(args.output_dir):
+        from transformers.trainer_utils import get_last_checkpoint
+        last_checkpoint = get_last_checkpoint(args.output_dir)
+        if last_checkpoint:
+            print(f"[*] Found checkpoint {last_checkpoint}. Resuming GRPO training from it!", flush=True)
+
     print("[*] Starting GRPO Reinforcement Learning...")
-    trainer.train()
+    trainer.train(resume_from_checkpoint=last_checkpoint)
 
     print(f"[+] Saving final GRPO Policy checkpoint to: {args.output_dir}")
     trainer.model.save_pretrained(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)
+    try:
+        import shutil
+        for item in os.listdir(args.output_dir):
+            if item.startswith("checkpoint-"):
+                shutil.rmtree(os.path.join(args.output_dir, item), ignore_errors=True)
+    except Exception:
+        pass
     print("[+] GRPO Training Completed Successfully!")
 
 if __name__ == "__main__":

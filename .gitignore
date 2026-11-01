@@ -35,7 +35,7 @@ checkpoints/
 result/
 /result/
 /results/
-submission.jsonl
+submission*.jsonl
 *.log
 
 # Databases & Cache

@@ -536,12 +536,38 @@ class PublicTestRunner:
 # 3. Output Post-Processing & Normalization
 # =====================================================================
 
+def sanitize_json_value(v: Any) -> Any:
+    """Recursively converts non-JSON serializable objects (dates, datetimes, Timestamps, numpy scalars) to clean JSON types."""
+    import datetime
+    import pandas as pd
+    import numpy as np
+
+    if v is None:
+        return None
+    if isinstance(v, (datetime.datetime, datetime.date, pd.Timestamp)):
+        return v.strftime("%Y-%m-%d")
+    if isinstance(v, (np.integer, int)):
+        return int(v)
+    if isinstance(v, (np.floating, float)):
+        if np.isnan(v):
+            return None
+        return round(float(v), 2) if not float(v).is_integer() else int(v)
+    if isinstance(v, (np.bool_, bool)):
+        return bool(v)
+    if isinstance(v, (list, tuple, np.ndarray)):
+        return [sanitize_json_value(x) for x in v]
+    if isinstance(v, dict):
+        return {str(k): sanitize_json_value(sub_v) for k, sub_v in v.items()}
+    return str(v).strip()
+
+
 def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Ensures exact matching compliance with Zalo AI submission format."""
     try:
         if not raw_result or not isinstance(raw_result, dict):
             return {"id": q_id, "type": "abstain"}
         
+        import datetime
         import pandas as pd
         import numpy as np
 
@@ -601,9 +627,17 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
             return {"id": q_id, "type": "string", "answer": str(val).strip()}
             
         elif ans_type == "date":
-            if val is None or str(val).strip().lower() in ["", "none", "nan", "null"]:
+            if val is None:
                 return {"id": q_id, "type": "abstain"}
-            return {"id": q_id, "type": "date", "answer": str(val).strip()}
+            if isinstance(val, (datetime.datetime, datetime.date, pd.Timestamp)):
+                val_str = val.strftime("%Y-%m-%d")
+            else:
+                val_str = str(val).strip()
+                if " " in val_str:
+                    val_str = val_str.split()[0]
+            if not val_str or val_str.lower() in ["none", "nan", "null"]:
+                return {"id": q_id, "type": "abstain"}
+            return {"id": q_id, "type": "date", "answer": val_str}
             
         elif ans_type in ["boolean", "bool"]:
             if val is None:
@@ -617,17 +651,18 @@ def format_final_submission(q_id: str, raw_result: Optional[Dict[str, Any]]) -> 
                 clean_list = []
                 for item in val:
                     if isinstance(item, (list, tuple, np.ndarray)) and len(item) == 1:
-                        clean_list.append(item[0])
+                        item = item[0]
                     elif isinstance(item, (list, tuple, np.ndarray)) and len(item) > 1:
-                        clean_list.append(item[0])
-                    else:
-                        clean_list.append(item)
+                        item = item[0]
+                    clean_list.append(sanitize_json_value(item))
                 return {"id": q_id, "type": "list", "answer": clean_list}
             return {"id": q_id, "type": "abstain"}
             
         elif ans_type == "table":
             if isinstance(val, dict) and "columns" in val and "rows" in val:
-                return {"id": q_id, "type": "table", "answer": val}
+                clean_cols = [str(c) for c in val["columns"]]
+                clean_rows = [[sanitize_json_value(cell) for cell in row] for row in val["rows"]]
+                return {"id": q_id, "type": "table", "answer": {"columns": clean_cols, "rows": clean_rows}}
             return {"id": q_id, "type": "abstain"}
             
         return {"id": q_id, "type": "abstain"}
@@ -828,12 +863,19 @@ def main():
                 log_item["elapsed_time"] = round(time.time() - start_time, 3)
                 log_item["final_submission"] = final_submission
 
-                # Write submission
-                out_f.write(json.dumps(final_submission, ensure_ascii=False) + "\n")
+                # Write submission with robust JSON serialization
+                try:
+                    sub_line = json.dumps(final_submission, default=str, ensure_ascii=False)
+                except Exception:
+                    sub_line = json.dumps({"id": q_id, "type": "abstain"}, ensure_ascii=False)
+                out_f.write(sub_line + "\n")
 
                 # Write question log
-                with open(os.path.join(args.log_dir, f"{q_id}.json"), "w", encoding="utf-8") as lf:
-                    json.dump(log_item, lf, ensure_ascii=False, indent=2)
+                try:
+                    with open(os.path.join(args.log_dir, f"{q_id}.json"), "w", encoding="utf-8") as lf:
+                        json.dump(log_item, lf, default=str, ensure_ascii=False, indent=2)
+                except Exception:
+                    pass
 
             out_f.flush()
             pbar.update(len(batch_q))

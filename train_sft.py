@@ -80,7 +80,14 @@ def main():
     parser.add_argument("--load_in_4bit", action="store_true", help="Use 4-bit QLoRA")
     parser.add_argument("--bf16", action="store_true", help="Use BF16 (recommended for A100)")
     parser.add_argument("--fp16", action="store_true", help="Use FP16 (for T4)")
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing trained adapter")
     args = parser.parse_args()
+
+    # Fast skip if already trained to save time when resuming
+    adapter_weights = os.path.join(args.output_dir, "adapter_model.safetensors")
+    if os.path.exists(adapter_weights) and not args.overwrite:
+        print(f"[+] Found existing trained LoRA adapter at: {args.output_dir}. Skipping SFT training!", flush=True)
+        return
 
     if not os.path.exists(args.data_path):
         print(f"[!] Dataset not found at: {args.data_path}. Please run build_training_dataset.py first.")

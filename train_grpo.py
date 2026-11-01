@@ -168,7 +168,14 @@ def main():
     parser.add_argument("--limit", type=int, default=None, help="Limit number of train questions")
     parser.add_argument("--bf16", action="store_true", help="Use BF16")
     parser.add_argument("--fp16", action="store_true", help="Use FP16")
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing trained adapter")
     args = parser.parse_args()
+
+    # Fast skip if already trained to save time when resuming
+    grpo_weights = os.path.join(args.output_dir, "adapter_model.safetensors")
+    if os.path.exists(grpo_weights) and not args.overwrite:
+        print(f"[+] Found existing trained GRPO adapter at: {args.output_dir}. Skipping GRPO training!", flush=True)
+        return
 
     if not args.bf16 and not args.fp16 and torch.cuda.is_available():
         args.bf16 = torch.cuda.is_bf16_supported()

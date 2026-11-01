@@ -372,7 +372,7 @@ class DataIngestionEngine:
                 view_groups.setdefault(vname, []).append((tlist, cols_str))
 
             for vname, groups in view_groups.items():
-                if len(groups) > 1:
+                if len(groups) >= 1:
                     all_tbls = []
                     for tlist, _ in groups:
                         for t in tlist:
@@ -380,24 +380,25 @@ class DataIngestionEngine:
                                 all_tbls.append(t)
                     union_sql = " UNION ALL BY NAME ".join([f'SELECT * FROM "{t}"' for t in all_tbls])
                     con.execute(f'CREATE OR REPLACE VIEW "{vname}" AS {union_sql}')
-                    col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f'DESCRIBE "{vname}"').fetchall()]
-                    merged_block = (
-                        f"View hợp nhất toàn bộ '{vname}' (hợp nhất từ {len(all_tbls)} bảng: {all_tbls}):\n"
-                        f"  Columns: {', '.join(col_types)}\n"
-                        f"  * LƯU Ý: Khuyên dùng view '{vname}' này để truy vấn toàn bộ thời gian không lo thiếu bảng!"
-                    )
-                    first_replaced = False
-                    def repl(m_obj):
-                        nonlocal first_replaced
-                        if m_obj.group(1) != vname:
-                            return m_obj.group(0)
-                        if not first_replaced:
-                            first_replaced = True
-                            return merged_block
-                        return ""
-                    schema_summary = pattern.sub(repl, schema_summary)
-                    schema_summary = re.sub(r'\n{2,}', '\n', schema_summary).strip()
-                    schema_changed = True
+                    if len(groups) > 1:
+                        col_types = [f"{desc[0]} ({desc[1]})" for desc in con.execute(f'DESCRIBE "{vname}"').fetchall()]
+                        merged_block = (
+                            f"View hợp nhất toàn bộ '{vname}' (hợp nhất từ {len(all_tbls)} bảng: {all_tbls}):\n"
+                            f"  Columns: {', '.join(col_types)}\n"
+                            f"  * LƯU Ý: Khuyên dùng view '{vname}' này để truy vấn toàn bộ thời gian không lo thiếu bảng!"
+                        )
+                        first_replaced = False
+                        def repl(m_obj):
+                            nonlocal first_replaced
+                            if m_obj.group(1) != vname:
+                                return m_obj.group(0)
+                            if not first_replaced:
+                                first_replaced = True
+                                return merged_block
+                            return ""
+                        schema_summary = pattern.sub(repl, schema_summary)
+                        schema_summary = re.sub(r'\n{2,}', '\n', schema_summary).strip()
+                        schema_changed = True
         except Exception:
             pass
 
@@ -416,6 +417,9 @@ class DataIngestionEngine:
         Returns connection and clean schema summary.
         Supports high-speed on-disk caching (.duckdb file) for near-instantaneous (0.01s) loading.
         """
+        import shutil
+        import tempfile
+
         biz_id = os.path.basename(os.path.normpath(biz_dir))
         cached_db_path = None
         cached_schema_path = None
@@ -429,13 +433,24 @@ class DataIngestionEngine:
             cached_db_path = os.path.join(cache_dir, f"{biz_id}.duckdb")
             cached_schema_path = os.path.join(cache_dir, f"{biz_id}_schema.txt")
             use_cache = True
+            # Remove stale 0-byte .tmp files that can block DuckDB on FUSE mounts
+            tmp_stale = f"{cached_db_path}.tmp"
+            if os.path.exists(tmp_stale):
+                try:
+                    os.remove(tmp_stale)
+                except Exception:
+                    pass
         except Exception:
             use_cache = False
 
-        # Fast path: Load from pre-built cache in ~0.01s!
+        # Fast path: Copy cached .duckdb to local /tmp SSD to avoid Google Drive FUSE file locking & slow network I/O
         if not overwrite and use_cache and os.path.exists(cached_db_path) and os.path.exists(cached_schema_path):
             try:
-                con = duckdb.connect(database=cached_db_path, read_only=False)
+                local_cache_dir = os.path.join(tempfile.gettempdir(), "datamate_duckdb_local")
+                os.makedirs(local_cache_dir, exist_ok=True)
+                local_db_path = os.path.join(local_cache_dir, f"{os.getpid()}_{biz_id}.duckdb")
+                shutil.copyfile(cached_db_path, local_db_path)
+                con = duckdb.connect(database=local_db_path, read_only=False)
                 con.execute("PRAGMA threads=8;")
                 con.execute("PRAGMA preserve_insertion_order=false;")
                 with open(cached_schema_path, "r", encoding="utf-8") as f:

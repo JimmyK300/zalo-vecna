@@ -83,6 +83,7 @@ def main():
     parser.add_argument("--model_id", type=str, default="Qwen/Qwen2.5-Coder-7B-Instruct", help="Hugging Face model ID")
     parser.add_argument("--samples_per_question", type=int, default=2, help="Number of rollouts/retries per question to try")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to process")
+    parser.add_argument("--max_golden", type=int, default=None, help="Stop early once total golden samples reaches this target")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for LLM inference")
     parser.add_argument("--fp16", action="store_true", help="Use FP16 precision")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite output file if exists")
@@ -115,6 +116,7 @@ def main():
         questions = questions[:args.limit]
 
     existing_ids = set()
+    start_idx = 0
     if os.path.exists(args.output) and not args.overwrite:
         with open(args.output, "r", encoding="utf-8") as f:
             for line in f:
@@ -124,10 +126,21 @@ def main():
                     except Exception:
                         pass
         if existing_ids:
-            print(f"[*] Found {len(existing_ids)} existing golden samples in {args.output}.")
+            max_seen_idx = -1
+            for idx, q in enumerate(questions):
+                if q["id"] in existing_ids:
+                    max_seen_idx = idx
+            if max_seen_idx >= 0 and max_seen_idx + 1 < len(questions):
+                start_idx = max_seen_idx + 1
+            print(f"[*] Found {len(existing_ids)} existing golden samples in {args.output} (fast-forwarding to index {start_idx}/{len(questions)}).", flush=True)
 
-    print(f"[*] Total questions to process: {len(questions)}")
-    print(f"[*] Initializing model: {args.model_id}")
+    if args.max_golden and len(existing_ids) >= args.max_golden:
+        print(f"[+] Already have {len(existing_ids)} >= {args.max_golden} golden samples. Skipping mining!", flush=True)
+        return
+
+    questions = questions[start_idx:]
+    print(f"[*] Remaining questions to process: {len(questions)}", flush=True)
+    print(f"[*] Initializing model: {args.model_id}", flush=True)
 
     runner = PublicTestRunner(
         model_id=args.model_id,
@@ -287,13 +300,21 @@ def main():
                 retry_queue = next_retry_queue
 
             pbar.set_postfix({
-                "golden": f"{golden_samples}/{max(1, total_processed)}",
-                "rate": f"{golden_samples * 100.0 / max(1, total_processed):.1f}%",
+                "golden": f"{golden_samples}",
+                "new": f"{golden_samples - len(existing_ids)}/{max(1, total_processed)}",
                 "exec_ok": f"{exec_ok_count}/{max(1, total_processed)}"
             })
+            if (q_idx // args.batch_size) % 5 == 0:
+                print(
+                    f"  [Progress] Processed {total_processed}/{len(questions)} | Total Golden: {golden_samples} | Exec OK: {exec_ok_count}",
+                    flush=True,
+                )
+            if args.max_golden and golden_samples >= args.max_golden:
+                print(f"\n[+] Reached target --max_golden={args.max_golden} ({golden_samples} samples). Stopping mining early!", flush=True)
+                break
 
-    print(f"\n[+] Mining Completed! Mined {golden_samples}/{total_processed} ({golden_samples*100.0/max(1, total_processed):.1f}%) Golden SFT Trajectories.")
-    print(f"[+] Output saved to: {args.output}")
+    print(f"\n[+] Mining Completed! Total Golden SFT Trajectories: {golden_samples} (newly mined: {golden_samples - len(existing_ids)}/{max(1, total_processed)}).", flush=True)
+    print(f"[+] Output saved to: {args.output}", flush=True)
 
 if __name__ == "__main__":
     main()

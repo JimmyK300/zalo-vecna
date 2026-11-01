@@ -307,7 +307,17 @@ def main():
         })
 
     from datasets import Dataset
+    try:
+        import peft.import_utils
+        peft.import_utils.is_torchao_available = lambda: False
+        import peft.tuners.lora.torchao
+        peft.tuners.lora.torchao.is_torchao_available = lambda: False
+    except Exception:
+        pass
     from peft import LoraConfig, TaskType, PeftModel
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        args.bf16 = True
+        args.fp16 = False
     train_dataset = Dataset.from_list(dataset_rows)
     print(f"[+] Dataset created with {len(train_dataset)} prompts.")
 

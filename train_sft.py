@@ -100,13 +100,25 @@ def main():
         return
 
     # Initialize Tokenizer
+    import inspect
     from datasets import Dataset
+    try:
+        import peft.import_utils
+        peft.import_utils.is_torchao_available = lambda: False
+        import peft.tuners.lora.torchao
+        peft.tuners.lora.torchao.is_torchao_available = lambda: False
+    except Exception:
+        pass
     from peft import (
         LoraConfig,
         get_peft_model,
         prepare_model_for_kbit_training,
         TaskType
     )
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        args.bf16 = True
+        args.fp16 = False
+
     tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -152,22 +164,24 @@ def main():
     model.print_trainable_parameters()
 
     # Training Arguments
-    training_args = TrainingArguments(
-        output_dir=args.output_dir,
-        num_train_epochs=args.epochs,
-        per_device_train_batch_size=args.batch_size,
-        gradient_accumulation_steps=args.grad_accum,
-        learning_rate=args.lr,
-        lr_scheduler_type="cosine",
-        warmup_ratio=0.05,
-        logging_steps=5,
-        save_strategy="epoch",
-        bf16=args.bf16,
-        fp16=args.fp16 and not args.bf16,
-        gradient_checkpointing=True,
-        optim="adamw_torch_fused" if torch.cuda.is_available() else "adamw_torch",
-        report_to="none"
-    )
+    ta_kwargs = {
+        "output_dir": args.output_dir,
+        "num_train_epochs": args.epochs,
+        "per_device_train_batch_size": args.batch_size,
+        "gradient_accumulation_steps": args.grad_accum,
+        "learning_rate": args.lr,
+        "lr_scheduler_type": "cosine",
+        "warmup_ratio": 0.05,
+        "logging_steps": 5,
+        "save_strategy": "epoch",
+        "bf16": args.bf16,
+        "fp16": args.fp16 and not args.bf16,
+        "gradient_checkpointing": True,
+        "optim": "adamw_torch_fused" if torch.cuda.is_available() else "adamw_torch",
+        "report_to": "none",
+    }
+    ta_sig = inspect.signature(TrainingArguments.__init__).parameters
+    training_args = TrainingArguments(**{k: v for k, v in ta_kwargs.items() if k in ta_sig})
 
     trainer = Trainer(
         model=model,

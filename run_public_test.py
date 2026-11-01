@@ -181,6 +181,13 @@ class PublicTestRunner:
 
         if adapter_path and os.path.exists(adapter_path):
             try:
+                try:
+                    import peft.import_utils
+                    peft.import_utils.is_torchao_available = lambda: False
+                    import peft.tuners.lora.torchao
+                    peft.tuners.lora.torchao.is_torchao_available = lambda: False
+                except Exception:
+                    pass
                 from peft import PeftModel
                 print(f"[*] Loading fine-tuned LoRA adapter from: {adapter_path}")
                 self.model = PeftModel.from_pretrained(self.model, adapter_path)

@@ -1,0 +1,55 @@
+{
+  "score": {
+    "questions": 200,
+    "correct": 135,
+    "wrong": 47,
+    "abstain": 18,
+    "pa": 0.44,
+    "accuracy": 0.675,
+    "coverage": 0.91
+  },
+  "by_reference_type": {
+    "number": {
+      "correct": 82,
+      "wrong": 31,
+      "abstain": 12
+    },
+    "percent": {
+      "correct": 33,
+      "wrong": 6,
+      "abstain": 4
+    },
+    "unanswerable": {
+      "wrong": 1,
+      "correct": 2,
+      "abstain": 1
+    },
+    "date": {
+      "correct": 9,
+      "wrong": 1
+    },
+    "list": {
+      "correct": 5,
+      "wrong": 6,
+      "abstain": 1
+    },
+    "table": {
+      "correct": 1
+    },
+    "string": {
+      "correct": 3,
+      "wrong": 2
+    }
+  },
+  "by_stop_reason": {
+    "finished": 40,
+    "verified_metric": 142,
+    "step_limit": 2,
+    "repeated_action": 16
+  },
+  "zero_model_call_questions": 40,
+  "businesses": 30,
+  "median_seconds": 3.8594999999995707,
+  "p95_seconds": 17.03099999999904,
+  "source_files_changed_since_start": []
+}

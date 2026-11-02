@@ -1,0 +1,10 @@
+* text=auto
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ps1 text eol=lf
+*.txt text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+# Preserve the exact generated registry bytes recorded by the frozen run.
+datamate_bench/policy_contract.json -text whitespace=cr-at-eol

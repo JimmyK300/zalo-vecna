@@ -1,0 +1,62 @@
+{
+  "source_sha256": {
+    "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+    "datamate_bench\\__main__.py": "5ebe71a618a2e424864389e9348ce21f59daa91a32b255f49a4d99a8a1ed6f33",
+    "datamate_bench\\agent.py": "7a08b22ec9c85a86f16300acb7a647712a4f8b83a1565abeaafdd965554c3ef6",
+    "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+    "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+    "datamate_bench\\metrics.py": "a6b6b6eb3933bcc40bc78fe0387097d3a0ac7ee9fa6911d019b730acf3ad58ad",
+    "datamate_bench\\normalized.py": "70d86be8a8b344b79dcb81a06cbf92b898bb614f418d0c9462009315b5ce7612",
+    "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+    "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+    "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+    "datamate_bench\\temporal.py": "cd30d165e809c140f042f1b4e03904a82723fbfc4ba9ea8ecc6b8d7a88ab8f90",
+    "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+  },
+  "input_fingerprints": {
+    "source_sha256": {
+      "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+      "datamate_bench\\__main__.py": "5ebe71a618a2e424864389e9348ce21f59daa91a32b255f49a4d99a8a1ed6f33",
+      "datamate_bench\\agent.py": "7a08b22ec9c85a86f16300acb7a647712a4f8b83a1565abeaafdd965554c3ef6",
+      "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+      "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+      "datamate_bench\\metrics.py": "a6b6b6eb3933bcc40bc78fe0387097d3a0ac7ee9fa6911d019b730acf3ad58ad",
+      "datamate_bench\\normalized.py": "70d86be8a8b344b79dcb81a06cbf92b898bb614f418d0c9462009315b5ce7612",
+      "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+      "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+      "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+      "datamate_bench\\temporal.py": "cd30d165e809c140f042f1b4e03904a82723fbfc4ba9ea8ecc6b8d7a88ab8f90",
+      "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+    },
+    "questions_sha256": "b258ebd978a6d51b3b0b431b26926f958e56522beeb7da2984fea8333e21cec1",
+    "answers_sha256": "0b5fe9d13edf5fae306bda9cafaf699c06b639846c8e1d9e41c39a86d1160b3d",
+    "rulebook_sha256": "740267bccba29df70f745bc39968bbec5b3e62dada2c858c45314f3ec723d113"
+  },
+  "model_artifact": {
+    "model_repo": "unsloth/Qwen3.5-9B-GGUF",
+    "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+    "filename": "Qwen3.5-9B-Q4_K_M.gguf",
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "note": "Quantized local baseline. Verify base-model provenance before a competition submission."
+  },
+  "runtime_artifact": {
+    "tag": "b11960",
+    "assets": [
+      {
+        "file": "llama-b11960-bin-win-cuda-13.4-x64.zip",
+        "source": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-win-cuda-13.4-x64.zip",
+        "sha256": "31C75EA62B80F0816C855EA783EF68757BC2D48028EDAA57D904E4982BDDEA4A"
+      },
+      {
+        "file": "cudart-llama-bin-win-cuda-13.4-x64.zip",
+        "source": "https://github.com/ggml-org/llama.cpp/releases/download/b11960/cudart-llama-bin-win-cuda-13.4-x64.zip",
+        "sha256": "738F8C251AC22B70C3AE6F83A10CF222725DF0395246A2CF58F32BDB85FBE668"
+      }
+    ],
+    "note": "Locally computed download hashes; official GitHub release origin."
+  },
+  "question_timeout": 240,
+  "max_steps": 12,
+  "max_tokens": 1024,
+  "seed": 42
+}

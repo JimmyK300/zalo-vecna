@@ -1,0 +1,15 @@
+.venv/
+venv/
+train/
+public_test/
+public-test/
+models/
+tools/
+.cache/
+artifacts/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+benchmarks/*.json
+reports/validation200_error_workstreams.json

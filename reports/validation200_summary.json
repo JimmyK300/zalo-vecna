@@ -1,0 +1,21 @@
+{
+  "model": "datamate-local",
+  "score": {
+    "questions": 200,
+    "correct": 135,
+    "wrong": 47,
+    "abstain": 18,
+    "pa": 0.44,
+    "accuracy": 0.675,
+    "coverage": 0.91
+  },
+  "wall_seconds": 1070.1618949000003,
+  "ingestion_seconds": 0.5527086999954918,
+  "normalization_seconds": 0.44574680000005173,
+  "question_seconds_total": 1066.982999999993,
+  "question_seconds_median": 3.8594999999995707,
+  "model_calls": 416,
+  "hardware_cuda_visible": true,
+  "gpu_execution_verified": false,
+  "note": "Confirm GPU offload from server logs. No GPU speed claim is inferred from HTTP."
+}

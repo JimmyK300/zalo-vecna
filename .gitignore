@@ -1,0 +1,18 @@
+# local environment
+.venv/
+__pycache__/
+*.pyc
+
+# competition data (licensed; includes gold answers) - never publish
+devkit/
+*.zip
+
+# run outputs, logs, caches (large; contain shop data)
+out/
+sample_data/
+*.gguf
+*.safetensors
+
+# stray DuckDB files named after a shop (contain shop data)
+/biz_*
+*.duckdb

@@ -1,0 +1,7 @@
+duckdb>=1.1
+pandas>=2.2
+numpy
+openpyxl
+xlrd
+anthropic>=0.70
+openai>=1.50

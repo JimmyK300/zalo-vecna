@@ -2,7 +2,9 @@
 
 Pipeline mới chạy Qwen3.5-9B Q4_K_M trên RTX 5060 Laptop: đọc bảng, chuẩn hóa dữ liệu, gọi SQL và chấm câu hỏi train. Code cũ được giữ trong lịch sử nhánh `dev`; nhánh làm việc là `benchmark/local-clean`.
 
-**Kết quả đáng dùng để đánh giá hiện tại:** bộ 200 câu ngẫu nhiên mới đạt **135 đúng, 47 sai, 18 bỏ trống**, accuracy **67,5%**, PA **0,44**, thời gian **17 phút 50 giây**. Solver giữ nguyên trong toàn bộ lượt. Bộ 90 câu phát triển trước đó đạt 89/90, không đại diện cho điểm câu mới. Xem [báo cáo 200 câu](reports/validation200.md).
+**Đánh giá đối chứng mới nhất:** cùng 100 câu mới, trước/sau sửa đều **71 đúng**; sai **22 → 18**, bỏ trống **7 → 11**, PA **0,49 → 0,53**, thời gian có cache **575 → 445 giây**. Trên 20 câu chọn trước, hybrid đúng **11/20**, model tự viết SQL đúng **9/20**. Sau lượt đóng băng có sửa thêm lỗi mất nhà cung cấp, kiểm tra riêng; chưa chấm lại toàn bộ 100 câu bằng model. Xem [báo cáo SQL và giới hạn](reports/sql_validation.md).
+
+Lịch sử: [200 câu ngẫu nhiên](reports/validation200.md) đạt 135/200; bộ phát triển 90 câu đạt 89/90 sau chỉnh lỗi. Các bộ này khác nhau, không so điểm trực tiếp để suy ra mức cải thiện.
 
 Chưa fine-tune, chưa GRPO, **0 Colab CU**. Hiện tập trung hoàn thiện công cụ/nghiệp vụ trước khi train. Đây là benchmark train, chưa phải bộ nộp 1.000 câu public hay Docker thi chính thức.
 
@@ -79,11 +81,11 @@ Lệnh tự tạo thư mục mới `artifacts/run_<thời gian>/`. Có thể tru
 ### Chọn bộ câu ngẫu nhiên mới
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen290.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
+.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen402.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
 .\.venv\Scripts\python.exe -m datamate_bench run --suite benchmarks/validation_new200.json --require-cuda
 ```
 
-`seen290.json` loại cả 90 câu phát triển lẫn 200 câu đã đánh giá. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
+`seen402.json` loại 90 câu phát triển, 200 câu đánh giá cũ, 12 câu thử chuẩn hoá và 100 câu thử SQL. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
 
 ### Tổng hợp sau khi chạy xong
 
@@ -121,10 +123,14 @@ Thời gian `run` không gồm tải weights hoặc khởi động server. Lư�
 | `scripts/rebuild_suites.py` | Tái tạo chính xác các bộ đã đánh giá từ dữ liệu gốc và seed |
 | `scripts/select_random_suite.py` | Chọn bộ ngẫu nhiên, loại ID đã dùng |
 | `scripts/audit_validation.py` | Tổng hợp một lượt đã hoàn tất |
+| `scripts/test_question_normalization.py` | A/B câu gốc và câu Qwen biên tập; xem [kết quả và lệnh chạy](reports/normalization12.md) |
+| `scripts/check_sql_arithmetic.py` | Đối chiếu SQL với vòng lặp Python trên cùng dữ liệu, không gọi model |
+| `scripts/compare_sql_runs.py` | Tổng hợp các lượt đối chứng SQL đã hoàn tất, không xuất ID dữ liệu |
 | `datamate_bench/__main__.py` | CLI chung: `python -m datamate_bench ...` |
 | `data.py`, `normalized.py` | Đọc/chuẩn hóa bảng, giữ nguồn và ô gốc |
 | `agent.py`, `client.py` | Điều phối model và công cụ |
 | `metrics.py`, `temporal.py` | Phép tính SQL và mốc thời gian |
+| `purchases.py` | Nối phiếu nhập/dòng nhập, giữ nguồn và đơn vị |
 | `scoring.py`, `suite.py` | Chấm điểm và quản lý bộ câu |
 
 Các module trong `datamate_bench/` là thư viện; dùng CLI, không chạy riêng từng file bằng double-click.
@@ -136,15 +142,26 @@ Lệnh phụ:
 .\.venv\Scripts\python.exe -m datamate_bench profile --suite benchmarks/development90.json
 # Đo tốc độ model; cần server đang bật
 .\.venv\Scripts\python.exe -m datamate_bench speed
-# 24 bài kiểm tra; không cần tải weights hoặc bật server thật
+# 28 bài kiểm tra; không cần tải weights hoặc bật server thật
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
+```
+
+Thử SQL với server đang bật (mỗi lệnh cần output mới):
+
+```powershell
+# Hybrid: model chọn phép tính theo mẫu SQL, dùng SQL tự viết khi cần
+.\.venv\Scripts\python.exe -m datamate_bench run --suite benchmarks/sql100_random.json --output artifacts/sql100_new --require-cuda
+# Cùng bản solver và dữ liệu, tắt metric để model tự sinh SQL trên 20 câu đối chứng
+.\.venv\Scripts\python.exe -m datamate_bench run --suite benchmarks/sql20_paired.json --tool-policy generated_sql --output artifacts/sql20_new --require-cuda
+# Chỉ kiểm tra số học SQL/Python; không chứng nhận parser/ánh xạ đúng
+.\.venv\Scripts\python.exe scripts/check_sql_arithmetic.py --suite benchmarks/sql100_random.json --output artifacts/sql_arithmetic_new.json
 ```
 
 ## 7. Trạng thái và giới hạn
 
-- Bản solver của lượt 200 câu được giữ nguyên; hash khớp trước/sau chạy. Chưa sửa solver theo lỗi của bộ này.
+- Các lượt đối chứng 100/20 giữ nguyên solver trong khi chạy; hash khớp. Bản làm việc sau đó sửa riêng lỗi nhà cung cấp, có test hồi quy và cache v15.
 - Rà soát 65 câu chưa đúng: 31 trường hợp ưu tiên mở rộng công cụ, 14 trường hợp ở hợp đồng/ánh xạ/định tuyến pipeline, 20 trường hợp chọn công cụ/SQL/đầu ra của model. Các nhóm có thể có nguyên nhân phụ chồng lấn.
-- Ưu tiên sửa parser/nghiệp vụ và công cụ trước; chưa chi CU cho SFT hoặc GRPO. Sau đó đánh giá lại bằng bộ mới, rồi mới quyết định SFT nhỏ.
+- Đã sửa một nhóm lỗi parser/ánh xạ và bổ sung nhập hàng/tỷ trọng; chưa tăng accuracy trên đối chứng 100 câu. Chưa chi CU cho SFT hoặc GRPO; tiếp tục kiểm tra ánh xạ và hợp đồng công cụ trước.
 - Các câu đã xem lỗi không còn là test mù cho bản sửa kế tiếp. Không suy ra 1.000/1.000 từ điểm bộ phát triển.
 - Không có nhánh theo ID câu/cửa hàng trong solver. Câu rõ nghĩa có thể được định tuyến vào SQL trực tiếp; đây là pipeline kết hợp luật và model.
 

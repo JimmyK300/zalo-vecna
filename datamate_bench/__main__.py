@@ -85,6 +85,7 @@ def run_benchmark(args):
               "endpoint": args.endpoint, "model_requested": args.model,
               "question_timeout": args.question_timeout, "max_steps": args.max_steps,
               "max_tokens": args.max_tokens, "seed": args.seed,
+              "tool_policy": getattr(args,'tool_policy','hybrid'),
               "questions": [q["id"] for q in questions]}
     # Preserve the actual quantization/runtime identities instead of just an HTTP alias.
     for label, path in {
@@ -118,7 +119,7 @@ def run_benchmark(args):
         sql = ReadOnlySQL(db, seconds=args.sql_timeout)
         before = len(client.records)
         try:
-            result = solve(q, readme, rulebook, schema, sql, client, args.max_steps, args.question_timeout)
+            result = solve(q, readme, rulebook, schema, sql, client, args.max_steps, args.question_timeout,getattr(args,'tool_policy','hybrid'))
         finally:
             sql.close()
         calls = client.records[before:]
@@ -185,6 +186,7 @@ def main(argv=None):
         cmd.add_argument("--output", type=Path)
         cmd.add_argument("--limit", type=int)
         cmd.add_argument("--max-steps", type=int, default=12)
+        cmd.add_argument("--tool-policy", choices=['hybrid','generated_sql'],default='hybrid')
         cmd.add_argument("--question-timeout", type=float, default=240)
         cmd.add_argument("--sql-timeout", type=float, default=5)
         cmd.add_argument("--require-cuda", action="store_true")

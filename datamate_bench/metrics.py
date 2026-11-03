@@ -15,7 +15,7 @@ SUPPORTED = ["revenue", "count_orders", "average_order", "top_customers", "top_p
              "customer_group_share", "monthly_trend", "debt", "quantity", "product_revenue",
              "cancel_rate", "revenue_by", "quantity_growth", "revenue_growth", "count_cancelled",
              "debt_customers", "prescription_revenue", "stock_units", "monthly_totals",
-             "product_group_share", "sale_price", "purchase_average", "product_group_revenue", "customer_group_revenue"]
+             "product_group_share", "sale_price", "purchase_average", "purchase_total", "revenue_share", "prescription_share", "product_group_revenue", "customer_group_revenue"]
 
 
 def money(value):
@@ -39,6 +39,7 @@ def execute(action, question, sql, layer):
             "prescription_revenue":{"prescription"},"stock_units":{"product","unit","as_of"},
             "monthly_totals":{"months","dimension","criterion"},"product_group_share":{"group"},
             "sale_price":{"product","unit"},"purchase_average":{"product","unit"},
+            "revenue_share":{"dimension","values"},"prescription_share":{"prescription"},
             "product_group_revenue":{"group"},"customer_group_revenue":{"group"}}
     unknown=set(action)-{"action","operation","start","end"}-extras.get(op,set())
     if unknown: raise ValueError(f"Unsupported parameters {sorted(unknown)}; they cannot be silently ignored. Use revenue_by for multiple channel/payment totals, or SQL.")
@@ -55,12 +56,59 @@ def execute(action, question, sql, layer):
         return sql.query(statement)["rows"]
     def literal(value):
         return "'"+str(value).replace("'","''")+"'"
-    if not layer or not layer.get("date_min"):
-        raise ValueError("Sales layer unavailable; inspect typed/raw tables instead")
-    if op=='purchase_average':
+    if op in {'purchase_average','purchase_total'}:
         if not layer.get('has_purchase_data'):
             return {'prediction':{'type':'unanswerable','reason':'Dữ liệu phát hành không có sổ/phiếu nhập để tính giá nhập bình quân.'},'sql':[]}
-        raise ValueError('Purchase source exists: inspect purchase schemas and compute quantity-weighted purchase price, never average sale prices')
+        dates=resolve(question['question'],question['as_of_date'])
+        start=action.get('start') or (dates[0] if dates else None)
+        end=action.get('end') or (dates[1] if dates else None)
+        if dates:start,end=dates
+        if not start or not end:raise ValueError('Purchase metrics require start/end')
+        dt.date.fromisoformat(start);dt.date.fromisoformat(end)
+        if start>end:raise ValueError('start must be <= end')
+        if layer.get('purchase_unresolved_dates') or layer.get('purchase_warnings'):
+            raise ValueError('Purchase source dates/headers unresolved; inspect raw sources')
+        if not layer.get('purchase_date_min'):raise ValueError('No dated purchase facts; inspect sources')
+        if end<layer['purchase_date_min'] or start>layer['purchase_date_max']:
+            return {'prediction':{'type':'unanswerable','reason':'Kỳ hỏi nằm ngoài khoảng dữ liệu nhập hàng.'},'sql':statements}
+        table='purchase_receipts' if op=='purchase_total' else 'purchase_lines'
+        condition=f'purchase_date BETWEEN {literal(start)} AND {literal(end)}'
+        if query(f"SELECT COUNT(*) FROM {table} WHERE {condition} AND status='unknown'")[0][0]:
+            raise ValueError('Unknown purchase status')
+        condition+=" AND status<>'cancelled'"
+        if op=='purchase_average':
+            product=action.get('product')
+            if not product:raise ValueError('purchase_average requires product name from data')
+            names=query(f'SELECT DISTINCT product_name FROM purchase_lines WHERE fold(product_name)=fold({literal(product)})')
+            if not names:raise ValueError('Purchase product not found; search product/catalog names')
+            condition+=f' AND fold(product_name)=fold({literal(product)})'
+        count,missing,amount=query(f'SELECT COUNT(*),SUM(amount IS NULL),SUM(amount) FROM {table} WHERE {condition}')[0]
+        if missing:
+            return {'prediction':{'type':'unanswerable','reason':'Nguồn nhập không ghi đủ giá/tiền nhập để tính.'},'sql':statements}
+        if op=='purchase_total':answer=money(amount)
+        else:
+            if not count:raise ValueError('Weighted purchase price undefined without purchases in period')
+            unit=action.get('unit')
+            rows=query(f'SELECT DISTINCT unit,base_unit,product_id FROM purchase_lines WHERE {condition}')
+            if not unit:
+                if len({r[0] for r in rows})!=1:raise ValueError('Specify purchase unit when multiple units exist')
+                denominator='quantity'
+            elif all(fold(unit)==fold(r[0]) for r in rows):denominator='quantity'
+            else:
+                from .normalized import key
+                if fold(unit) in {'base','base_unit','co ban','don vi co ban'} or all(fold(unit)==fold(r[1]) for r in rows):factor=1
+                else:
+                    ids=','.join(literal(key(r[2])) for r in rows)
+                    factors=query(f'SELECT DISTINCT factor FROM unit_conversions WHERE product_key IN ({literal(key(product))},{ids}) AND large_unit={literal(key(unit))}')
+                    if len(factors)!=1:raise ValueError('Purchase unit conversion unavailable/ambiguous')
+                    factor=factors[0][0]
+                denominator=f'base_quantity/{float(factor)}'
+            qty,missing_qty=query(f'SELECT SUM({denominator}),SUM(({denominator}) IS NULL) FROM purchase_lines WHERE {condition}')[0]
+            if not qty or missing_qty:raise ValueError('Purchase quantities missing or denominator zero')
+            answer=money(Decimal(str(amount))/Decimal(str(qty)))
+        return {'prediction':{'type':'number','answer':answer},'sql':statements,'period':[start,end]}
+    if not layer or not layer.get("date_min"):
+        raise ValueError("Sales layer unavailable; inspect typed/raw tables instead")
     dates=resolve(question["question"],question["as_of_date"])
     start=action.get("start") or (dates[0] if dates else None)
     end=action.get("end") or (dates[1] if dates else None)
@@ -78,6 +126,11 @@ def execute(action, question, sql, layer):
         elif re.search(r'thang nay|dau thang nay',text) and re.search(r'th[a-z]* truoc|thang truoc',text):
             from .temporal import context
             a,b=context(question['as_of_date'])['previous_month_same_days']
+            action={**action,'compare_start':a,'compare_end':b}
+        elif re.search(r'thang (?:lien )?truoc',text) and dates:
+            prior=dt.date.fromisoformat(start).replace(day=1)-dt.timedelta(days=1)
+            from .temporal import month_range
+            a,b=month_range(prior.year,prior.month)
             action={**action,'compare_start':a,'compare_end':b}
     if op in {"debt","debt_customers","stock_units"}:
         end=action.get("as_of") or end or question["as_of_date"]
@@ -117,7 +170,7 @@ def execute(action, question, sql, layer):
     if op not in {'quantity','quantity_growth','count_orders','cancel_rate','sale_price'} and layer.get('missing_amount_rows',0):
         raise ValueError('Unparsed line amounts remain; inspect source values before computing money')
     valid=f"valid_sale=1 AND {period}"
-    table="sales" if op in {"top_products","quantity","product_revenue","quantity_growth","prescription_revenue","product_group_share","product_group_revenue","sale_price"} else "orders"
+    table="sales" if op in {"top_products","quantity","product_revenue","quantity_growth","prescription_revenue","prescription_share","product_group_share","product_group_revenue","sale_price"} else "orders"
     if table=="orders" and not layer.get("can_count_orders"):
         if op in {"revenue","revenue_growth","monthly_trend","monthly_totals"}: table="sales"
         else: raise ValueError("Order identifiers unavailable; do not invent order counts")
@@ -141,22 +194,26 @@ def execute(action, question, sql, layer):
         rows=query(f'SELECT DISTINCT unit_price*quantity/base_quantity,base_unit,product_id FROM sales WHERE {period} AND fold(product_name)=fold({literal(product)}) AND base_quantity>0 AND unit_price IS NOT NULL')
         if len(rows)!=1 or rows[0][0] is None:raise ValueError('No unique unit sale price; inspect source prices and units')
         price=Decimal(str(rows[0][0]));unit=action.get('unit')
-        if unit and fold(unit)!=fold(rows[0][1]):
+        if unit and fold(unit) not in {'base','base_unit','co ban','don vi co ban',fold(rows[0][1])}:
             from .normalized import key
             factors=query(f'SELECT factor FROM unit_conversions WHERE product_key IN ({literal(key(product))},{literal(key(rows[0][2]))}) AND large_unit={literal(key(unit))}')
             if not factors or len({r[0] for r in factors})!=1:raise ValueError('Requested sale unit conversion missing/ambiguous')
             price*=Decimal(str(factors[0][0]))
         result={'type':'number','answer':money(price)}
-    elif op=='prescription_revenue':
+    elif op in {'prescription_revenue','prescription_share'}:
         if not layer.get('has_prescription_attributes'):raise ValueError('Prescription attributes unavailable')
         flag=int(action.get('prescription',True))
         amount=query(f'SELECT SUM(s.line_amount) FROM sales s WHERE {valid} AND COALESCE((SELECT p.prescription FROM product_attributes p WHERE p.product_id=s.product_id),0)={flag}')[0][0]
-        result={'type':'number','answer':money(amount)}
+        if op=='prescription_share':
+            total=query(f'SELECT SUM(line_amount) FROM sales WHERE {valid}')[0][0]
+            if not total:raise ValueError('Prescription share denominator zero')
+            result={'type':'percent','answer':float((Decimal(str(amount or 0))*100/Decimal(str(total))).quantize(Decimal('.01'),rounding=ROUND_HALF_UP))}
+        else:result={'type':'number','answer':money(amount)}
     elif op in {"cancel_rate","count_cancelled"}:
         total,cancelled=query(f"SELECT COUNT(*),SUM(status='cancelled') FROM orders WHERE {period}")[0]
         if not total: raise ValueError("Cancellation percentage denominator is zero")
         result=({'type':'number','answer':cancelled or 0} if op=='count_cancelled' else {"type":"percent","answer":float((Decimal(cancelled or 0)*100/total).quantize(Decimal('.01'),rounding=ROUND_HALF_UP))})
-    elif op=="revenue_by":
+    elif op in {"revenue_by","revenue_share"}:
         dimension=action.get("dimension"); values=action.get("values")
         if dimension not in {"channel","payment_method","customer_group"} or not isinstance(values,list) or not 1<=len(values)<=20:
             raise ValueError("revenue_by requires dimension channel/payment_method/customer_group and ordered values list")
@@ -164,11 +221,22 @@ def execute(action, question, sql, layer):
         found=query(f"SELECT DISTINCT {dimension} FROM orders WHERE {dimension} IS NOT NULL")
         known={fold(r[0]):r[0] for r in found}
         amounts=[]
+        resolved_values=[]
         for value in values:
-            value=aliases.get(fold(value),value)
-            if fold(value) not in known: raise ValueError(f"Unknown {dimension} {value}; inspect distinct values")
-            amounts.append(money(query(f"SELECT SUM(revenue) FROM orders WHERE {valid} AND fold({dimension})=fold({literal(known[fold(value)])})")[0][0]))
-        result={"type":"list","answer":amounts}
+            normalized=fold(value)
+            if normalized not in known:
+                target=aliases.get(normalized,normalized)
+                candidates=[v for k,v in known.items() if aliases.get(k,k)==target]
+                if len(candidates)!=1:raise ValueError(f"Unknown/ambiguous {dimension} {value}; inspect distinct values")
+                normalized=fold(candidates[0])
+            resolved_values.append(normalized)
+            amounts.append(money(query(f"SELECT SUM(revenue) FROM orders WHERE {valid} AND fold({dimension})=fold({literal(known[normalized])})")[0][0]))
+        if op=='revenue_share':
+            if len(set(resolved_values))!=len(values):raise ValueError('Share values must be distinct after alias resolution')
+            total=query(f'SELECT SUM(revenue) FROM orders WHERE {valid}')[0][0]
+            if not total:raise ValueError('Share denominator zero')
+            result={'type':'percent','answer':float((Decimal(sum(amounts))*100/Decimal(str(total))).quantize(Decimal('.01'),rounding=ROUND_HALF_UP))}
+        else:result={"type":"list","answer":amounts}
     elif op in {"quantity_growth","revenue_growth"}:
         a,b=action.get("compare_start"),action.get("compare_end")
         if not a or not b: raise ValueError("quantity_growth needs compare_start/compare_end for the baseline period")

@@ -61,13 +61,28 @@ def main():
         value['excluded_suite'] = 'benchmarks/development90.json'
         validation.write_text(json.dumps(value, indent=2)+'\n', encoding='utf-8')
         combine(base/'seen290.json', [dev90, validation], 'Exclusion only; not a held-out test')
+        def uniform(name, excluded, size, seed):
+            subprocess.run([sys.executable,str(ROOT/'scripts/select_random_suite.py'),
+                            '--train',str(args.train.resolve()),'--exclude-suite',str(base/excluded),
+                            '--output',str(base/name),'--size',str(size),'--seed',str(seed)],check=True)
+        uniform('normalization12_random.json','seen290.json',12,2026110301)
+        combine(base/'seen302.json',[base/'seen290.json',base/'normalization12_random.json'],'Exclusion only; inspected questions')
+        value=read(base/'seen302.json')
+        value['items'].sort(key=lambda x:x['id'])
+        (base/'seen302.json').write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+        uniform('sql100_random.json','seen302.json',100,2026110302)
+        value=read(base/'sql100_random.json');value['items']=value['items'][:20]
+        value['purpose']='Prespecified first 20 of random 100: generated SQL vs hybrid'
+        (base/'sql20_paired.json').write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+        combine(base/'seen402.json',[base/'seen302.json',base/'sql100_random.json'],'Exclusion only; inspected questions')
         args.output_dir.mkdir(parents=True, exist_ok=True)
-        for name in ['train10.json', 'development90.json', 'validation200_random.json', 'seen290.json']:
+        for name in ['train10.json', 'development90.json', 'validation200_random.json', 'seen290.json',
+                     'normalization12_random.json','seen302.json','sql100_random.json','sql20_paired.json','seen402.json']:
             source, target = base/name, args.output_dir/name
             if target.exists():
                 old, new = read(target), read(source)
                 if ([x['id'] for x in old['items']] != [x['id'] for x in new['items']] or
-                        any(old.get(k) != v for k, v in new.items() if k.endswith('_sha256'))):
+                        any(old.get(k) != new.get(k) for k in ['questions_sha256','answers_sha256','rulebook_sha256'])):
                     raise ValueError(f'Existing selection differs: {target}; use another output directory')
             else:
                 target.write_bytes(source.read_bytes())

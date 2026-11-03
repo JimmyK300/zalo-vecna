@@ -33,7 +33,20 @@ def resolve(question, as_of):
         try: full_dates.append(dt.date(int(m[3]),int(m[2]),int(m[1])).isoformat())
         except ValueError: pass
     if full_dates:
+        if len(full_dates)==1 and re.search(r'\btu\b.*\bden\b.*(?:hom nay|hnay|bua nay)',q):
+            return [full_dates[0],as_of]
         return [full_dates[0],full_dates[1] if len(full_dates)>1 else full_dates[0]]
+    # A named quarter is not a numeric month, even when written Q/Y.
+    quarter=re.search(r'\bquy\s*([1-4])(?:\s*(?:/|nam\s*)\s*(20\d{2}))?',q)
+    if quarter:
+        first_month=(int(quarter[1])-1)*3+1
+        year=int(quarter[2]) if quarter[2] else day.year
+        if not quarter[2] and first_month>day.month:year-=1
+        return [f'{year}-{first_month:02d}-01',month_range(year,first_month+2)[1]]
+    # Yearless day/month followed by a relative endpoint takes precedence over 'today'.
+    partial=re.search(r'\btu\s+(?:ngay\s+)?(\d{1,2})/(\d{1,2})(?![/\d])',q)
+    if partial and re.search(r'\bden\b.*(?:hom nay|hnay|bua nay)',q):
+        return [dt.date(day.year,int(partial[2]),int(partial[1])).isoformat(),as_of]
     # Explicit month/year, including common shorthand. Ambiguous input remains unresolved.
     m = re.search(r"(?:thang|th|t)\s*(\d{1,2})\s*(?:/|-|nam\s*)\s*(20\d{2}|\d{2})\b", q)
     if not m:
@@ -60,6 +73,17 @@ def event_comparison(question):
     """An explicit N-day post-event window and its immediately preceding window."""
     q=fold(question)
     m=re.search(r'(\d+)\s*ngay ke tu\s+(?:ngay\s+)?(\d{1,2})/(\d{1,2})/(20\d{2})',q)
+    if not m:
+        # Anaphoric date: "Ngày D tăng giá ... N ngày kể từ ngày đó".
+        date=re.search(r'\bngay\s+(\d{1,2})/(\d{1,2})/(20\d{2})',q)
+        count=re.search(r'(\d+)\s*ngay ke tu\s+(?:ngay\s+)?do',q)
+        if date and count and re.search(r'ngay (?:ngay )?truoc',q):
+            n=int(count[1]);day=dt.date(int(date[3]),int(date[2]),int(date[1]))
+            before=re.search(r'(\d+)\s*ngay (?:ngay )?truoc',q)
+            previous=int(before[1]) if before else n
+            if n<1 or previous<1:return None
+            return ([day.isoformat(),(day+dt.timedelta(days=n-1)).isoformat()],
+                    [(day-dt.timedelta(days=previous)).isoformat(),(day-dt.timedelta(days=1)).isoformat()])
     if not m or not re.search(r'ngay (?:ngay )?truoc',q): return None
     count=int(m[1]); day=dt.date(int(m[4]),int(m[3]),int(m[2]))
     if count<1: return None

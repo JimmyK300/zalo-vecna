@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .data import fold, identifier, iso_date, number, quote
 
-VERSION = "typed-sales-v13"
+VERSION = "typed-sales-v15"
 parse_number = functools.lru_cache(maxsize=100000)(number)
 parse_date = functools.lru_cache(maxsize=100000)(iso_date)
 
@@ -202,11 +202,14 @@ def create_sales(con, tables, mappings, info, readme):
         for row in tables[name]:
             code=val(row,m,"customer_id")
             if code: customer_index[str(code).strip()] = row,m
+    # Rich catalog rows must precede conversion-only tables sharing a product name.
+    product_tables.sort(key=lambda name: sum(bool(mappings[name].get(r)) for r in
+                        ('product_id','product_group','base_unit')),reverse=True)
     for name in product_tables:
         m=mappings[name]
         for row in tables[name]:
             code, title=val(row,m,"product_id"),val(row,m,"product_name")
-            if code: product_index[("id",str(code).strip())] = row,m
+            if code: product_index.setdefault(("id",str(code).strip()),(row,m))
             if title: product_index.setdefault(("name",key(title)),(row,m))
     headers = {}
     for name in header_tables:
@@ -398,6 +401,8 @@ def create_sales(con, tables, mappings, info, readme):
     conversion_rows=[(title,large,factor,small) for (title,large),(factor,small) in unit_index.items()]
     con.execute('CREATE TABLE unit_conversions(product_key,large_unit,factor,base_unit)')
     con.executemany('INSERT INTO unit_conversions VALUES (?,?,?,?)',conversion_rows)
+    from .purchases import create_purchases
+    purchase_info=create_purchases(con,tables,info,product_index,unit_index)
     for name,cols in [("sales",columns),("orders",order_cols),("payments",["order_id","payment_date","amount"])]:
         count=con.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
         info["tables"][name]={"columns":cols,"rows":count,"sources":[{"file":"derived","sheet":"mapped from typed source columns"}],
@@ -413,7 +418,7 @@ def create_sales(con, tables, mappings, info, readme):
     cutoff=re.search(r'du lieu co den het\s+(\d{1,2}/\d{1,2}/20\d{2})',fold(readme))
     info['sales_layer'].update(has_prescription_attributes=bool(attributes),has_inventory_snapshot=bool(inventory),
                                inventory_as_of=iso_date(cutoff[1]) if cutoff else None,
-                               has_purchase_data=any(re.search(r'nhap|purchase',sources(name)) for name in mappings))
+                               **purchase_info)
     for table in ['inventory','unit_conversions','product_attributes']:
         cols=[r[1] for r in con.execute('PRAGMA table_info('+table+')')]
         info['tables'][table]={'columns':cols,'rows':con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0],

@@ -1,0 +1,56 @@
+{
+  "purpose": "Known regression after frozen validation; not a held-out result",
+  "score": {
+    "questions": 1,
+    "correct": 1,
+    "wrong": 0,
+    "abstain": 0,
+    "pa": 1.0,
+    "accuracy": 1.0,
+    "coverage": 1.0
+  },
+  "qa_seconds": 6.92200000000048,
+  "model_calls": 3,
+  "source_sha256": {
+    "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+    "datamate_bench\\__main__.py": "334fc6c94fa08b0b29961d9e7dae259819ebb9d23ab6d23c2ae2a30d481e93cd",
+    "datamate_bench\\agent.py": "88c490de6a55832526e1a8638fe9611dd0e3a237c95311f674f526cc44c0eb46",
+    "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+    "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+    "datamate_bench\\metrics.py": "2460808b08aade5a4c2375c6a51c6cd4b91a4550adad8364b3917acef63beb9b",
+    "datamate_bench\\normalized.py": "46fe463115b6f66f252ab008ce6ce7d7f62860effc8ff73b79c9b75aafd85281",
+    "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+    "datamate_bench\\purchases.py": "a2cd42fc66c8535311975a9580da9b56cb4eba139a413d394d607260cce186ab",
+    "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+    "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+    "datamate_bench\\temporal.py": "1eb77487db0ac28df67b87a6af032acee0c321b364c4b74422905e2d369fdc69",
+    "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+  },
+  "unit_tests_passed": 28,
+  "note": "Supplier preserved from inline purchase source. Full model evaluation on the 100 questions was not repeated after this fix.",
+  "arithmetic_after_fix": {
+    "businesses": 27,
+    "comparisons": 966,
+    "matched": 966,
+    "failed": 0,
+    "sql_seconds_total": 4.225266300005387,
+    "sql_seconds_median": 0.002196099999764556,
+    "sql_seconds_max": 0.050491700000748096,
+    "source_sha256": {
+      "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+      "datamate_bench\\__main__.py": "334fc6c94fa08b0b29961d9e7dae259819ebb9d23ab6d23c2ae2a30d481e93cd",
+      "datamate_bench\\agent.py": "88c490de6a55832526e1a8638fe9611dd0e3a237c95311f674f526cc44c0eb46",
+      "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+      "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+      "datamate_bench\\metrics.py": "2460808b08aade5a4c2375c6a51c6cd4b91a4550adad8364b3917acef63beb9b",
+      "datamate_bench\\normalized.py": "46fe463115b6f66f252ab008ce6ce7d7f62860effc8ff73b79c9b75aafd85281",
+      "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+      "datamate_bench\\purchases.py": "a2cd42fc66c8535311975a9580da9b56cb4eba139a413d394d607260cce186ab",
+      "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+      "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+      "datamate_bench\\temporal.py": "1eb77487db0ac28df67b87a6af032acee0c321b364c4b74422905e2d369fdc69",
+      "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+    },
+    "note": "Independent Python arithmetic on the same canonical facts. Does not certify mapping, business rules, or model intent."
+  }
+}

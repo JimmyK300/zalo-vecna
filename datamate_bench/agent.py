@@ -47,6 +47,9 @@ Công cụ:
 - product_group_share: group theo nhóm hàng, % doanh thu cả shop. customer_group_share chỉ dành cho NHÓM KHÁCH.
 - product_group_revenue/customer_group_revenue: group đúng tên; doanh thu cả NHÓM, không tự chọn một sản phẩm trong nhóm để thay cả nhóm.
 - purchase_average: product, unit; giá nhập bình quân. Không dùng giá bán để thay giá nhập; thiếu file nhập thì không trả lời được.
+- purchase_total: tổng tiền phiếu nhập trong start/end, bỏ phiếu huỷ, tính cả nhập đầu kỳ. Không dùng doanh thu bán hàng.
+- revenue_share: dimension='channel'/'payment_method', values=[tên]; % doanh thu các giá trị này trên doanh thu cả shop cùng kỳ. revenue_by trả list tiền, khác revenue_share trả percent.
+- prescription_share: prescription=true/false; % doanh thu thuốc kê đơn/không kê đơn trên doanh thu cả shop.
 - {"action":"search","kind":"product","text":"công tắc"}: tìm tên trong dữ liệu; kind có product/customer/group.
 - {"action":"schema","table":"t01"} xem schema gốc, mẫu và kiểu cột; bỏ table để liệt kê.
 - {"action":"preview","table":"t01"} xem 5 dòng.
@@ -59,6 +62,7 @@ Công cụ:
 Bảng orders: một đơn, revenue là tổng tiền dòng trước voucher/ship; valid_sale=1 bỏ cả đơn hủy/trả.
 Bảng sales: một dòng hàng đã nối thông tin đơn/sản phẩm/khách; quantity theo đơn vị bán, base_quantity theo đơn vị cơ bản; line_amount là thành tiền dòng.
 payments: sự kiện trả tiền, dùng để tính nợ theo ngày. amount_due khác revenue. status chuẩn là cancelled/returned/completed/shipping/unknown.
+purchase_receipts: một phiếu nhập, purchase_date, amount là tổng phiếu, status='cancelled' phải bỏ. purchase_lines: product_name, quantity/unit là đơn vị nhập, base_quantity/base_unit, amount là tiền dòng; bình quân gia quyền SUM(amount)/SUM(quantity), không AVG(unit_price).
 tNN là dữ liệu đã parse ngày/tiền theo kiểu cột; raw_tNN giữ ô gốc. Kiểm column_types và parse_failures khi nghi ngờ.
 Ngày chuẩn YYYY-MM-DD; dùng khoảng thời gian đã cung cấp, không lấy 7 ngày gần nhất thay tuần rồi. ISO DATE đã chuẩn hoá không cần parse lại.
 Mỗi metric cần start/end nếu chưa có kỳ mặc định; debt dùng as_of; monthly_trend phải liệt kê đúng các tháng câu hỏi nêu.
@@ -70,24 +74,32 @@ Nếu dùng SQL thì số phải khớp kết quả SQL. Không chuyển lỗi a
 """
 
 
+def asks_percent(question):
+    from .data import fold
+    # Numeric concentration/thresholds do not by themselves request a percent answer.
+    q=re.sub(r'\d+(?:[.,]\d+)?\s*%', '', fold(question))
+    return bool(re.search(r'%|phan tram|ti le|ty le',q))
+
+
 def suggested_operation(question):
     from .data import fold
     q=fold(question)
-    percent=bool(re.search(r'%|phan tram|ti le|ty le',q))
+    percent=asks_percent(question)
     revenue=bool(re.search(r'doanh thu|dthu|\bdth\b',q))
     if re.search(r'\bnhap\b.*binh quan|gia nhap.*binh quan',q):return 'purchase_average'
+    if re.search(r'\bnhap\b',q) and re.search(r'tong.*(?:tien|gia tri)|nhap hang.*(?:het|bao nhiu|bao nhieu).*tien|tien nhap hang',q) and not re.search(r'gia.*binh quan|so luong|nhat|\btru\b|chenh',q):return 'purchase_total'
     if re.search(r'gia (?:bao nhieu|bao nhiu)|gia ban.*(?:ngay|hom)|ban.*gia bao',q):return 'sale_price'
     if revenue and re.search(r'tung thang|lan luot',q):return 'monthly_totals'
     if revenue and re.search(r'lien tuc|luon cao hon',q):return 'monthly_trend'
     if percent and 'nhom' in q and re.search(r'chiem|dong gop|ti trong|ty trong|tong doanh thu|doanh thu ca',q):return 'customer_group_share' if 'khach' in q else 'product_group_share'
     if not percent and 'nhom' in q and (revenue or re.search(r'thu.*tien|tien ban',q)) and not re.search(r'nhat|top',q):return 'customer_group_revenue' if 'khach' in q else 'product_group_revenue'
     if revenue and percent and re.search(r'so|vs|thay doi|tang|giam',q) and not re.search(r'chiem|ti trong|ty trong',q):return 'revenue_growth'
-    if re.search(r'don.*huy|huy.*don',q):return 'cancel_rate' if percent else 'count_cancelled'
-    if revenue and 'thuoc ke don' in q and not percent:return 'prescription_revenue'
+    if re.search(r'\bdon\b.*\bhuy\b|\bhuy\b.*\bdon\b',q):return 'cancel_rate' if percent else 'count_cancelled'
+    if revenue and re.search(r'thuoc (?:khong )?ke don',q):return 'prescription_share' if percent else 'prescription_revenue'
     if (re.search(r'(?:bao nhieu|may) khach',q) and re.search(r'no|chua tra',q)) or re.search(r'so khach.*\bno\b',q):return 'debt_customers'
     if re.search(r'con.*(?:chan|\ble\b)',q) and re.search(r'cuon|thung|hop|bao|kien|lo[cx]',q):return 'stock_units'
     general_revenue=bool(re.search(r'(?:doanh thu|dthu|\bdth\b)\s+(?:trong|thang|tuan|hom|ngay|tu\b|la\b|cua (?:hang|shop))|tong (?:doanh thu|dthu)|(?:cua hang|shop).*ban duoc.*tien',q))
-    if general_revenue and not re.search(r'nhat|theo|tung|%|so voi|\bvs\b|mat hang|san pham|thuoc|mon|banh|nhom|kenh|khach|tien mat',q):return 'revenue'
+    if general_revenue and not percent and not re.search(r'nhat|theo|tung|so voi|\bvs\b|mat hang|san pham|thuoc|mon|banh|nhom|kenh|khach|tien mat|chuyen khoan|cod|ghi no',q):return 'revenue'
     return None
 
 
@@ -95,12 +107,13 @@ def type_hint(question):
     from .data import fold
     q=fold(question)
     operation=suggested_operation(question)
-    if operation in {'count_cancelled','debt_customers','prescription_revenue','sale_price','product_group_revenue','customer_group_revenue'}:return 'number'
+    if operation in {'count_cancelled','debt_customers','prescription_revenue','sale_price','product_group_revenue','customer_group_revenue','purchase_total','purchase_average'}:return 'number'
     if operation in {'stock_units','monthly_totals'}:return 'list'
+    if operation=='prescription_share':return 'percent'
     k=re.search(r'(?:top\s*(\d+)|(\d+)\s+khach)',q)
     if k and re.search(r'nhieu|top|nhat',q) and not re.search(r'\bno\b|moi.*(?:bao nhi[eua]u?|bnhiu|nhieu)|kem.*(?:tien|doanh thu)',q):
         return 'list' if int(k[1] or k[2])>1 else 'string'
-    if re.search(r"%|phan tram|ti le|ty le",q): return "percent"
+    if asks_percent(question): return "percent"
     if re.search(r"lien tuc|co luon cao hon",q): return "boolean"
     if re.search(r"ngay nao.*(?:nhat|cao)|thang nao.*(?:nhat|cao)",q): return "date"
     return None
@@ -116,7 +129,8 @@ def sections(text):
     return result
 
 
-def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeout=240):
+def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeout=240, tool_policy='hybrid'):
+    if tool_policy not in {'hybrid','generated_sql'}:raise ValueError('Unknown tool policy')
     rules = sections(rulebook)
     outline = {key: next(iter(value.splitlines()),'') for key, value in rules.items()}
     schema = {name: {"columns": info["columns"], "rows": info["rows"]}
@@ -138,7 +152,7 @@ def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeou
         if re.search(r"ton|kho|nhap|von|lai|loi|gia|het han",qtext): selected.add("5")
         if re.search(r"thuoc|hoat chat|ke don|topping|bao hanh|size|tho|xe|imei",qtext): selected.add("6")
         initially_read={k for k in selected if k in rules}
-        schema={name:meta for name,meta in schema.items() if name in {"sales","orders","payments"}}
+        schema={name:meta for name,meta in schema.items() if name in {"sales","orders","payments","purchase_receipts","purchase_lines"}}
         catalog={name:{"rows":meta["rows"],"source":meta.get("sources",[])[:2]} for name,meta in manifest["tables"].items() if name not in schema}
         payload.update(rulebook_sections={k:rules[k] for k in sorted(initially_read)},time_context=time_context(question["as_of_date"]),
                        readme=readme[:3000],readme_total_characters=len(readme),tables=schema,other_table_catalog=catalog,
@@ -150,7 +164,12 @@ def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeou
         if not compatible:
             payload['policy_warning']='Rulebook changed: metric tools and derived sales/orders/payments are not verified for these rules. Apply current rules using typed tNN or original raw_tNN sources through SQL.'
         payload.pop("rulebook_intro",None)
-    messages = [{"role": "system", "content": SYSTEM_V2 if enhanced else SYSTEM},
+    system=SYSTEM_V2 if enhanced else SYSTEM
+    if tool_policy=='generated_sql':
+        system=SYSTEM+'\n'+SYSTEM_V2[SYSTEM_V2.index('Bảng orders:'):SYSTEM_V2.index('tNN là dữ liệu')]
+        system+='\nCông cụ khám phá: {"action":"search","kind":"product","text":"tên"}, kind còn có customer/group; {"action":"readme","offset":3000}. tNN đã parse kiểu, raw_tNN giữ ô gốc. Công cụ metric không được bật: tự viết SQL, thực thi và finish. Không có Python. Áp dụng rulebook cho mọi phép tính.'
+        payload.pop('suggested_operation_from_question',None)
+    messages = [{"role": "system", "content": system},
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]
     start = time.monotonic()
     trace, rules_read, successful_sql = [], initially_read, 0
@@ -158,10 +177,12 @@ def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeou
     final, stop = {"type": "abstain"}, "step_limit"
     automatic=None
     suggested=suggested_operation(question['question'])
-    if enhanced and compatible:
+    if enhanced and compatible and tool_policy=='hybrid':
         period=resolve(question['question'],question['as_of_date'])
-        if period and suggested in {'revenue','count_cancelled','cancel_rate','prescription_revenue','debt_customers'}:
+        if period and suggested in {'revenue','count_cancelled','cancel_rate','prescription_revenue','prescription_share','debt_customers','purchase_total'}:
             automatic={'action':'metric','operation':suggested}
+            if suggested in {'prescription_revenue','prescription_share'}:
+                automatic['prescription']=not bool(re.search(r'khong ke don',fold(question['question'])))
         if period and suggested=='revenue_growth' and re.search(r'cung ky nam|nam ngoai|nam truoc|thang nay',fold(question['question'])):
             automatic={'action':'metric','operation':suggested}
         if suggested in {'monthly_trend','monthly_totals'} and month_series(question['question']):
@@ -202,6 +223,7 @@ def solve(question, readme, rulebook, manifest, sql, model, max_steps=12, timeou
             if seen_actions[signature]==2:
                 raise ValueError("This exact action already ran. Change the query/interpretation or finish; repeating cannot add evidence.")
             if kind == "metric":
+                if tool_policy=='generated_sql':raise ValueError('Metric tools disabled in generated_sql comparison; use sql')
                 if not enhanced: raise ValueError("Canonical sales layer unavailable")
                 if not compatible: raise ValueError("Rulebook policy differs from verified metric contract; use source tables and current rules")
                 suggested=suggested_operation(question['question'])

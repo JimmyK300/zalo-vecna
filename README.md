@@ -6,6 +6,8 @@ Pipeline mới chạy Qwen3.5-9B Q4_K_M trên RTX 5060 Laptop: đọc bảng, ch
 
 **Pilot train local mới:** Qwen2.5-1.5B-Instruct + SQL, SFT **19/40** đúng, thêm Dr. GRPO **20/40** đúng; đã train thật trên RTX 5060, không dùng Colab CU. Task một bước và model khác agent 9B nên không so điểm trực tiếp. Bản gốc lỗi protocol; xem cả chẩn đoán alias trong [báo cáo SFT/GRPO và cách chạy](reports/local_sft_grpo.md). Agent mặc định 9B chưa bị thay thế.
 
+**Thử verify trên agent 9B:** cùng 40 câu mới, baseline 26 đúng/6 sai/8 bỏ trống; code check 26/5/9; model review mọi câu 25/6/9, thời gian QA **216 → 724 giây**. Chưa bật model review đại trà. [Báo cáo verify và lệnh chạy](reports/answer_verification.md).
+
 Lịch sử: [200 câu ngẫu nhiên](reports/validation200.md) đạt 135/200; bộ phát triển 90 câu đạt 89/90 sau chỉnh lỗi. Các bộ này khác nhau, không so điểm trực tiếp để suy ra mức cải thiện.
 
 Chưa fine-tune, chưa GRPO, **0 Colab CU**. Hiện tập trung hoàn thiện công cụ/nghiệp vụ trước khi train. Đây là benchmark train, chưa phải bộ nộp 1.000 câu public hay Docker thi chính thức.
@@ -83,11 +85,11 @@ Lệnh tự tạo thư mục mới `artifacts/run_<thời gian>/`. Có thể tru
 ### Chọn bộ câu ngẫu nhiên mới
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen442.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
+.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen482.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
 .\.venv\Scripts\python.exe -m datamate_bench run --suite benchmarks/validation_new200.json --require-cuda
 ```
 
-`seen442.json` loại 90 câu phát triển, 200 câu đánh giá cũ, 12 câu thử chuẩn hoá, 100 câu thử SQL và 40 câu đánh giá train local. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
+`seen482.json` loại 90 câu phát triển, 200 câu đánh giá cũ, 12 câu thử chuẩn hoá, 100 câu thử SQL, 40 câu đánh giá train local và 40 câu thử verify. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
 
 ### Tổng hợp sau khi chạy xong
 
@@ -132,6 +134,9 @@ Thời gian `run` không gồm tải weights hoặc khởi động server. Lư�
 | `scripts/prepare_local_training.py` | Tạo ví dụ công cụ đã kiểm chứng bằng SQL và tập đánh giá tách riêng |
 | `scripts/train_local_sql_pilot.py` | Baseline → LoRA SFT → Dr. GRPO, chỉ chạy local |
 | `scripts/audit_local_training.py` | Đối chiếu trọng số, reward và kết quả ba bản |
+| `scripts/test_answer_verification.py` | So baseline, code gate và một lượt model review trên cùng đáp án |
+| `scripts/audit_answer_verification.py` | Tổng hợp lợi ích, hồi quy, lỗi và thời gian verify |
+| `verification/` | Kiểm tra bằng code và thực thi phép sửa chỉ đọc; chưa bật mặc định |
 | `datamate_bench/__main__.py` | CLI chung: `python -m datamate_bench ...` |
 | `data.py`, `normalized.py` | Đọc/chuẩn hóa bảng, giữ nguồn và ô gốc |
 | `agent.py`, `client.py` | Điều phối model và công cụ |
@@ -148,7 +153,7 @@ Lệnh phụ:
 .\.venv\Scripts\python.exe -m datamate_bench profile --suite benchmarks/development90.json
 # Đo tốc độ model; cần server đang bật
 .\.venv\Scripts\python.exe -m datamate_bench speed
-# 31 bài kiểm tra; không cần tải weights hoặc bật server thật
+# 38 bài kiểm tra; không cần tải weights hoặc bật server thật
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 

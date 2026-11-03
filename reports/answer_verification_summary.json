@@ -1,0 +1,156 @@
+{
+  "model": "Qwen3.5-9B-Q4_K_M",
+  "questions": 40,
+  "arms": {
+    "baseline": {
+      "questions": 40,
+      "correct": 26,
+      "wrong": 6,
+      "abstain": 8,
+      "pa": 0.5,
+      "accuracy": 0.65,
+      "coverage": 0.8,
+      "gained_correct_vs_baseline": 0,
+      "lost_correct_vs_baseline": 0,
+      "extra_seconds": 0,
+      "qa_seconds_including_baseline": 216.12799999999334
+    },
+    "code": {
+      "questions": 40,
+      "correct": 26,
+      "wrong": 5,
+      "abstain": 9,
+      "pa": 0.525,
+      "accuracy": 0.65,
+      "coverage": 0.775,
+      "gained_correct_vs_baseline": 0,
+      "lost_correct_vs_baseline": 0,
+      "extra_seconds": 0.006086300005335943,
+      "qa_seconds_including_baseline": 216.13408629999867
+    },
+    "review": {
+      "questions": 40,
+      "correct": 25,
+      "wrong": 6,
+      "abstain": 9,
+      "pa": 0.475,
+      "accuracy": 0.625,
+      "coverage": 0.775,
+      "gained_correct_vs_baseline": 2,
+      "lost_correct_vs_baseline": 3,
+      "extra_seconds": 507.7943579000057,
+      "qa_seconds_including_baseline": 723.922357899999
+    }
+  },
+  "issue_counts": {
+    "no_answer": 8,
+    "truncated_sql_evidence": 1,
+    "unanswerable_not_certified": 1
+  },
+  "review_decisions": {
+    "replace": 21,
+    "error": 16,
+    "keep": 3
+  },
+  "repairs_executed": 21,
+  "review_errors": 16,
+  "frozen_sources_match": true,
+  "colab_compute_units": 0,
+  "paired_transitions": {
+    "code": {
+      "wrong->wrong": 5,
+      "abstain->abstain": 8,
+      "correct->correct": 26,
+      "wrong->abstain": 1
+    },
+    "review": {
+      "wrong->wrong": 4,
+      "abstain->abstain": 6,
+      "correct->correct": 23,
+      "wrong->correct": 1,
+      "correct->abstain": 2,
+      "correct->wrong": 1,
+      "wrong->abstain": 1,
+      "abstain->wrong": 1,
+      "abstain->correct": 1
+    }
+  },
+  "raw_model_decisions": {
+    "replace": 29,
+    "error": 8,
+    "keep": 3
+  },
+  "review_error_categories": {
+    "result_shape_or_empty": 3,
+    "generation_budget": 8,
+    "unsupported_parameters": 1,
+    "unknown_sql_schema": 4
+  },
+  "code_flagged_questions": 10,
+  "hard_flagged_questions": 1,
+  "successful_repairs_leaving_same_answer": 14,
+  "selective_review_diagnostic": {
+    "questions": 40,
+    "correct": 27,
+    "wrong": 6,
+    "abstain": 7,
+    "pa": 0.525,
+    "accuracy": 0.675,
+    "coverage": 0.825,
+    "review_calls_if_deployed": 10,
+    "gained_correct_vs_baseline": 1,
+    "lost_correct_vs_baseline": 0,
+    "estimated_extra_seconds": 89.52493350000259,
+    "note": "Diagnostic reuse of the same reviewer outputs, not a separate blind run. Timing estimates ignore changed server cache/order."
+  },
+  "baseline_model_calls": 87,
+  "completed_review_texts_saved": 32,
+  "review_call_attempts": 40,
+  "context_tokens_estimate_min": 4619,
+  "context_tokens_estimate_max": 7134,
+  "compressed_contexts": 0,
+  "source_sha256": {
+    "scripts\\test_answer_verification.py": "a2c21efefc8f543386c7301f637d28d8d4bd4aabcc1296a380cbb410caf6efb3",
+    "verification\\__init__.py": "d9108eda8f03ffe212543a47e7eb757c1515b94ca79f6a5332a4711ac851a501",
+    "verification\\checks.py": "6435915bbf3e02756158bf581cbdbb154d7c1f6b6fa0e75cabe0cb7c65aaa8e6",
+    "verification\\reviewer.py": "144303811a640b4482313047f251a05c7e34c2902bf4e82c382396b8e39769a7"
+  },
+  "baseline_source_sha256": {
+    "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+    "datamate_bench\\__main__.py": "334fc6c94fa08b0b29961d9e7dae259819ebb9d23ab6d23c2ae2a30d481e93cd",
+    "datamate_bench\\agent.py": "88c490de6a55832526e1a8638fe9611dd0e3a237c95311f674f526cc44c0eb46",
+    "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+    "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+    "datamate_bench\\metrics.py": "2460808b08aade5a4c2375c6a51c6cd4b91a4550adad8364b3917acef63beb9b",
+    "datamate_bench\\normalized.py": "46fe463115b6f66f252ab008ce6ce7d7f62860effc8ff73b79c9b75aafd85281",
+    "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+    "datamate_bench\\purchases.py": "a2cd42fc66c8535311975a9580da9b56cb4eba139a413d394d607260cce186ab",
+    "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+    "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+    "datamate_bench\\temporal.py": "1eb77487db0ac28df67b87a6af032acee0c321b364c4b74422905e2d369fdc69",
+    "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+  },
+  "input_sha256": {
+    "questions_sha256": "b258ebd978a6d51b3b0b431b26926f958e56522beeb7da2984fea8333e21cec1",
+    "answers_sha256": "0b5fe9d13edf5fae306bda9cafaf699c06b639846c8e1d9e41c39a86d1160b3d",
+    "rulebook_sha256": "740267bccba29df70f745bc39968bbec5b3e62dada2c858c45314f3ec723d113"
+  },
+  "model_identity": {
+    "model_repo": "unsloth/Qwen3.5-9B-GGUF",
+    "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+    "filename": "Qwen3.5-9B-Q4_K_M.gguf",
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "note": "Quantized local baseline. Verify base-model provenance before a competition submission."
+  },
+  "scope": "Frozen Qwen 9B hybrid agent; not the trained 1.5B pilot. Same original predictions reused in every arm.",
+  "limitations": [
+    "40 uniform random unseen questions; businesses may overlap development.",
+    "One seed, same model as solver and reviewer, one repair at most; no independent-model verification.",
+    "Code gating can abstain on true unanswerable cases it cannot certify.",
+    "Code checks cover selected contracts; no general SQL semantics or ingestion proof.",
+    "Review repairs may reuse the same mistaken data mapping as the baseline.",
+    "Model/data caches warm; reported QA excludes model loading and fresh ingestion.",
+    "Initial interrupted packaging attempt retained separately; one preliminary review is outside the completed run timings.",
+    "No SFT/GRPO training in this experiment, no Colab CU; no official private/Docker six-hour test."
+  ]
+}

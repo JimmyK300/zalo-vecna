@@ -16,7 +16,7 @@ md('''
 # DataMate — GitHub + Drive → submission.jsonl (không fine-tune)
 
 Chọn **A100 + High RAM**. Chạy lần lượt M0–M5. Code được clone từ nhánh
-`feat/datamate-colab-inference` của `JimmyK300/zalo-vecna`.
+`feat/query-scoring` của `JimmyK300/zalo-vecna`.
 Model chạy local: `VikramPal/Qwen3.5-9B-Agentic-GRPO`, revision cố định, NF4 4-bit.
 Đây là một checkpoint ứng viên; chưa có bằng chứng nó vượt stock Qwen trên Colab.
 Giữ recipe của Jimmy; chỉ câu chưa có recipe mới gọi model. Không train và không gọi API LLM.
@@ -37,7 +37,7 @@ code('''
 import os, sys, json, subprocess, time, shutil, hashlib
 from pathlib import Path
 REPO = "https://github.com/JimmyK300/zalo-vecna.git"
-BRANCH = "feat/datamate-colab-inference"
+BRANCH = "feat/query-scoring"
 # Lần đầu để trống. Khi resume phiên mới, dán commit_sha trong manifest.json của run cũ.
 CODE_REVISION = ""
 ROOT = Path("/content/zalo-vecna")

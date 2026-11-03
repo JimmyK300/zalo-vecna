@@ -1,7 +1,7 @@
 # Chạy DataMate từ GitHub + Google Drive
 
 Mở `DataMate_Submission_Colab.ipynb` trong Colab, chọn **A100 + High RAM**.
-Notebook lấy code từ `feat/datamate-colab-inference`, dùng Drive của nhóm và chạy full pipeline Jimmy:
+Notebook lấy code từ `feat/query-scoring`, dùng Drive của nhóm và chạy full pipeline Jimmy:
 recipe trả lời trực tiếp trước; câu còn lại qua model local và SQL/Python. Không fine-tune.
 
 1. **M0:** Clone GitHub và cài thư viện. Không cần GitHub token vì repo public.

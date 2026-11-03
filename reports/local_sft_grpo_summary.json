@@ -1,0 +1,240 @@
+{
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "scope": "Single-step metric planner with SQL executor. Not the multi-turn Qwen 9B benchmark.",
+  "evaluation_questions": 40,
+  "train_examples": 128,
+  "reserved_development_examples": 16,
+  "splits_disjoint": true,
+  "colab_compute_units": 0,
+  "primary_strict_protocol": {
+    "base": {
+      "questions": 40,
+      "correct": 0,
+      "wrong": 0,
+      "abstain": 40,
+      "pa": 0.0,
+      "accuracy": 0.0,
+      "coverage": 0.0,
+      "invalid_actions": 40,
+      "inference_seconds": 114.7767515000105
+    },
+    "sft": {
+      "questions": 40,
+      "correct": 19,
+      "wrong": 7,
+      "abstain": 14,
+      "pa": 0.3,
+      "accuracy": 0.475,
+      "coverage": 0.65,
+      "invalid_actions": 14,
+      "inference_seconds": 115.48501679999208
+    },
+    "sft_grpo": {
+      "questions": 40,
+      "correct": 20,
+      "wrong": 7,
+      "abstain": 13,
+      "pa": 0.325,
+      "accuracy": 0.5,
+      "coverage": 0.675,
+      "invalid_actions": 13,
+      "inference_seconds": 97.73956370000087
+    }
+  },
+  "secondary_alias_normalized": {
+    "base": {
+      "questions": 40,
+      "correct": 9,
+      "wrong": 9,
+      "abstain": 22,
+      "pa": 0.0,
+      "accuracy": 0.225,
+      "coverage": 0.45,
+      "aliases_normalized": 32,
+      "invalid_actions": 22
+    },
+    "sft": {
+      "questions": 40,
+      "correct": 19,
+      "wrong": 7,
+      "abstain": 14,
+      "pa": 0.3,
+      "accuracy": 0.475,
+      "coverage": 0.65,
+      "aliases_normalized": 0,
+      "invalid_actions": 14
+    },
+    "sft_grpo": {
+      "questions": 40,
+      "correct": 20,
+      "wrong": 7,
+      "abstain": 13,
+      "pa": 0.325,
+      "accuracy": 0.5,
+      "coverage": 0.675,
+      "aliases_normalized": 0,
+      "invalid_actions": 13
+    }
+  },
+  "primary_sft_to_grpo_paired": {
+    "gained_correct": 1,
+    "lost_correct": 0,
+    "score_improved": 1,
+    "score_regressed": 0
+  },
+  "secondary_sft_to_grpo_paired": {
+    "gained_correct": 1,
+    "lost_correct": 0,
+    "score_improved": 1,
+    "score_regressed": 0
+  },
+  "sft": {
+    "optimizer_steps": 64,
+    "wall_seconds": 118.80067459999918,
+    "training_seconds": 114.9401,
+    "train_loss": 0.21414247964276
+  },
+  "grpo": {
+    "optimizer_steps": 24,
+    "wall_seconds": 115.68420569999944,
+    "training_seconds": 115.1177,
+    "rollouts": 48,
+    "reward_counts": {
+      "1": 24,
+      "-1": 24
+    },
+    "steps_with_nonzero_gradient": 4,
+    "steps_with_zero_group_reward_variance": 20,
+    "adapter_changed": true,
+    "changed_tensors": 112,
+    "adapter_l2_delta": 0.01804356369603539,
+    "loss_type": "dr_grpo",
+    "scale_rewards": "none",
+    "beta": 0,
+    "num_generations": 2
+  },
+  "max_process_allocated_gib": 4.174487113952637,
+  "config": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "base_model_sha256": "dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee",
+    "dtype": "bfloat16",
+    "versions": {
+      "torch": "2.11.0+cu128",
+      "transformers": "5.21.0",
+      "trl": "1.17.1",
+      "peft": "0.21.2",
+      "datasets": "5.1.0",
+      "accelerate": "1.15.0"
+    },
+    "seed": 20261103,
+    "sft_steps": 64,
+    "grpo_steps": 24,
+    "sft_lr": 0.0001,
+    "grpo_lr": 5e-06,
+    "lora_rank": 8,
+    "lora_targets": [
+      "q_proj",
+      "v_proj"
+    ],
+    "max_total_tokens": 2048,
+    "max_completion_tokens": 128,
+    "num_generations": 2,
+    "loss_type": "dr_grpo",
+    "scale_rewards": "none",
+    "beta": 0,
+    "data_sha256": "ae372919c3cf9bfa407d48299547c4de45acf178edce65604053ebca69bd58f5",
+    "solver_source_sha256": {
+      "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+      "datamate_bench\\__main__.py": "334fc6c94fa08b0b29961d9e7dae259819ebb9d23ab6d23c2ae2a30d481e93cd",
+      "datamate_bench\\agent.py": "88c490de6a55832526e1a8638fe9611dd0e3a237c95311f674f526cc44c0eb46",
+      "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+      "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+      "datamate_bench\\metrics.py": "2460808b08aade5a4c2375c6a51c6cd4b91a4550adad8364b3917acef63beb9b",
+      "datamate_bench\\normalized.py": "46fe463115b6f66f252ab008ce6ce7d7f62860effc8ff73b79c9b75aafd85281",
+      "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+      "datamate_bench\\purchases.py": "a2cd42fc66c8535311975a9580da9b56cb4eba139a413d394d607260cce186ab",
+      "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+      "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+      "datamate_bench\\temporal.py": "1eb77487db0ac28df67b87a6af032acee0c321b364c4b74422905e2d369fdc69",
+      "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+    },
+    "training_source_sha256": {
+      "scripts\\train_local_sql_pilot.py": "26661c8c7d80c4f255f629a5c13e352ffdd9e756ad08600363fe9d3276132f45",
+      "local_training\\__init__.py": "8f520112d6f1a0518501f8c72e1f82997b5193ae2fdf22b32845fd843474ec24",
+      "local_training\\planner.py": "08b8214e433655c614026734292d687dd723f9299a8e0cd59dde4fca081adc76"
+    },
+    "scope": "Single-step metric planner with SQL executor. Not the multi-turn Qwen 9B benchmark.",
+    "external_training": false,
+    "report_to": "none"
+  },
+  "dataset_summary": {
+    "train_examples": 128,
+    "development_examples": 16,
+    "evaluation_questions": 40,
+    "evaluation_seed": 2026110304,
+    "excluded_seen_questions": 402,
+    "training_operations": {
+      "count_cancelled": 7,
+      "revenue": 18,
+      "cancel_rate": 6,
+      "quantity": 8,
+      "top_products": 7,
+      "best_day": 10,
+      "average_order": 10,
+      "revenue_growth": 12,
+      "count_orders": 13,
+      "purchase_average": 2,
+      "product_group_share": 4,
+      "debt": 4,
+      "monthly_trend": 2,
+      "top_customers": 6,
+      "sale_price": 2,
+      "monthly_totals": 2,
+      "customer_group_share": 3,
+      "customer_group_revenue": 1,
+      "quantity_growth": 2,
+      "revenue_by": 2,
+      "product_group_revenue": 2,
+      "debt_customers": 1,
+      "prescription_share": 1,
+      "stock_units": 1,
+      "prescription_revenue": 1,
+      "purchase_total": 1
+    },
+    "rejected": {},
+    "source_sha256": {
+      "datamate_bench\\__init__.py": "294a5f39e7e06b9414818d97fb526686d8095aa530033447195f50a6f92d6469",
+      "datamate_bench\\__main__.py": "334fc6c94fa08b0b29961d9e7dae259819ebb9d23ab6d23c2ae2a30d481e93cd",
+      "datamate_bench\\agent.py": "88c490de6a55832526e1a8638fe9611dd0e3a237c95311f674f526cc44c0eb46",
+      "datamate_bench\\client.py": "5ada70704048a7dd1e289abfd150fc5266b6d949126ff98f04b219c5cbdf1d14",
+      "datamate_bench\\data.py": "29bb4f53fe94b9c9734172ffe64ffd07060458034f3ae9508f583501888f5819",
+      "datamate_bench\\metrics.py": "2460808b08aade5a4c2375c6a51c6cd4b91a4550adad8364b3917acef63beb9b",
+      "datamate_bench\\normalized.py": "46fe463115b6f66f252ab008ce6ce7d7f62860effc8ff73b79c9b75aafd85281",
+      "datamate_bench\\preflight.py": "6aeb91b11014b9d94983546e66b7e57191a571cab76ddd2a1cca174fa41daa2a",
+      "datamate_bench\\purchases.py": "a2cd42fc66c8535311975a9580da9b56cb4eba139a413d394d607260cce186ab",
+      "datamate_bench\\scoring.py": "2267ca0bd4a436b3676cd4c3f671dc61e0570a46ec15ba4054c8c10ee6c3eab1",
+      "datamate_bench\\suite.py": "eee520aec2cd0e3f45daa8975e862543474dd424ccf50d7dd9217a7dbc6cf125",
+      "datamate_bench\\temporal.py": "1eb77487db0ac28df67b87a6af032acee0c321b364c4b74422905e2d369fdc69",
+      "datamate_bench\\policy_contract.json": "859a57992704a149b1e7a31760825d72e72e9f5f28e8de8525f2a1b6a9c0696b"
+    },
+    "input_sha256": {
+      "questions": "b258ebd978a6d51b3b0b431b26926f958e56522beeb7da2984fea8333e21cec1",
+      "answers": "0b5fe9d13edf5fae306bda9cafaf699c06b639846c8e1d9e41c39a86d1160b3d"
+    },
+    "scope": "Single-step tool selection; deterministic SQL executor. Not full multi-turn 9B agent.",
+    "eval_references_loaded_for_training": false
+  },
+  "limitations": [
+    "Single-step metric planner, not a full multi-turn SQL-generating agent.",
+    "Small question-held-out pilot; business formats were already encountered.",
+    "Fixed one-epoch SFT and 24-step RL, one seed; no checkpoint selection on evaluation.",
+    "Positive-only verified SFT demonstrations; reserved development examples not used for tuning.",
+    "Strict-protocol baseline fails tool envelopes; do not attribute all gains to semantic reasoning.",
+    "Alias-normalized rescoring is a post-hoc diagnostic on the same completions, not a new blind test.",
+    "LoRA from the 1.5B model cannot be applied to the 9B model; scores are not directly comparable.",
+    "Local scorer; no official private-test or six-hour Docker verification."
+  ]
+}

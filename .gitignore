@@ -1,4 +1,5 @@
 .venv/
+.train-venv/
 venv/
 train/
 public_test/

@@ -75,9 +75,12 @@ def main():
         value['purpose']='Prespecified first 20 of random 100: generated SQL vs hybrid'
         (base/'sql20_paired.json').write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
         combine(base/'seen402.json',[base/'seen302.json',base/'sql100_random.json'],'Exclusion only; inspected questions')
+        uniform('local_training40_random.json','seen402.json',40,2026110304)
+        combine(base/'seen442.json',[base/'seen402.json',base/'local_training40_random.json'],'Exclusion only; inspected questions')
         args.output_dir.mkdir(parents=True, exist_ok=True)
         for name in ['train10.json', 'development90.json', 'validation200_random.json', 'seen290.json',
-                     'normalization12_random.json','seen302.json','sql100_random.json','sql20_paired.json','seen402.json']:
+                     'normalization12_random.json','seen302.json','sql100_random.json','sql20_paired.json','seen402.json',
+                     'local_training40_random.json','seen442.json']:
             source, target = base/name, args.output_dir/name
             if target.exists():
                 old, new = read(target), read(source)

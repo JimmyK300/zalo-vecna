@@ -2,7 +2,9 @@
 
 Pipeline mới chạy Qwen3.5-9B Q4_K_M trên RTX 5060 Laptop: đọc bảng, chuẩn hóa dữ liệu, gọi SQL và chấm câu hỏi train. Code cũ được giữ trong lịch sử nhánh `dev`; nhánh làm việc là `benchmark/local-clean`.
 
-**Đánh giá đối chứng mới nhất:** cùng 100 câu mới, trước/sau sửa đều **71 đúng**; sai **22 → 18**, bỏ trống **7 → 11**, PA **0,49 → 0,53**, thời gian có cache **575 → 445 giây**. Trên 20 câu chọn trước, hybrid đúng **11/20**, model tự viết SQL đúng **9/20**. Sau lượt đóng băng có sửa thêm lỗi mất nhà cung cấp, kiểm tra riêng; chưa chấm lại toàn bộ 100 câu bằng model. Xem [báo cáo SQL và giới hạn](reports/sql_validation.md).
+**Đối chứng agent 9B:** cùng 100 câu mới, trước/sau sửa đều **71 đúng**; sai **22 → 18**, bỏ trống **7 → 11**, PA **0,49 → 0,53**, thời gian có cache **575 → 445 giây**. Trên 20 câu chọn trước, hybrid đúng **11/20**, model tự viết SQL đúng **9/20**. Sau lượt đóng băng có sửa thêm lỗi mất nhà cung cấp, kiểm tra riêng; chưa chấm lại toàn bộ 100 câu bằng model. Xem [báo cáo SQL và giới hạn](reports/sql_validation.md).
+
+**Pilot train local mới:** Qwen2.5-1.5B-Instruct + SQL, SFT **19/40** đúng, thêm Dr. GRPO **20/40** đúng; đã train thật trên RTX 5060, không dùng Colab CU. Task một bước và model khác agent 9B nên không so điểm trực tiếp. Bản gốc lỗi protocol; xem cả chẩn đoán alias trong [báo cáo SFT/GRPO và cách chạy](reports/local_sft_grpo.md). Agent mặc định 9B chưa bị thay thế.
 
 Lịch sử: [200 câu ngẫu nhiên](reports/validation200.md) đạt 135/200; bộ phát triển 90 câu đạt 89/90 sau chỉnh lỗi. Các bộ này khác nhau, không so điểm trực tiếp để suy ra mức cải thiện.
 
@@ -81,11 +83,11 @@ Lệnh tự tạo thư mục mới `artifacts/run_<thời gian>/`. Có thể tru
 ### Chọn bộ câu ngẫu nhiên mới
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen402.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
+.\.venv\Scripts\python.exe scripts/select_random_suite.py --exclude-suite benchmarks/seen442.json --size 200 --seed 20261108 --output benchmarks/validation_new200.json
 .\.venv\Scripts\python.exe -m datamate_bench run --suite benchmarks/validation_new200.json --require-cuda
 ```
 
-`seen402.json` loại 90 câu phát triển, 200 câu đánh giá cũ, 12 câu thử chuẩn hoá và 100 câu thử SQL. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
+`seen442.json` loại 90 câu phát triển, 200 câu đánh giá cũ, 12 câu thử chuẩn hoá, 100 câu thử SQL và 40 câu đánh giá train local. Lấy mẫu không dùng type/đáp án tham chiếu. Doanh nghiệp vẫn có thể trùng; đây là tách theo câu hỏi. Script từ chối ghi đè manifest đã có.
 
 ### Tổng hợp sau khi chạy xong
 
@@ -126,6 +128,10 @@ Thời gian `run` không gồm tải weights hoặc khởi động server. Lư�
 | `scripts/test_question_normalization.py` | A/B câu gốc và câu Qwen biên tập; xem [kết quả và lệnh chạy](reports/normalization12.md) |
 | `scripts/check_sql_arithmetic.py` | Đối chiếu SQL với vòng lặp Python trên cùng dữ liệu, không gọi model |
 | `scripts/compare_sql_runs.py` | Tổng hợp các lượt đối chứng SQL đã hoàn tất, không xuất ID dữ liệu |
+| `scripts/setup-local-training.ps1` | Tạo môi trường train riêng, tái dùng CUDA torch local |
+| `scripts/prepare_local_training.py` | Tạo ví dụ công cụ đã kiểm chứng bằng SQL và tập đánh giá tách riêng |
+| `scripts/train_local_sql_pilot.py` | Baseline → LoRA SFT → Dr. GRPO, chỉ chạy local |
+| `scripts/audit_local_training.py` | Đối chiếu trọng số, reward và kết quả ba bản |
 | `datamate_bench/__main__.py` | CLI chung: `python -m datamate_bench ...` |
 | `data.py`, `normalized.py` | Đọc/chuẩn hóa bảng, giữ nguồn và ô gốc |
 | `agent.py`, `client.py` | Điều phối model và công cụ |
@@ -142,7 +148,7 @@ Lệnh phụ:
 .\.venv\Scripts\python.exe -m datamate_bench profile --suite benchmarks/development90.json
 # Đo tốc độ model; cần server đang bật
 .\.venv\Scripts\python.exe -m datamate_bench speed
-# 28 bài kiểm tra; không cần tải weights hoặc bật server thật
+# 31 bài kiểm tra; không cần tải weights hoặc bật server thật
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
@@ -161,7 +167,7 @@ Thử SQL với server đang bật (mỗi lệnh cần output mới):
 
 - Các lượt đối chứng 100/20 giữ nguyên solver trong khi chạy; hash khớp. Bản làm việc sau đó sửa riêng lỗi nhà cung cấp, có test hồi quy và cache v15.
 - Rà soát 65 câu chưa đúng: 31 trường hợp ưu tiên mở rộng công cụ, 14 trường hợp ở hợp đồng/ánh xạ/định tuyến pipeline, 20 trường hợp chọn công cụ/SQL/đầu ra của model. Các nhóm có thể có nguyên nhân phụ chồng lấn.
-- Đã sửa một nhóm lỗi parser/ánh xạ và bổ sung nhập hàng/tỷ trọng; chưa tăng accuracy trên đối chứng 100 câu. Chưa chi CU cho SFT hoặc GRPO; tiếp tục kiểm tra ánh xạ và hợp đồng công cụ trước.
+- Đã sửa một nhóm lỗi parser/ánh xạ và bổ sung nhập hàng/tỷ trọng; chưa tăng accuracy trên đối chứng 100 câu. Pilot riêng đã train SFT/GRPO local trên 1.5B; tăng thêm 1/40 câu sau GRPO chưa chứng minh hiệu quả ổn định. Colab CU dùng: 0.
 - Các câu đã xem lỗi không còn là test mù cho bản sửa kế tiếp. Không suy ra 1.000/1.000 từ điểm bộ phát triển.
 - Không có nhánh theo ID câu/cửa hàng trong solver. Câu rõ nghĩa có thể được định tuyến vào SQL trực tiếp; đây là pipeline kết hợp luật và model.
 

@@ -1,5 +1,14 @@
 # Trạng thái tiếp tục — 03/11/2026
 
+## Mới nhất: SQL + SFT + Dr. GRPO local
+
+- Người dùng yêu cầu kết hợp SQL/SFT/GRPO và chỉ dùng local vì Colab đã hết CU. Đã hoàn tất pilot thật bằng Qwen2.5-1.5B-Instruct cached, LoRA, trên RTX 5060; không dùng adapter cũ, không thay agent 9B.
+- 128 ví dụ SFT được SQL xác minh, 16 ví dụ development để riêng chưa dùng tuning, 40 câu ngẫu nhiên mới loại 402 ID cũ. Seed evaluation 2026110304; các tập không giao ID. Nhãn evaluation chỉ dùng chấm sau cả ba lượt suy luận.
+- Protocol nghiêm: gốc 0 đúng/0 sai/40 bỏ trống (40 action lỗi); SFT 19/7/14, PA 0,30; SFT + GRPO 20/7/13, PA 0,325. Sau chuẩn hoá alias cùng đầu ra để chẩn đoán: gốc 9/9/22; hai bản train giữ nguyên. Không gán toàn bộ cải thiện cho suy luận.
+- SFT 64 steps/114,94 giây; Dr. GRPO 24 steps/115,12 giây, group 2, 48 rollout, 4 bước gradient khác 0, 20 nhóm cùng reward. Adapter thật thay đổi; GRPO chỉ thêm 1 câu nhờ chọn đúng tên tool, chưa chứng minh hiệu quả ổn định.
+- Adapter và trace local ở `artifacts/local_sft_grpo/run1/`; [báo cáo/cách chạy](reports/local_sft_grpo.md), [JSON tổng hợp](reports/local_sft_grpo_summary.json). 31 unit tests qua; script setup local đã chạy thành công. GPU đã được giải phóng khi tiến trình kết thúc.
+- Tiếp tục lấy mẫu phải loại `benchmarks/seen442.json`. Chưa train 9B; adapter 1.5B không dùng cho 9B. Không chi Colab CU, không kiểm chứng Docker/6 giờ BTC.
+
 ## Kết quả mới nhất
 
 - Cùng 100 câu mới, bản trước sửa: 71 đúng/22 sai/7 bỏ trống, PA 0,49, wall 575,19 giây. Bản sửa đóng băng: 71 đúng/18 sai/11 bỏ trống, PA 0,53, wall 444,56 giây. Có 8 câu được sửa thành đúng và mất 8 câu đang đúng; không tăng accuracy.
@@ -21,17 +30,17 @@ Giữ SQL làm bộ tính toán; chưa chuyển sang model tự viết mọi tru
 1. Giữ đầy đủ thuộc tính khi ánh xạ, đối chiếu bảng chuẩn hoá với nguồn.
 2. Kiểm soát thực thể, làm tròn tiền, dạng list và xử lý thiếu dữ liệu; các lỗi model chọn công cụ/SQL vẫn còn.
 3. Mở rộng công cụ ca bán, dòng tiền nợ, ngưỡng và tần suất khách khi có kiểm tra nguồn độc lập.
-4. Chọn câu mới loại `benchmarks/seen402.json`; không gọi bộ 100 vừa rà soát là test mù nữa.
-5. Chỉ thử SFT nhỏ khi lỗi còn lại chủ yếu thuộc model. Chưa có căn cứ chọn GRPO ở bước này.
+4. Chọn câu mới loại `benchmarks/seen442.json`; các bộ đã rà soát không còn là test mù.
+5. Pilot 1.5B đã xác nhận có thể train local. Trước train lớn hơn, cải thiện dữ liệu công cụ và tín hiệu reward; chưa tăng mạnh GRPO dựa trên chỉ 1 câu cải thiện.
 
 ## Thử chuẩn hoá trước đó
 
-12 câu mới, seed 2026110301: câu gốc 9/12 đúng, Qwen chuẩn hoá có kèm câu gốc 7/12. Không bật viết lại câu hỏi mặc định. [Báo cáo](reports/normalization12.md). Lựa chọn cuối của người dùng là chỉ thử agent, chưa train GRPO.
+12 câu mới, seed 2026110301: câu gốc 9/12 đúng, Qwen chuẩn hoá có kèm câu gốc 7/12. Không bật viết lại câu hỏi mặc định. [Báo cáo](reports/normalization12.md). Ở lượt đó chỉ thử agent; yêu cầu sau đã chuyển sang pilot train local như phần mới nhất.
 
 ## Tệp và lịch sử
 
 - Local ignored: `artifacts/sql100_before/`, `sql100_after/`, `sql20_generated/`, `supplier_regression_after_fix/`, các trace và nhãn. Snapshot solver đóng băng: `artifacts/sql_fixes_source/solver.zip`; bản đối chứng: `artifacts/baseline_before_sql_fixes/`.
-- Suite local: train10, development90, validation200_random, normalization12_random, sql100_random, sql20_paired; bộ loại seen290/302/402. Tái tạo ID bằng `scripts/rebuild_suites.py`.
+- Suite local: train10, development90, validation200_random, normalization12_random, sql100_random, sql20_paired, local_training40_random; bộ loại seen290/302/402/442. Tái tạo ID bằng `scripts/rebuild_suites.py`.
 - Lịch sử: bộ phát triển 90 câu đạt 89 đúng, 0 sai, 1 bỏ trống; bộ 200 câu mới trước đó đạt 135 đúng, 47 sai, 18 bỏ trống. Không so trực tiếp các tập khác nhau.
 - Dữ liệu gốc ở `E:\ZALO_AI_Challenge\train` và `public_test`. Bản sao trong repo giữ nguyên theo yêu cầu, gitignore `train/`, `public_test/`, `public-test/`.
 - Nhánh `benchmark/local-clean`; main/dev giữ nguyên. README có hướng dẫn chạy. Git chỉ chứa code và kết quả tổng hợp, không chứa dữ liệu/ID/trace.

@@ -1,0 +1,7 @@
+# CUDA torch==2.11.0+cu128 is reused from the local runtime by setup-local-training.ps1.
+transformers==5.21.0
+accelerate==1.15.0
+trl==1.17.1
+peft==0.21.2
+datasets==5.1.0
+openpyxl==3.1.5

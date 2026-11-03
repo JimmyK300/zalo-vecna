@@ -21,6 +21,7 @@ from .primitives import resolve_periods
 from .recipes import debt_card, debt_mentioned
 from .semantic_model import semantic_on
 from .semantics import strip_accents
+from .question import auxiliary_question
 
 JOIN_ROLES = ("order_id", "customer_code", "item_code", "item", "customer")
 CAVEAT_RE = re.compile(r"cuối dữ liệu|hiện tại|cột trống|không có dữ liệu|chỉ đơn|dòng trả hàng|"
@@ -35,7 +36,7 @@ STOP = set("la co cua cho toi minh giup xem coi hoi nhi ha nao bao nhieu va cac 
 
 
 def _tokens(text: str) -> list[str]:
-    t = re.sub(r"[^a-z0-9 ]+", " ", strip_accents(text))
+    t = re.sub(r"[^a-z0-9 ]+", " ", strip_accents(auxiliary_question(text)))
     words = []
     for w in t.split():
         words.extend(SLANG.get(w, w).split())

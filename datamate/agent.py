@@ -6,6 +6,7 @@ import time
 
 from .io_contract import ABSTAIN, ANSWER_TYPES, UNANSWERABLE, normalize_answer
 from .llm import make_chat
+from .question import question_hint
 from .graph import plan_card
 from .semantic_model import semantic_on
 from .tools import TOOL_SPECS, ToolExecutor
@@ -122,7 +123,7 @@ def solve(q: dict, ws: Workspace, system: str, backend: str, model: str | None,
     sem = getattr(ws, "semantic", None)
     sem_text = f"{sem.render()}\n\n" if sem is not None and semantic_on() else ""
     user = (f"# Shop data ({q['business_id']})\n{ws.profile}\n\n{sem_text}{card}\n\n"
-            f"# Question\nas_of_date (hôm nay): {q['as_of_date']}\n{q['question']}"
+            f"# Question\nas_of_date (hôm nay): {q['as_of_date']}\n{q['question']}" + question_hint(q["question"])
             + (f"\n\n{note}" if note else ""))
     try:
         reply = chat.send_user(user)

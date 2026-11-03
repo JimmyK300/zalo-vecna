@@ -379,11 +379,16 @@ class OllamaChat(OpenAIChat):
                 self.extra = saved
 
 
-BACKENDS = {"anthropic": AnthropicChat, "openai": OpenAIChat, "openrouter": OpenRouterChat, "ollama": OllamaChat,
+from .hf_backend import TransformersChat
+
+BACKENDS = {"transformers": TransformersChat, "anthropic": AnthropicChat, "openai": OpenAIChat, "openrouter": OpenRouterChat, "ollama": OllamaChat,
             "codex": CodexChat, "opencode": OpenCodeChat, "scripted": ScriptedChat}
 # codex: None = the model set in ~/.codex/config.toml
 DEFAULT_MODELS = {"anthropic": "claude-haiku-5-5", "openai": "gpt-6-luna", "openrouter": "qwen/qwen3.5-9b", "ollama": "qwen3.5-9b-40k", "codex": None, "opencode": "opencode/deepseek-v4.1-flash-free", "scripted": "none"}
 
 
 def make_chat(backend: str, model: str | None, system: str, tools: list[dict]):
+    if backend == "transformers" and not model:
+        from .hf_backend import MODEL
+        model = MODEL
     return BACKENDS[backend](model or DEFAULT_MODELS[backend], system, tools)

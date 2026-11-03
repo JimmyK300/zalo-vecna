@@ -5,6 +5,8 @@ __pycache__/
 
 # competition data (licensed; includes gold answers) - never publish
 devkit/
+dataset/
+tmp/
 *.zip
 
 # run outputs, logs, caches (large; contain shop data)

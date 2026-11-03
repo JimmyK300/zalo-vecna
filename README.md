@@ -3,6 +3,13 @@
 Answers Vietnamese questions over messy business data (CSV / Excel / SQLite / docs).
 The LLM decides **how** to compute; DuckDB / pandas do the computing.
 
+**Colab submission (GitHub + Drive, no new fine-tuning):** open
+[`notebooks/DataMate_Submission_Colab.ipynb`](notebooks/DataMate_Submission_Colab.ipynb)
+and follow [`SUBMISSION_GUIDE_VI.md`](notebooks/SUBMISSION_GUIDE_VI.md).
+This branch adds local Transformers inference, conservative auxiliary question expansion,
+and stricter numeric scoring. Historical PA below used the older scorer; GPU quality/latency
+of the new backend has not been benchmarked.
+
 ```
 question + business folder
   -> workspace.py   load every file into DataFrames, detect messy Excel headers,

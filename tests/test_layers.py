@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -22,6 +23,7 @@ from datamate.rules import RULES, active_rules  # noqa: E402
 from datamate.workspace import load_workspace  # noqa: E402
 
 D = dt.date
+DATA_ROOT = Path(os.environ.get("DATAMATE_TEST_DATA", "devkit"))
 fails = []
 
 
@@ -46,7 +48,7 @@ check("quarter 3/2025", period("quarter", a, quarter=3, year=2025), (D(2025, 7, 
 check("quarter no year, future", period("quarter", a, quarter=3), (D(2025, 7, 1), D(2025, 9, 30)))
 check("last 7 days", period("last_n_days", a, n=7), (D(2026, 4, 17), D(2026, 4, 23)))
 check("ytd", period("year_to_date", a), (D(2026, 1, 1), D(2026, 4, 23)))
-cal = pd.read_csv(Path("devkit/train/calendar.csv"))
+cal = pd.read_csv(DATA_ROOT / "train/calendar.csv")
 s, e = period("tet", a, year=2026, cal=cal)
 check("tet 2026", (s, e), (D(2026, 2, 10), D(2026, 2, 26)))  # 23/12 âm 2025 .. 10/1 âm 2026 (calendar.csv)
 check("pct_change", pct_change(90, 100), -10.0)
@@ -64,13 +66,13 @@ bal = as_of_balance(orders, "oid", "total", "d", "2026-01-31", pays, minus_amoun
 check("balance all paid", len(bal), 0)
 
 # 3. rule-change test
-rb = Path("devkit/train/rulebook.md").read_text(encoding="utf-8")
+rb = (DATA_ROOT / "train/rulebook.md").read_text(encoding="utf-8")
 check("train rulebook: all helpers on", active_rules(rb), set(RULES) - {"no_status_note"})  # public-only rule
 changed = rb.replace("bắt đầu **thứ Hai**", "bắt đầu **Chủ nhật**").replace("**kể cả chỉ trả một phần**", "")
 on = active_rules(changed)
 check("week rule switched off", "week_monday" in on, False)
 check("revenue rule switched off", "in_revenue" in on, False)
-ws = load_workspace(Path("devkit/train/data/biz_105"), {"calendar": cal}, on)
+ws = load_workspace(DATA_ROOT / "train/data/biz_105", {"calendar": cal}, on)
 check("no in_revenue column when rule changed", any("in_revenue" in t.df for t in ws.tables.values()), False)
 check("profile tells the model", any("disabled" in e for e in ws.errors), True)
 card = plan_card("doanh thu tuần trước bao nhiêu", "2026-04-23", ws, parse_rulebook(changed))
@@ -79,7 +81,7 @@ check("plan card defers week definition", "week definition changed" in card, Tru
 # 4. every shop loads (slow)
 if "--all-shops" in sys.argv:
     for split in ("train", "public_test"):
-        root = Path("devkit") / split
+        root = DATA_ROOT / split
         rules = active_rules((root / "rulebook.md").read_text(encoding="utf-8"))
         rows = parse_rulebook((root / "rulebook.md").read_text(encoding="utf-8"))
         qs = {}

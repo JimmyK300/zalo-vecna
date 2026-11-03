@@ -11,12 +11,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+from decimal import Decimal
 import re
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
-EPS = 1e-6
+def _number_eq(p, g):
+    # A magnitude-relative tolerance incorrectly accepted hundreds of VND error.
+    return (_is_num(p) and _is_num(g) and math.isfinite(p) and math.isfinite(g)
+            and abs(Decimal(str(p)) - Decimal(str(g))) <= Decimal("0.000000001"))
 
 
 def _load(path: Path) -> dict[str, dict]:
@@ -34,7 +39,7 @@ def _is_num(v) -> bool:
 
 def _scalar_eq(p, g, alts=()) -> bool:
     if _is_num(g):
-        return _is_num(p) and abs(p - g) <= EPS * max(1.0, abs(g))
+        return _number_eq(p, g)
     if isinstance(g, bool):
         return p is g
     if isinstance(g, str):
@@ -45,7 +50,7 @@ def _scalar_eq(p, g, alts=()) -> bool:
 def match(typ: str, pred, gold, alias) -> bool:
     alias = alias or []
     if typ in ("number", "percent"):
-        return _is_num(pred) and abs(pred - gold) <= EPS * max(1.0, abs(gold))
+        return _number_eq(pred, gold)
     if typ in ("date",):
         return isinstance(pred, str) and pred.strip() == gold
     if typ == "boolean":
@@ -97,7 +102,7 @@ def score_one(p: dict | None, g: dict) -> str:
     return "correct" if match(g["type"], p.get("answer"), g["answer"], g.get("alias")) else "wrong"
 
 
-def score(pred: dict[str, dict], gold: dict[str, dict], only_pred: bool = True) -> dict:
+def score(pred: dict[str, dict], gold: dict[str, dict], only_pred: bool = False) -> dict:
     ids = [i for i in gold if i in pred] if only_pred else list(gold)
     kinds = Counter()
     by_type = defaultdict(Counter)
@@ -119,9 +124,10 @@ def main() -> None:
     ap.add_argument("--pred", required=True)
     ap.add_argument("--gold", required=True)
     ap.add_argument("--all", action="store_true", help="score over every gold id (missing = abstain)")
+    ap.add_argument("--only-pred", action="store_true", help="debug only: score predicted IDs")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
-    res = score(_load(Path(a.pred)), _load(Path(a.gold)), only_pred=not a.all)
+    res = score(_load(Path(a.pred)), _load(Path(a.gold)), only_pred=a.only_pred and not a.all)
     for qid, kind, p, g in res.pop("rows"):
         if a.verbose or kind == "wrong":
             pv = None if p is None else {k: v for k, v in p.items() if k != "id"}

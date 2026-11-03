@@ -66,7 +66,7 @@ def main() -> None:
     ap.add_argument("--data", default=os.environ.get("DATAMATE_DATA", "/data"))
     ap.add_argument("--out", default=os.environ.get("DATAMATE_OUT", "/result/submission.jsonl"))
     ap.add_argument("--backend", default=os.environ.get("DATAMATE_BACKEND", "anthropic"),
-                    choices=["anthropic", "openai", "openrouter", "ollama", "codex", "opencode", "scripted"])
+                    choices=["transformers", "anthropic", "openai", "openrouter", "ollama", "codex", "opencode", "scripted"])
     ap.add_argument("--model", default=os.environ.get("DATAMATE_MODEL"))
     ap.add_argument("--workers", type=int, default=int(os.environ.get("DATAMATE_WORKERS", "8")))
     ap.add_argument("--min-confidence", type=float, default=float(os.environ.get("DATAMATE_MIN_CONF", "0.5")))

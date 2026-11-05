@@ -3,6 +3,11 @@
 Answers Vietnamese questions over messy business data (CSV / Excel / SQLite / docs).
 The LLM decides **how** to compute; DuckDB / pandas do the computing.
 
+**Data cleaner branch:** see [DATA_CLEANER.md](DATA_CLEANER.md) for `--cleaner off|rules|rules+llm`,
+raw/provenance reports, local LLM fallback budgets, paired benchmarks and milestones.
+This branch starts from `datamate-agent` (`7a2a5e6`). Numeric scoring is stricter than the historical
+results below. Model/GPU cleaner quality and the 6-hour runtime have not yet been verified.
+
 ```
 question + business folder
   -> workspace.py   load every file into DataFrames, detect messy Excel headers,

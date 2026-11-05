@@ -282,17 +282,26 @@ class Workspace:
     debt: object = None
     lines: object = None
     semantic: object = None
+    cleaner: bool = False
+    raw_tables: dict = field(default_factory=dict)
+    cleaning_reports: dict = field(default_factory=dict)
 
-    def _add(self, name: str, source: str, df: pd.DataFrame, clean: bool = True, shared: bool = False) -> None:
+    def _add(self, name: str, source: str, df: pd.DataFrame, clean: bool = True, shared: bool = False, raw=None) -> None:
         base, i = _slug(name), 2
         key = base
         while key in self.tables:
             key, i = f"{base}_{i}", i + 1
         df.columns = [str(c) for c in df.columns]
+        original = (raw.copy(deep=True) if raw is not None else df.copy(deep=True)) if self.cleaner and not shared else None
         notes = []
         if clean:
             df, notes = clean_frame(df, _year_hint(source))
         self.tables[key] = TableInfo(key, source, df, notes, shared)
+        if original is not None:
+            from .cleaning import column_reports
+            self.raw_tables[key] = original
+            self.cleaning_reports[key] = dict(source=source, input_rows=len(original),
+                parsed_rows=len(df), columns=column_reports(original, df, notes))
 
     def _add_sheets(self, stem: str, rel: str, sheets: dict[str, pd.DataFrame]) -> None:
         """Monthly sheets with the same columns become one table with a `_sheet` column."""
@@ -301,15 +310,20 @@ class Workspace:
             groups.setdefault(tuple(map(str, df.columns)), []).append(s)
         for cols, names in groups.items():
             if len(names) > 1:
-                parts = []
+                parts, raw_parts = [], []
                 for s in names:
+                    if self.cleaner:
+                        raw_part = sheets[s].copy(deep=True)
+                        raw_part.insert(0, "_sheet", s)
+                        raw_parts.append(raw_part)
                     df, _ = clean_frame(sheets[s].copy(), _year_hint(s, stem))
                     df.insert(0, "_sheet", s)
                     parts.append(df)
                 merged = pd.concat(parts, ignore_index=True)
                 _, notes = clean_frame(sheets[names[0]].head(200).copy(), _year_hint(names[0], stem))
                 key = _slug(stem if len(groups) == 1 else f"{stem}_{names[0]}")
-                self._add(key, f"{rel} (sheets: {', '.join(names)})", merged, clean=False)
+                self._add(key, f"{rel} (sheets: {', '.join(names)})", merged, clean=False,
+                          raw=pd.concat(raw_parts, ignore_index=True) if raw_parts else None)
                 self.tables[list(self.tables)[-1]].notes = notes + [
                     "_sheet: source sheet name; dates without a year take the sheet's year"]
             else:
@@ -325,8 +339,8 @@ class Workspace:
 
 
 def load_workspace(root: Path, shared: dict[str, pd.DataFrame] | None = None,
-                   rules: set[str] | None = None) -> Workspace:
-    ws = Workspace(root=root)
+                   rules: set[str] | None = None, cleaner: bool = False) -> Workspace:
+    ws = Workspace(root=root, cleaner=cleaner)
     ws.rules = rules
     for name, df in (shared or {}).items():
         ws._add(name, f"{name} (shared, all businesses)", df.copy(), clean=False, shared=True)
@@ -362,6 +376,10 @@ def load_workspace(root: Path, shared: dict[str, pd.DataFrame] | None = None,
     for t in own:
         enrich_table(t, readme, rules)
     apply_conventions(own, ws.docs)
+    if cleaner:
+        for t in own:
+            ws.cleaning_reports[t.name]["final_source_rows"] = len(t.df)
+            ws.cleaning_reports[t.name]["row_delta_after_legacy_conventions"] = len(t.df) - ws.cleaning_reports[t.name]["input_rows"]
     link_orders(own, rules)
     try:
         for name, odf in build_orders(ws).items():
@@ -462,8 +480,9 @@ def build_profile(ws: Workspace) -> str:
 class WorkspaceCache:
     """Load each business folder once, shared across worker threads."""
 
-    def __init__(self, shared: dict[str, pd.DataFrame] | None = None, rules: set[str] | None = None):
+    def __init__(self, shared: dict[str, pd.DataFrame] | None = None, rules: set[str] | None = None, cleaner: bool = False):
         self.rules = rules
+        self.cleaner = cleaner
         self._cache: dict[Path, Workspace] = {}
         self._locks: dict[Path, threading.Lock] = {}
         self._lock = threading.Lock()
@@ -475,5 +494,5 @@ class WorkspaceCache:
             lock = self._locks.setdefault(root, threading.Lock())
         with lock:
             if root not in self._cache:
-                self._cache[root] = load_workspace(root, self.shared, self.rules)
+                self._cache[root] = load_workspace(root, self.shared, self.rules, cleaner=self.cleaner)
             return self._cache[root]

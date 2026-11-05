@@ -11,12 +11,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+from decimal import Decimal
 import re
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
 EPS = 1e-6
+
+
+def _number_eq(p, g):
+    return (_is_num(p) and _is_num(g) and math.isfinite(p) and math.isfinite(g)
+            and abs(Decimal(str(p)) - Decimal(str(g))) <= Decimal("0.000000001"))
 
 
 def _load(path: Path) -> dict[str, dict]:
@@ -34,7 +41,7 @@ def _is_num(v) -> bool:
 
 def _scalar_eq(p, g, alts=()) -> bool:
     if _is_num(g):
-        return _is_num(p) and abs(p - g) <= EPS * max(1.0, abs(g))
+        return _number_eq(p, g)
     if isinstance(g, bool):
         return p is g
     if isinstance(g, str):
@@ -45,7 +52,7 @@ def _scalar_eq(p, g, alts=()) -> bool:
 def match(typ: str, pred, gold, alias) -> bool:
     alias = alias or []
     if typ in ("number", "percent"):
-        return _is_num(pred) and abs(pred - gold) <= EPS * max(1.0, abs(gold))
+        return _number_eq(pred, gold)
     if typ in ("date",):
         return isinstance(pred, str) and pred.strip() == gold
     if typ == "boolean":

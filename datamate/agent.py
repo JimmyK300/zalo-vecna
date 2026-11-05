@@ -116,13 +116,22 @@ def solve(q: dict, ws: Workspace, system: str, backend: str, model: str | None,
         trace.append({"assistant": reply.text, "tool_calls": [(c.name, c.args) for c in reply.tool_calls]})
 
     try:
-        card = plan_card(q["question"], q["as_of_date"], ws, rule_rows or [])
+        card_query = q.get("cleaner", {}).get("normalized", q["question"])
+        card = plan_card(card_query, q["as_of_date"], ws, rule_rows or [])
     except Exception as e:  # noqa: BLE001 - the card is advisory
         card = f"(plan card unavailable: {type(e).__name__})"
     sem = getattr(ws, "semantic", None)
     sem_text = f"{sem.render()}\n\n" if sem is not None and semantic_on() else ""
+    clean_text = ""
+    if q.get("cleaner"):
+        cleaned = q["cleaner"]
+        clean_text = ("\n# Auxiliary interpretation (unverified; original question controls)\n"
+                      + cleaned["normalized"] + "\nWarnings: " + str(cleaned["warnings"]))
+    if q.get("shop_cleaner_hints"):
+        clean_text += "\n# Unverified column hints (never override README/rulebook)\n" + str(q["shop_cleaner_hints"])
     user = (f"# Shop data ({q['business_id']})\n{ws.profile}\n\n{sem_text}{card}\n\n"
             f"# Question\nas_of_date (hôm nay): {q['as_of_date']}\n{q['question']}"
+            + clean_text
             + (f"\n\n{note}" if note else ""))
     try:
         reply = chat.send_user(user)

@@ -106,6 +106,9 @@ class ToolExecutor:
             "I": _items(ws),
         }
         self.outputs: list[str] = []  # everything the model has seen, for evidence checks
+        if getattr(ws, "cleaner", False):
+            self.ns["raw_tables"] = {name: df.copy(deep=True) for name, df in ws.raw_tables.items()}
+            self.ns["docs"]["cleaning_report"] = str(ws.cleaning_reports)
 
     def run(self, name: str, args: dict) -> str:
         try:

@@ -7,6 +7,8 @@ import logging
 import os
 import random
 import time
+import hashlib
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -23,6 +25,7 @@ from .metrics import metric_candidate
 from .recipes import debt_candidate, debt_mentioned
 from .rules import active_rules
 from .workspace import WorkspaceCache
+from .cleaning import clean_question, VERSION
 
 log = logging.getLogger("datamate")
 
@@ -68,6 +71,11 @@ def main() -> None:
     ap.add_argument("--backend", default=os.environ.get("DATAMATE_BACKEND", "anthropic"),
                     choices=["anthropic", "openai", "openrouter", "ollama", "codex", "opencode", "scripted"])
     ap.add_argument("--model", default=os.environ.get("DATAMATE_MODEL"))
+    ap.add_argument("--cleaner", choices=["off", "rules", "rules+llm"], default="rules")
+    ap.add_argument("--cleaner-url", default="http://127.0.0.1:8000/v1")
+    ap.add_argument("--cleaner-budget-sec", type=float, default=900)
+    ap.add_argument("--cleaner-timeout-sec", type=float, default=8)
+    ap.add_argument("--cleaner-max-calls", type=int, default=100)
     ap.add_argument("--workers", type=int, default=int(os.environ.get("DATAMATE_WORKERS", "8")))
     ap.add_argument("--min-confidence", type=float, default=float(os.environ.get("DATAMATE_MIN_CONF", "0.5")))
     ap.add_argument("--time-budget-min", type=float, default=float(os.environ.get("DATAMATE_TIME_BUDGET_MIN", "330")),
@@ -138,7 +146,43 @@ def main() -> None:
     rule_rows = parse_rulebook(rulebook)
     rules = active_rules(rulebook)
     log.info("rule helpers on: %s", sorted(rules))
-    cache = WorkspaceCache(shared, rules)
+    cache = WorkspaceCache(shared, rules, cleaner=args.cleaner != "off")
+    cleaner_llm = None
+    if args.cleaner == "rules+llm":
+        if args.backend not in ("openai", "ollama") or not args.model:
+            ap.error("rules+llm requires an explicit --model and a local openai/ollama solver backend")
+        from urllib.parse import urlparse
+        solver_url = (os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1") if args.backend == "ollama"
+                      else os.environ.get("OPENAI_BASE_URL", ""))
+        if urlparse(solver_url).hostname not in ("localhost", "127.0.0.1", "::1"):
+            ap.error("rules+llm requires a local solver URL too; set OPENAI_BASE_URL/OLLAMA_BASE_URL")
+        if args.cleaner_budget_sec < 0 or args.cleaner_timeout_sec <= 0 or args.cleaner_max_calls < 0:
+            ap.error("cleaner budgets must be nonnegative; timeout must be positive")
+        from .cleaner_llm import CleanerLLM
+        cleaner_llm = CleanerLLM(args.model, args.cleaner_url, out.parent / "cleaner_cache",
+            args.cleaner_budget_sec, args.cleaner_timeout_sec, args.cleaner_max_calls)
+    shop_lock = threading.Lock()
+    manifest_path = out.parent / "cleaner_manifest.json"
+    manifest = dict(version=VERSION, baseline="7a2a5e65f6bbbd89318563ac49fedf571101701e",
+                    cleaner=args.cleaner, backend=args.backend, model=args.model, rulebook_sha256=hashlib.sha256(rulebook.encode()).hexdigest(),
+                    endpoint=args.cleaner_url, budget=args.cleaner_budget_sec, timeout=args.cleaner_timeout_sec,
+                    max_calls=args.cleaner_max_calls)
+    data_hash = hashlib.sha256()
+    for path in sorted([data / "questions.jsonl", data / "calendar.csv", *list((data / "data").rglob("*"))]):
+        if path.is_file():
+            data_hash.update(str(path.relative_to(data)).encode())
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    data_hash.update(chunk)
+    manifest["data_hash"] = data_hash.hexdigest()
+    manifest["cleaner_code_hash"] = hashlib.sha256(b"".join(Path(__file__).with_name(n).read_bytes()
+        for n in ("cleaning.py", "cleaner_llm.py", "workspace.py", "agent.py", "run.py"))).hexdigest()
+    manifest["inference"] = dict(min_confidence=args.min_confidence, consistency=args.consistency,
+        verify=args.verify, verify_new=args.verify_new, candidate_policy=args.candidate_policy, seed=args.seed)
+    if manifest_path.exists() and not args.fresh:
+        if json.loads(manifest_path.read_text(encoding="utf-8")) != manifest:
+            raise ValueError("Cleaner config changed: use a new --out directory (do not mix predictions)")
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     if args.thermal_guard:
         from . import thermal
         slow, soft, resume, hard = map(float, args.temp_limits.split(","))
@@ -152,17 +196,50 @@ def main() -> None:
     halted: list[str] = []  # set once the backend is unusable (e.g. quota hit): stop burning questions
 
     def work(q: dict) -> dict:
+        q = {**q, "_work_started": time.monotonic()}
         if halted:
             return {"type": "skipped", "answer": None, "note": halted[0]}
         if time.time() > deadline:
             res = {"type": ABSTAIN, "answer": None, "reason": None, "trace": [], "note": "time budget exhausted"}
         else:
             ws = cache.get(find_dataset_dir(data, q["business_id"]))
+            q = dict(q)
+            if args.cleaner != "off":
+                with shop_lock:
+                    if not hasattr(ws, "cleaner_context"):
+                        context = hashlib.sha256(rulebook.encode())
+                        for path in sorted(ws.root.rglob("*")):
+                            if path.is_file():
+                                context.update(str(path.relative_to(ws.root)).encode())
+                                with path.open("rb") as stream:
+                                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                                        context.update(chunk)
+                        ws.cleaner_context = context.hexdigest()
+                        ws.cleaner_entities = []
+                        for table in ws.tables.values():
+                            for role, column in table.roles.items():
+                                if role in ("customer", "customer_code", "item", "item_code", "item_group") and column in table.df:
+                                    ws.cleaner_entities.extend(str(v) for v in table.df[column].dropna().unique()[:500])
+                        ws.cleaner_entities = sorted(set(ws.cleaner_entities))
+                    report_path = log_dir / f"shop_{_safe(q['business_id'])}_cleaning.json"
+                    if not getattr(ws, "cleaner_report_written", False):
+                        report_path.write_text(json.dumps(ws.cleaning_reports, ensure_ascii=False, indent=2), encoding="utf-8")
+                        ws.cleaner_report_written = True
+                q["cleaner"] = clean_question(q["question"], ws.cleaner_entities).to_dict()
             cand = None if args.candidate_policy == "off" else recipe_candidate(q, ws)
             if cand is not None and args.candidate_policy == "answer":
                 # a validated deterministic recipe covers this question: answer from it (no LLM call)
                 return finish(q, {"type": cand[0], "answer": cand[1], "reason": "recipe", "trace": [],
                                   "final_call": {"recipe": True}, "seconds": 0, "tokens": {}, "recipe_candidate": list(cand)})
+            if cleaner_llm is not None:
+                with shop_lock:
+                    if not hasattr(ws, "cleaner_shop_result"):
+                        ws.cleaner_shop_result = cleaner_llm.shop(ws, ws.cleaner_context, deadline - 60)
+                q["shop_cleaner_hints"], q["shop_cleaner_report"] = ws.cleaner_shop_result
+                if q["cleaner"]["ambiguous"]:
+                    from .cleaning import QuestionCleanResult
+                    result = cleaner_llm.question(QuestionCleanResult(**q["cleaner"]), ws.cleaner_context, deadline - 60)
+                    q["cleaner"] = result.to_dict()
             res = solve(q, ws, system, args.backend, args.model, args.min_confidence, deadline, rule_rows)
             if args.consistency > 1 and res["type"] not in (ABSTAIN,) and res.get("final_call"):
                 # candidates disagree -> abstain: a second independent attempt must reach the same answer
@@ -204,6 +281,7 @@ def main() -> None:
         return finish(q, res)
 
     def finish(q: dict, res: dict) -> dict:
+        res["total_seconds"] = round(time.monotonic() - q["_work_started"], 3)
         err = next((t["error"] for t in res["trace"] if "error" in t), None) if not res.get("final_call") else None
         if err:
             # backend failure, not a model decision: leave it out so a resumed run retries it
@@ -216,7 +294,9 @@ def main() -> None:
             writer.write(format_record(q["id"], res["type"], res["answer"], res.get("reason")))
         (log_dir / f"{_safe(q['id'])}.json").write_text(
             json.dumps({"id": q["id"], "business_id": q["business_id"], "as_of_date": q["as_of_date"],
-                        "question": q["question"], **res}, ensure_ascii=False, indent=1, default=str),
+                        "question": q["question"], "cleaner": q.get("cleaner"),
+                        "shop_cleaner_hints": q.get("shop_cleaner_hints"),
+                        "shop_cleaner_report": q.get("shop_cleaner_report"), **res}, ensure_ascii=False, indent=1, default=str),
             encoding="utf-8")
         return res
 
@@ -245,6 +325,9 @@ def main() -> None:
         log.info("GPU max %.0fC, paused %.0fs, tripped=%s", g.max_seen, g.paused_s, g.tripped.is_set())
         g.stop()
     writer.finalize([q["id"] for q in questions])
+    if cleaner_llm is not None:
+        (out.parent / "cleaner_usage.json").write_text(json.dumps(dict(calls=cleaner_llm.calls,
+            seconds=cleaner_llm.spent, budget=cleaner_llm.budget), indent=2), encoding="utf-8")
     log.info("done in %.1f min: %s -> %s (API cost reported: $%.4f)", (time.time() - t_start) / 60, counts, out, spent[0])
 
 

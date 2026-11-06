@@ -41,3 +41,11 @@ at 22k tokens), so bf16 LoRA fits a 40 GB A100.
 | Rented A100 80GB / H100 (RunPod, Vast, Lambda) | (none) | ~3-5 h, ~$8-12, no session limit |
 `--resume` reloads the newest `ckpt_step*` adapter in `--out`, fast-forwards the schedule and data order (same seed);
 optimizer moments restart (small approximation). Always write `--out` to Drive.
+
+## Optional speed-up (same training math)
+`--ckpt-over 12000` uses gradient checkpointing only for examples >= 12k tokens (G4 96 GB); shorter ones skip the
+~30% recompute. If an example still runs out of memory it is redone with checkpointing (accumulated gradients are
+restored first, so nothing is double-counted). Expected ~15% faster training updates. `--sketch-examples 256` halves the
+gradient-sketch passes (~30 min less). Progress lines now show peak GPU memory and the number of OOM redos.
+To switch a running job: wait for a `step X/Y` line (checkpoint saved), stop the cell, re-run step 2 (re-clone), set
+RESUME = True, and run step 6 with these flags added.

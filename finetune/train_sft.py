@@ -80,6 +80,8 @@ def main():
     ap.add_argument('--seed', type=int, default=20261106)
     ap.add_argument('--resume', action='store_true', help='continue from the latest ckpt_step* in --out')
     ap.add_argument('--four-bit', dest='four_bit', action='store_true', help='QLoRA (nf4) for 24 GB GPUs')
+    ap.add_argument('--ckpt-over', dest='ckpt_over', type=int, default=0,
+                    help='gradient checkpointing only for examples with >= N tokens (0 = always). 12000 suits 96 GB')
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -139,6 +141,7 @@ def main():
     def sketch_pass(tag):
         if not sketch:
             return
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
         model.train()
         # Stratified by (answer type, metric tag) so every skill group gets gradient sketches; same ids at mid and final.
         groups = {}
@@ -190,6 +193,7 @@ def main():
                     epoch += 1
                 order.pop()
             print(f'resumed from {ckpts[-1].name} (step {step}, epoch {epoch})', flush=True)
+    ckpt_on, oom_redo = [True], [0]
     model.train()
     while micro < total_micro:
         if not order:
@@ -198,9 +202,36 @@ def main():
             epoch += 1
         i = order.pop()
         d = data[i]
-        loss = example_loss(d)
-        (loss / a.grad_accum).backward()
-        exlog.write(json.dumps(dict(id=d['id'], epoch=epoch, micro=micro, loss=float(loss), gold_type=d['gold_type'])) + '\n')
+        # Gradient checkpointing only for long examples (same math, ~30% less recompute); OOM -> redo with checkpointing.
+        want_ckpt = a.ckpt_over <= 0 or len(d['ids']) >= a.ckpt_over
+        if want_ckpt != ckpt_on[0]:
+            if want_ckpt:
+                model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
+            else:
+                model.gradient_checkpointing_disable()
+            ckpt_on[0] = want_ckpt
+        # Without checkpointing an OOM may hit mid-backward after part of this example's gradient was accumulated:
+        # stash the accumulated LoRA grads (~43M floats) so the redo starts from exactly the pre-example state.
+        stash = None if ckpt_on[0] else [None if p.grad is None else p.grad.detach().clone() for p in params]
+        oom = False
+        try:
+            loss = example_loss(d)
+            (loss / a.grad_accum).backward()
+        except torch.cuda.OutOfMemoryError:
+            if ckpt_on[0]:
+                raise
+            oom = True  # redo OUTSIDE the except block, so the traceback no longer pins the failed activations
+        if oom:
+            loss = None
+            for p, g in zip(params, stash):
+                p.grad = g
+            torch.cuda.empty_cache()
+            model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
+            ckpt_on[0] = True
+            oom_redo[0] += 1
+            loss = example_loss(d)
+            (loss / a.grad_accum).backward()
+        exlog.write(json.dumps(dict(id=d['id'], epoch=epoch, micro=micro, loss=float(loss.detach()), gold_type=d['gold_type'])) + '\n')
         micro += 1
         if micro % a.grad_accum == 0:
             torch.nn.utils.clip_grad_norm_(params, 1.0)
@@ -208,16 +239,19 @@ def main():
             sched.step()
             opt.zero_grad(set_to_none=True)
             step += 1
-            log.write(json.dumps(dict(step=step, epoch=epoch, loss=float(loss), lr=sched.get_last_lr()[0], sec=time.time() - t0)) + '\n')
+            log.write(json.dumps(dict(step=step, epoch=epoch, loss=float(loss.detach()), lr=sched.get_last_lr()[0], sec=time.time() - t0,
+                                      oom_redo=oom_redo[0], gpu_peak_gb=round(torch.cuda.max_memory_allocated() / 2**30, 1))) + '\n')
             log.flush()
             exlog.flush()
             if step == 1:
                 print(f'first optimizer step after {time.time() - t0:.0f}s (if this is very slow, the linear-attention kernels are missing)', flush=True)
             if step % ckpt_every == 0:
                 model.save_pretrained(out / f'ckpt_step{step:05d}')
-                print(f'step {step}/{total_steps} loss {float(loss):.4f} ({time.time() - t0:.0f}s)', flush=True)
+                print(f'step {step}/{total_steps} loss {float(loss.detach()):.4f} ({time.time() - t0:.0f}s) '
+                      f'peak {torch.cuda.max_memory_allocated() / 2**30:.0f} GB, oom-redo {oom_redo[0]}', flush=True)
             if step == max(1, total_steps // 2):
                 sketch_pass('mid')
+                ckpt_on[0] = True  # sketch_pass leaves checkpointing on
     model.save_pretrained(out / 'final')
     tok.save_pretrained(out / 'final')
     sketch_pass('final')

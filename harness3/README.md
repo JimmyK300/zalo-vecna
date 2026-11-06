@@ -36,11 +36,23 @@ DeepSeek V4.1 Flash gets 97% in the same H1 harness, with SHORTER SQL (median 60
 subqueries and 3.8 turns vs 6-7: the gap is choosing the right prepared columns (`orders.in_revenue`,
 `revenue_lines`), not capacity. So the harness should remove mechanical failure modes, not add tools.
 
-## Evidence so far (honest)
-- Offline scripted tests pass (tool parsing, error hints, value coercion, overflow handling, unanswerable gate).
-- Paired H1 vs H3 vs H3b runs (60 validation-business questions + 20 unanswerable) were started but interrupted
-  (API credit ran out after a handful of items). Early H3 pairs: same accuracy as H1, zero invalid finals, but some
-  false `unanswerable` -> motivated H3b. **No H3b numbers yet.**
+## Evidence (stock Qwen3.5-9B via OpenRouter bf16, thinking off, greedy; 2026-11-06)
+80 questions = 60 from 3 held-out validation businesses (all answerable) + 20 unanswerable from train businesses.
+Same model/settings for all arms; paired.
+
+| Arm | All 80: right/wrong/abstain, PA | Answerable 60: right/wrong/abstain, PA | False "unanswerable" | Unanswerable detected | SQL errors (60) |
+|---|---|---|---:|---:|---:|
+| H1 (previous simple harness) | 22/58/0, -0.45 | 22/38/0, -0.267 | 0 | 0/20 | 42 |
+| H3 | 36/38/6, -0.025 | 20/36/4, -0.267 | 11 | 16/20 | 25 |
+| **H3b** | 34/38/8, -0.05 | **22/32/6, -0.167** | **6** | 12/20 | **16** |
+
+- Paired vs H1 on all 80: H3 23 vs 9 discordant (exact McNemar p=0.02), H3b 20 vs 8 (p=0.036); H3b vs H3 n.s.
+- The 80-mix is 25% unanswerable vs 2.3% in train, which flatters H3. Reweighted to the real 97.7/2.3 mix:
+  H1 ~ -0.28, H3 ~ -0.25, **H3b ~ -0.16 PA** (best: same accuracy as H1, fewer wrong via abstain, 60% fewer SQL errors).
+- Remaining weakness: 6/60 false "unanswerable" on answerable questions (each -1). Candidate next step: allow
+  `unanswerable` only when a query shows the requested period is outside the data range, or drop the tool.
+- Stock is only ~37% accurate here, so PA stays negative: a calibrated abstention policy and fine-tuning matter more
+  than the harness. The harness's job is removing mechanical failures, which it does.
 
 ## Running
 `python -m harness3.run --data <folder with questions.jsonl, rulebook.md, calendar.csv, data/> --out submission.jsonl`

@@ -29,3 +29,15 @@ Needs the DataMate train folder (`devkit/train`: questions.jsonl, answers.jsonl,
 ```
 Keep the fine-tune only if **real-mix PA with unanswerable->abstain** improves over the base on these questions
 (reference from the OpenRouter bf16 base: H3b + unanswerable->abstain real-mix PA = -0.073).
+
+## If the RTX PRO 6000 (G4) is not available
+The loss computes logits only at assistant positions (full-sequence logits over Qwen's 248k vocabulary would need ~20 GB
+at 22k tokens), so bf16 LoRA fits a 40 GB A100.
+| GPU | flags | 2 epochs, opt2 (28M tokens) |
+|---|---|---|
+| RTX PRO 6000 96 GB (G4) | (none) | ~5 h |
+| A100 40/80 GB | (none) | ~6-8 h — near the Colab session limit: rerun the same command with `--resume` after a disconnect |
+| L4 24 GB | `--four-bit` (QLoRA) | ~20 h — use opt1 and `--epochs 1` (~8-10 h) or rent a GPU |
+| Rented A100 80GB / H100 (RunPod, Vast, Lambda) | (none) | ~3-5 h, ~$8-12, no session limit |
+`--resume` reloads the newest `ckpt_step*` adapter in `--out`, fast-forwards the schedule and data order (same seed);
+optimizer moments restart (small approximation). Always write `--out` to Drive.

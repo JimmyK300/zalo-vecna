@@ -78,6 +78,8 @@ def main():
     ap.add_argument('--sketch-examples', type=int, default=512, help='examples per gradient-sketch pass (0 = off)')
     ap.add_argument('--limit', type=int, default=0, help='smoke test: use only N examples')
     ap.add_argument('--seed', type=int, default=20261106)
+    ap.add_argument('--resume', action='store_true', help='continue from the latest ckpt_step* in --out')
+    ap.add_argument('--four-bit', dest='four_bit', action='store_true', help='QLoRA (nf4) for 24 GB GPUs')
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -98,12 +100,29 @@ def main():
     print(f'{len(data)} examples, {sum(len(d["ids"]) for d in data):,} tokens, '
           f'{sum(sum(l != -100 for l in d["labels"]) for d in data):,} trained (assistant) tokens', flush=True)
 
-    model = AutoModelForCausalLM.from_pretrained(a.model, dtype=torch.bfloat16, device_map={'': 0}, attn_implementation='sdpa')
+    load = dict(dtype=torch.bfloat16, device_map={'': 0}, attn_implementation='sdpa')
+    if a.four_bit:  # QLoRA for 24 GB-class GPUs (L4); slower, slightly different numerics
+        from transformers import BitsAndBytesConfig
+        load['quantization_config'] = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type='nf4',
+                                                         bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(a.model, **load)
+    if a.four_bit:
+        from peft import prepare_model_for_kbit_training
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
     model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
     model.enable_input_require_grads()
     cfg = LoraConfig(r=a.rank, lora_alpha=a.alpha, lora_dropout=0.05, target_modules='all-linear', task_type='CAUSAL_LM')
     model = get_peft_model(model, cfg)
     model.print_trainable_parameters()
+
+    def example_loss(d):
+        """Next-token loss computing logits ONLY at positions that predict assistant tokens (identical loss, far less memory:
+        full-sequence logits over a 248k vocabulary would need ~20 GB at 22k tokens)."""
+        ids = torch.tensor([d['ids']], device=model.device)
+        lab = torch.tensor(d['labels'], device=model.device)
+        keep = (lab[1:] != -100).nonzero(as_tuple=True)[0]          # position t predicts token t+1
+        logits = model(input_ids=ids, logits_to_keep=keep).logits[0]  # [len(keep), vocab]
+        return torch.nn.functional.cross_entropy(logits.float(), lab[keep + 1])
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=a.lr, weight_decay=0.0, betas=(0.9, 0.999))
     total_micro = int(math.ceil(len(data) * a.epochs))
@@ -137,11 +156,8 @@ def main():
         idx = sorted(idx)
         vecs = []
         for i in idx:
-            d = data[i]
-            ids = torch.tensor([d['ids']], device=model.device)
-            lab = torch.tensor([d['labels']], device=model.device)
             model.zero_grad(set_to_none=True)
-            model(input_ids=ids, labels=lab).loss.backward()
+            example_loss(data[i]).backward()
             vecs.append(sketch())
         model.zero_grad(set_to_none=True)
         import numpy as np
@@ -155,6 +171,25 @@ def main():
     step, micro, t0 = 0, 0, time.time()
     order = []
     epoch = 0
+    if a.resume:
+        # Continue after a disconnect: load the latest checkpoint adapter, fast-forward step/scheduler and the data order
+        # (same seed => same shuffles). Optimizer moments restart (documented approximation).
+        ckpts = sorted(out.glob('ckpt_step*'))
+        if ckpts:
+            from peft import set_peft_model_state_dict
+            from safetensors.torch import load_file
+            set_peft_model_state_dict(model, load_file(str(ckpts[-1] / 'adapter_model.safetensors')))
+            step = int(ckpts[-1].name.replace('ckpt_step', ''))
+            micro = step * a.grad_accum
+            for _ in range(step):
+                sched.step()
+            for _ in range(micro):  # replay the order generator without training
+                if not order:
+                    order = list(range(len(data)))
+                    random.shuffle(order)
+                    epoch += 1
+                order.pop()
+            print(f'resumed from {ckpts[-1].name} (step {step}, epoch {epoch})', flush=True)
     model.train()
     while micro < total_micro:
         if not order:
@@ -163,9 +198,7 @@ def main():
             epoch += 1
         i = order.pop()
         d = data[i]
-        ids = torch.tensor([d['ids']], device=model.device)
-        lab = torch.tensor([d['labels']], device=model.device)
-        loss = model(input_ids=ids, labels=lab).loss
+        loss = example_loss(d)
         (loss / a.grad_accum).backward()
         exlog.write(json.dumps(dict(id=d['id'], epoch=epoch, micro=micro, loss=float(loss), gold_type=d['gold_type'])) + '\n')
         micro += 1

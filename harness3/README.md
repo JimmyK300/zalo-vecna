@@ -54,6 +54,15 @@ Same model/settings for all arms; paired.
 - Stock is only ~37% accurate here, so PA stays negative: a calibrated abstention policy and fine-tuning matter more
   than the harness. The harness's job is removing mechanical failures, which it does.
 
+## Update: H3c (negative) and the recommended submission policy
+- H3c showed per-table date coverage and accepted `unanswerable` only for a period fully outside it (otherwise
+  "REJECTED: query or abstain"). Result: false unanswerable 6 -> 0, but answerable correct 22 -> 14; the rejected
+  model committed to wrong answers instead of abstaining. Real-mix PA -0.42 (worse than H1). Not recommended.
+- **Recommended: H3b + submit any `unanswerable` as `abstain`.** At the real ~2.6% unanswerable rate (public reference
+  26/1000), the model's unanswerable calls are right only ~14% of the time (EV -0.72 vs 0 for abstain). Re-scoring the
+  same runs: real-mix PA H1 -0.29, H3b -0.155, **H3b + unanswerable->abstain -0.073** (chosen post hoc on these 80;
+  principled by base rates, still to be confirmed on fresh questions).
+
 ## Running
 `python -m harness3.run --data <folder with questions.jsonl, rulebook.md, calendar.csv, data/> --out submission.jsonl`
 Workspaces are built once per business with the repository loader (`harness3/workspace.py`) into `.h3_cache/`.

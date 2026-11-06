@@ -119,24 +119,58 @@ Use unanswerable when the data does not cover the requested period/field. Follow
 Query ONLY these tables: {tables}"""
 
 
-def schema_text(path):
+TOOLS_C = copy.deepcopy(TOOLS_B)
+TOOLS_C[2]['function'] = {
+    'name': 'unanswerable',
+    'description': ('ONLY when the requested period lies completely outside the data coverage shown for the tables. '
+                    'Give the requested period; the harness checks it against the data. Ends the task if confirmed.'),
+    'parameters': {'type': 'object', 'properties': {
+        'period_start': {'type': 'string', 'description': 'YYYY-MM-DD, first day the question asks about'},
+        'period_end': {'type': 'string', 'description': 'YYYY-MM-DD, last day the question asks about'},
+        'reason': {'type': 'string'}}, 'required': ['period_start', 'period_end', 'reason']}}
+
+SPEC_C_EXTRA = ("\n\nData coverage is computed from the data and shown as 'coverage' under each table; trust it over your own "
+                "date checks. unanswerable is only for a requested period completely outside that coverage. "
+                "If something else seems missing, query more or abstain.")
+
+
+def coverage(con, names):
+    """Min/max of every DATE/TIMESTAMP column per table (the shared calendar table is excluded)."""
+    out = {}
+    for n in names:
+        if n == 'calendar':
+            continue
+        for c, t, *_ in con.execute(f'DESCRIBE "{n}"').fetchall():
+            if str(t).upper().startswith(('DATE', 'TIMESTAMP')):
+                lo, hi = con.execute(f'SELECT MIN("{c}")::DATE, MAX("{c}")::DATE FROM "{n}"').fetchone()
+                if lo:
+                    out.setdefault(n, {})[c] = (str(lo), str(hi))
+    return out
+
+
+def schema_text(path, with_coverage=False):
     con = duckdb.connect(str(path), read_only=True, config={'threads': 1, 'memory_limit': '128MB', 'enable_external_access': False})
     try:
         names = [n for (n,) in con.execute('SHOW TABLES').fetchall()]
+        cov = coverage(con, names) if with_coverage else {}
         parts = []
         for n in names:
             cols = con.execute(f'DESCRIBE "{n}"').fetchall()
             rows = con.execute(f'SELECT * FROM "{n}" LIMIT 3').fetchall()
+            extra = ('\ncoverage: ' + ', '.join(f'{c} {lo} -> {hi}' for c, (lo, hi) in cov[n].items())) if n in cov else ''
             parts.append(f'TABLE {n}(' + ', '.join(f'{c[0]} {c[1]}' for c in cols) + ')\n3 rows: '
-                         + json.dumps(rows, ensure_ascii=False, default=serialize))
+                         + json.dumps(rows, ensure_ascii=False, default=serialize) + extra)
         return names, '\n\n'.join(parts)
     finally:
         con.close()
 
 
 def messages_for(question, path, docs, rulebook, variant='H3'):
-    names, schema = schema_text(path)
-    system = ((SPEC_B if variant == 'H3b' else SPEC).format(max_sql=MAX_SQL, tables=', '.join(names)) + '\n\n## Tables\n' + schema
+    names, schema = schema_text(path, with_coverage=variant == 'H3c')
+    spec = (SPEC_B if variant in ('H3b', 'H3c') else SPEC).format(max_sql=MAX_SQL, tables=', '.join(names))
+    if variant == 'H3c':
+        spec += SPEC_C_EXTRA
+    system = (spec + '\n\n## Tables\n' + schema
               + '\n\n## Task rulebook\n' + rulebook + '\n\n## Business documentation\n' + docs)
     user = json.dumps({k: question.get(k) for k in ('id', 'question', 'as_of_date')}, ensure_ascii=False)
     return [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}]
@@ -248,7 +282,7 @@ def lenient_json_answer(text, qid):
 
 
 def solve(question, messages, model, execute, variant='H3'):
-    tools = TOOLS_B if variant == 'H3b' else TOOLS
+    tools = TOOLS_C if variant == 'H3c' else TOOLS_B if variant == 'H3b' else TOOLS
     ok_sql = 0
     messages = [dict(m) for m in messages]
     trace, counts = [], dict(sql_calls=0, sql_errors=0, tool_format_errors=0, answer_value_errors=0, text_answers=0,
@@ -272,19 +306,24 @@ def solve(question, messages, model, execute, variant='H3'):
             obj = lenient_json_answer(text, question['id']) if not response.get('output_cap') else None
             if obj:
                 counts['text_answers'] += 1
+                messages.append(dict(role='assistant', content=text))
                 if obj['type'] == 'abstain':
                     prediction, stop = dict(id=question['id'], type='abstain', answer=None), 'abstain'
                     break
                 if obj['type'] == 'unanswerable':
-                    prediction, stop = dict(id=question['id'], type='unanswerable', answer=None, reason=str(obj.get('reason', ''))), 'unanswerable'
+                    if variant == 'H3c':  # unverified claim -> abstain
+                        prediction, stop = dict(id=question['id'], type='abstain', answer=None), 'unanswerable->abstain'
+                    else:
+                        prediction, stop = dict(id=question['id'], type='unanswerable', answer=None, reason=str(obj.get('reason', ''))), 'unanswerable'
                     break
                 ans, err = coerce(obj['type'], json.dumps(obj.get('answer'), ensure_ascii=False) if not isinstance(obj.get('answer'), str) else obj['answer'])
                 if not err:
                     prediction, stop = dict(id=question['id'], type=obj['type'], answer=ans), 'answer'
                     break
             counts['tool_format_errors'] += 1
-            messages += [dict(role='assistant', content=text),
-                         dict(role='user', content='Use exactly one tool call: sql, answer, unanswerable, or abstain.')]
+            if not (messages and messages[-1]['role'] == 'assistant' and messages[-1]['content'] == text):
+                messages.append(dict(role='assistant', content=text))
+            messages.append(dict(role='user', content='Use exactly one tool call: sql, answer, unanswerable, or abstain.'))
             continue
         name, args = calls[0]
         messages.append(dict(role='assistant', content=text))
@@ -316,6 +355,27 @@ def solve(question, messages, model, execute, variant='H3'):
                 continue
             prediction, stop = dict(id=question['id'], type=args['type'], answer=ans), 'answer'
             break
+        if name == 'unanswerable' and variant == 'H3c':
+            # Accept only a requested period entirely outside every transaction date column's coverage.
+            import datetime as _dt
+            spans = [(_dt.date.fromisoformat(a), _dt.date.fromisoformat(b))
+                     for t in coverage(execute.con, list(execute.tables)).values() for a, b in t.values()]
+            try:
+                ps = _dt.date.fromisoformat(str(args.get('period_start', '')).strip()[:10])
+                pe = _dt.date.fromisoformat(str(args.get('period_end', '')).strip()[:10])
+            except ValueError:
+                ps = pe = None
+            if ps and pe and spans and all(pe < a or ps > b for a, b in spans):
+                prediction, stop = dict(id=question['id'], type='unanswerable', answer=None, reason=args.get('reason', '')), 'unanswerable_verified'
+                break
+            counts['unanswerable_rejected'] = counts.get('unanswerable_rejected', 0) + 1
+            if not (ps and pe) or counts['unanswerable_rejected'] >= 2:
+                prediction, stop = dict(id=question['id'], type='abstain', answer=None), 'unanswerable->abstain'
+                break
+            lo, hi = min(a for a, _ in spans), max(b for _, b in spans)
+            messages.append(dict(role='tool', content=f'REJECTED: the data covers {lo} to {hi}, which overlaps your period. '
+                                                      'Query that period and answer, or abstain.'))
+            continue
         if name == 'unanswerable' and variant == 'H3b' and not ok_sql:
             counts['unanswerable_blocked'] = counts.get('unanswerable_blocked', 0) + 1
             messages.append(dict(role='tool', content='ERROR: check the data with sql first; unanswerable needs evidence from a query result.'))
@@ -330,5 +390,5 @@ def solve(question, messages, model, execute, variant='H3'):
         messages.append(dict(role='tool', content=f'Unknown tool {name}. Tools: sql, answer, unanswerable, abstain.'))
     if prediction is None:
         prediction, stop = dict(id=question['id'], type='abstain', answer=None), 'no_answer->abstain'
-    return dict(id=question['id'], prediction=prediction, stop=stop, trace=trace, counts=counts,
+    return dict(id=question['id'], prediction=prediction, stop=stop, trace=trace, counts=counts, messages=messages,
                 turns=sum(t['role'] == 'assistant' for t in trace))

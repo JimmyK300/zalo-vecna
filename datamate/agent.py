@@ -125,8 +125,15 @@ def solve(q: dict, ws: Workspace, system: str, backend: str, model: str | None,
     clean_text = ""
     if q.get("cleaner"):
         cleaned = q["cleaner"]
-        clean_text = ("\n# Auxiliary interpretation (unverified; original question controls)\n"
-                      + cleaned["normalized"] + "\nWarnings: " + str(cleaned["warnings"]))
+        clean_text = (
+            "\n# Auxiliary interpretation (unverified; original question controls)\n"
+            + cleaned.get("normalized_hint", cleaned["normalized"])
+            + "\nWarnings: " + str(cleaned["warnings"])
+        )
+    if q.get("grounding_hint"):
+        clean_text += "\n" + str(q["grounding_hint"])
+    if q.get("profiling_notes"):
+        clean_text += "\n# Data profiling warnings (verify in raw/cleaned tables)\n" + str(q["profiling_notes"])
     if q.get("shop_cleaner_hints"):
         clean_text += "\n# Unverified column hints (never override README/rulebook)\n" + str(q["shop_cleaner_hints"])
     user = (f"# Shop data ({q['business_id']})\n{ws.profile}\n\n{sem_text}{card}\n\n"

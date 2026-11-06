@@ -50,7 +50,15 @@ def _read_csv(path: Path) -> pd.DataFrame:
     last = None
     for enc in ("utf-8-sig", "utf-16", "cp1258", "latin1"):
         try:
-            return pd.read_csv(path, sep=None, engine="python", encoding=enc)
+            df_head = pd.read_csv(path, sep=None, engine="python", encoding=enc, dtype=str, nrows=500)
+            lz_cols = {
+                c: str
+                for c in df_head.columns
+                if df_head[c].dropna().astype(str).str.strip().str.match(r"^0\d+$").any()
+            }
+            if not lz_cols:
+                return pd.read_csv(path, sep=None, engine="python", encoding=enc)
+            return pd.read_csv(path, sep=None, engine="python", encoding=enc, dtype=lz_cols)
         except Exception as e:  # noqa: BLE001 - try the next encoding
             last = e
     raise last  # type: ignore[misc]
@@ -161,7 +169,7 @@ def _text_numbers_uniform(s: pd.Series) -> pd.Series | None:
     return s.map(conv)
 
 
-def _parse_date(v, default_year: int | None):
+def _parse_date(v, default_year: int | None, reject_ambiguous_slash: bool = False):
     if v is None or (isinstance(v, float) and np.isnan(v)):
         return pd.NaT
     if isinstance(v, (pd.Timestamp, datetime.datetime, datetime.date)):
@@ -170,7 +178,7 @@ def _parse_date(v, default_year: int | None):
         return pd.Timestamp("1899-12-30") + pd.Timedelta(days=float(v)) if 20000 < v < 80000 else pd.NaT
     t = str(v).strip()
     if re.fullmatch(r"\d{5}(\.\d+)?", t):
-        return _parse_date(float(t), default_year)
+        return _parse_date(float(t), default_year, reject_ambiguous_slash=reject_ambiguous_slash)
     m = YMD_RE.match(t)
     if m:
         y, mo, d, hh, mm, ss = m.groups()
@@ -178,8 +186,11 @@ def _parse_date(v, default_year: int | None):
     m = DMY_RE.match(t)
     if m:
         d, mo, y, hh, mm, ss = m.groups()
+        d_int, mo_int = int(d), int(mo)
+        if reject_ambiguous_slash and 1 <= d_int <= 12 and 1 <= mo_int <= 12 and d_int != mo_int:
+            return pd.NaT
         y = int(y) + (2000 if len(y) == 2 else 0) if y else default_year
-        return _ts(y, int(mo), int(d), hh, mm, ss) if y else pd.NaT
+        return _ts(y, mo_int, d_int, hh, mm, ss) if y else pd.NaT
     m = VN_MONTH_RE.match(t)
     if m:
         d, mo, y = m.groups()
@@ -197,8 +208,11 @@ def _ts(y, mo, d, hh=None, mm=None, ss=None):
 
 def clean_frame(df: pd.DataFrame, default_year: int | None = None) -> tuple[pd.DataFrame, list[str]]:
     """Light, rule-free cleaning. Raw columns are kept; derived columns are added:
-      <col>  text numbers converted in place (noted in the profile)
-      <col>__date  parsed datetime for messy date columns (dd/mm/yyyy, '1 thg 3 2025', Excel serials)"""
+      <col>  text numbers converted in place (noted in the profile; leading-zero codes never touched)
+      <col>__date  parsed datetime for messy date columns (dd/mm/yyyy, '1 thg 3 2025', Excel serials).
+      If a date column has conflicting DMY/MDY formats or only MDY dates, ambiguous slash dates are not guessed."""
+    from .cleaning import inspect_date_column
+
     notes = []
     for c in list(df.columns):
         s = df[c]
@@ -210,17 +224,25 @@ def clean_frame(df: pd.DataFrame, default_year: int | None = None) -> tuple[pd.D
                 continue
         if (_is_text(s) or pd.api.types.is_numeric_dtype(s)) and DATE_NAME_RE.search(str(c)) \
                 and not pd.api.types.is_datetime64_any_dtype(s):
-            parsed = s.map(lambda v: _parse_date(v, default_year))
+            d_info = inspect_date_column(s, default_year=default_year)
+            if d_info["has_mdy_only"]:
+                notes.append(f"{c}: non-DMY (MM/DD) date format detected; skipped automatic DMY coercion")
+                continue
+            reject_ambig = bool(d_info["has_conflicting_dmy_mdy"])
+            parsed = s.map(lambda v: _parse_date(v, default_year, reject_ambiguous_slash=reject_ambig))
             rate = parsed.notna().sum() / max(1, s.notna().sum())
             if rate >= 0.5:
                 df[f"{c}__date"] = pd.to_datetime(parsed)
-                notes.append(f"{c}: mixed date formats parsed into column '{c}__date' ({rate:.0%} parsed)")
+                extra_note = " (conflicting DMY/MDY ambiguous rows left NaT)" if reject_ambig else ""
+                notes.append(f"{c}: mixed date formats parsed into column '{c}__date' ({rate:.0%} parsed){extra_note}")
+            elif d_info["has_conflicting_dmy_mdy"]:
+                notes.append(f"{c}: conflicting DMY/MDY date formats; skipped '{c}__date' coercion")
     return df, notes
 
 
 def _read_excel(path: Path) -> dict[str, pd.DataFrame]:
     out = {}
-    for sheet, raw in pd.read_excel(path, sheet_name=None, header=None).items():
+    for sheet, raw in pd.read_excel(path, sheet_name=None, header=None, dtype=object).items():
         raw = raw.dropna(how="all").dropna(axis=1, how="all")
         if raw.empty:
             continue
@@ -232,12 +254,19 @@ def _read_excel(path: Path) -> dict[str, pd.DataFrame]:
             seen[name] = seen.get(name, 0) + 1
             cols.append(name if seen[name] == 1 else f"{name}_{seen[name]}")
         df.columns = cols
-        df = df.reset_index(drop=True).infer_objects()
-        for c in df.columns:  # numeric-looking object columns -> numbers
+        df = df.reset_index(drop=True)
+        for c in df.columns:  # numeric-looking object columns -> numbers, preserving leading-zero codes
             if _is_text(df[c]):
+                vals = df[c].dropna().astype(str).str.strip()
+                vals = vals[vals != ""]
+                if vals.empty or vals.str.match(r"^0\d+$").any():
+                    continue
                 conv = pd.to_numeric(df[c], errors="coerce")
                 if conv.notna().sum() >= 0.9 * df[c].notna().sum() > 0:
-                    df[c] = conv
+                    if conv.notna().all() and (conv == conv.round()).all():
+                        df[c] = conv.astype("int64")
+                    else:
+                        df[c] = conv
         out[sheet] = df
     return out
 
@@ -285,6 +314,7 @@ class Workspace:
     cleaner: bool = False
     raw_tables: dict = field(default_factory=dict)
     cleaning_reports: dict = field(default_factory=dict)
+    grounding_index: dict | None = None
 
     def _add(self, name: str, source: str, df: pd.DataFrame, clean: bool = True, shared: bool = False, raw=None) -> None:
         base, i = _slug(name), 2
@@ -294,14 +324,21 @@ class Workspace:
         df.columns = [str(c) for c in df.columns]
         original = (raw.copy(deep=True) if raw is not None else df.copy(deep=True)) if self.cleaner and not shared else None
         notes = []
+        yr_hint = _year_hint(source)
         if clean:
-            df, notes = clean_frame(df, _year_hint(source))
+            df, notes = clean_frame(df, yr_hint)
         self.tables[key] = TableInfo(key, source, df, notes, shared)
         if original is not None:
-            from .cleaning import column_reports
+            from .cleaning import profile_table
             self.raw_tables[key] = original
-            self.cleaning_reports[key] = dict(source=source, input_rows=len(original),
-                parsed_rows=len(df), columns=column_reports(original, df, notes))
+            self.cleaning_reports[key] = profile_table(
+                table_name=key,
+                source=source,
+                raw=original,
+                cleaned=df,
+                notes=notes,
+                default_year=yr_hint,
+            )
 
     def _add_sheets(self, stem: str, rel: str, sheets: dict[str, pd.DataFrame]) -> None:
         """Monthly sheets with the same columns become one table with a `_sheet` column."""
@@ -378,8 +415,13 @@ def load_workspace(root: Path, shared: dict[str, pd.DataFrame] | None = None,
     apply_conventions(own, ws.docs)
     if cleaner:
         for t in own:
-            ws.cleaning_reports[t.name]["final_source_rows"] = len(t.df)
-            ws.cleaning_reports[t.name]["row_delta_after_legacy_conventions"] = len(t.df) - ws.cleaning_reports[t.name]["input_rows"]
+            rep = ws.cleaning_reports.get(t.name)
+            if rep is not None:
+                rep["final_source_rows"] = len(t.df)
+                rep["row_delta_after_legacy_conventions"] = len(t.df) - rep["input_rows"]
+                rep["roles"] = dict(t.roles)
+                if "is_dup_line" in t.df.columns:
+                    rep["duplicates"]["same_order_duplicate_lines"] = int(t.df["is_dup_line"].sum())
     link_orders(own, rules)
     try:
         for name, odf in build_orders(ws).items():
@@ -424,6 +466,27 @@ def load_workspace(root: Path, shared: dict[str, pd.DataFrame] | None = None,
     except Exception as e:  # noqa: BLE001 - advisory only
         ws.semantic = None
         ws.errors.append(f"semantic model not built: {type(e).__name__}: {e}")
+    if cleaner:
+        if ws.semantic is not None and getattr(ws.semantic, "relations", None):
+            for r in ws.semantic.relations:
+                lt, lc = r.left
+                rt, rc = r.right
+                base_lt = lt.split(" (+")[0]
+                if base_lt in ws.cleaning_reports:
+                    ws.cleaning_reports[base_lt].setdefault("join_diagnostics", []).append({
+                        "left": f"{lt}.{lc}",
+                        "right": f"{rt}.{rc}",
+                        "cover_left": r.cover_l,
+                        "cover_right": r.cover_r,
+                        "fanout": r.fanout,
+                        "verdict": r.verdict,
+                        "has_unmatched_keys": bool(min(r.cover_l, r.cover_r) < 1.0),
+                    })
+        try:
+            from .cleaning import build_grounding_index
+            ws.grounding_index = build_grounding_index(ws)
+        except Exception:
+            ws.grounding_index = None
     ws.profile = build_profile(ws)
     return ws
 
@@ -454,7 +517,6 @@ def build_profile(ws: Workspace) -> str:
             if (pd.api.types.is_numeric_dtype(s) or pd.api.types.is_datetime64_any_dtype(s)) and nn:
                 extra = f" min={_fmt(s.min())} max={_fmt(s.max())}"
             elif _is_text(s) and nn:
-                # show values of different shapes, so messy formats are visible
                 shapes = s.dropna().astype(str).map(lambda v: re.sub(r"\d", "9", re.sub(r"[^\W\d_]+", "a", v)))
                 rare = s.dropna()[~shapes.duplicated()].astype(str).unique()[:6]
                 if len(rare) > 1:
@@ -490,7 +552,7 @@ class WorkspaceCache:
 
     def get(self, root: Path) -> Workspace:
         root = root.resolve()
-        with self._lock:  # one lock per business, so different businesses load in parallel
+        with self._lock:
             lock = self._locks.setdefault(root, threading.Lock())
         with lock:
             if root not in self._cache:

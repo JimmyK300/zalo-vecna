@@ -25,7 +25,7 @@ from .metrics import metric_candidate
 from .recipes import debt_candidate, debt_mentioned
 from .rules import active_rules
 from .workspace import WorkspaceCache
-from .cleaning import clean_question, VERSION
+from .cleaning import VERSION, clean_question, ground_question, render_grounding_hint
 
 log = logging.getLogger("datamate")
 
@@ -64,6 +64,23 @@ def stratified_sample(questions: list[dict], n: int, seed: int, gold_path: Path)
     return [q for t in sorted(pools) for q in pools[t][:quota[t]]]
 
 
+def _summarize_profiling_notes(cleaning_reports: dict) -> str:
+    """Render a compact summary of parse_failures and ambiguities from workspace profiling."""
+    notes = []
+    for tname, rep in (cleaning_reports or {}).items():
+        if not isinstance(rep, dict):
+            continue
+        for cp in rep.get("column_profiles", []):
+            col = cp.get("column", "")
+            for pf in cp.get("parse_failures", []):
+                notes.append(f"{tname}.{col}: {pf.get('kind')} ({pf.get('count')} rows)")
+            for amb in cp.get("ambiguities", []):
+                notes.append(f"{tname}.{col}: {amb.get('kind')} — {amb.get('description', '')}")
+    if not notes:
+        return ""
+    return "\n".join(f"- {n}" for n in notes[:8])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=os.environ.get("DATAMATE_DATA", "/data"))
@@ -71,7 +88,7 @@ def main() -> None:
     ap.add_argument("--backend", default=os.environ.get("DATAMATE_BACKEND", "anthropic"),
                     choices=["anthropic", "openai", "openrouter", "ollama", "codex", "opencode", "scripted"])
     ap.add_argument("--model", default=os.environ.get("DATAMATE_MODEL"))
-    ap.add_argument("--cleaner", choices=["off", "rules", "rules+llm"], default="rules")
+    ap.add_argument("--cleaner", choices=["off", "rules", "rules+llm", "rules+profile"], default="rules")
     ap.add_argument("--cleaner-url", default="http://127.0.0.1:8000/v1")
     ap.add_argument("--cleaner-budget-sec", type=float, default=900)
     ap.add_argument("--cleaner-timeout-sec", type=float, default=8)
@@ -195,6 +212,8 @@ def main() -> None:
         log.info("thermal guard on: %s, now %s", args.temp_limits, thermal.GUARD.gpu.read())
     halted: list[str] = []  # set once the backend is unusable (e.g. quota hit): stop burning questions
 
+    use_profile_grounding = (args.cleaner == "rules+profile") or (os.environ.get("DATAMATE_PROFILE_GROUNDING") == "1")
+
     def work(q: dict) -> dict:
         q = {**q, "_work_started": time.monotonic()}
         if halted:
@@ -226,6 +245,11 @@ def main() -> None:
                         report_path.write_text(json.dumps(ws.cleaning_reports, ensure_ascii=False, indent=2), encoding="utf-8")
                         ws.cleaner_report_written = True
                 q["cleaner"] = clean_question(q["question"], ws.cleaner_entities).to_dict()
+                if use_profile_grounding:
+                    grounding = ground_question(q["question"], ws)
+                    q["grounding"] = grounding
+                    q["grounding_hint"] = render_grounding_hint(grounding)
+                    q["profiling_notes"] = _summarize_profiling_notes(ws.cleaning_reports)
             cand = None if args.candidate_policy == "off" else recipe_candidate(q, ws)
             if cand is not None and args.candidate_policy == "answer":
                 # a validated deterministic recipe covers this question: answer from it (no LLM call)
@@ -295,6 +319,8 @@ def main() -> None:
         (log_dir / f"{_safe(q['id'])}.json").write_text(
             json.dumps({"id": q["id"], "business_id": q["business_id"], "as_of_date": q["as_of_date"],
                         "question": q["question"], "cleaner": q.get("cleaner"),
+                        "grounding": q.get("grounding"), "grounding_hint": q.get("grounding_hint"),
+                        "profiling_notes": q.get("profiling_notes"),
                         "shop_cleaner_hints": q.get("shop_cleaner_hints"),
                         "shop_cleaner_report": q.get("shop_cleaner_report"), **res}, ensure_ascii=False, indent=1, default=str),
             encoding="utf-8")

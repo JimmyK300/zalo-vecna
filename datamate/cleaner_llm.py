@@ -112,6 +112,8 @@ class CleanerLLM:
             result.llm.update(status="rejected", decision="rejected", reason="missing or invalid required field 'normalized'", proposal="")
             return result
         result.llm["proposal"] = proposal
+        result.llm_proposed = proposal
+        result.rules_normalized = rules_norm
         if "uncertain_spans" not in response:
             result.llm.update(status="rejected", decision="rejected", reason="missing required field 'uncertain_spans'")
             return result

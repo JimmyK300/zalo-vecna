@@ -94,7 +94,7 @@ def main():
     for r in rows:
         enc = assistant_mask_tokens(tok, r['messages'], r['tools'], a.thinking, a.max_len)
         if enc:
-            data.append(dict(id=r['id'], ids=enc[0], labels=enc[1], gold_type=r.get('gold_type')))
+            data.append(dict(id=r['id'], ids=enc[0], labels=enc[1], gold_type=r.get('gold_type'), tags=r.get('tags') or {}))
     print(f'{len(data)} examples, {sum(len(d["ids"]) for d in data):,} tokens, '
           f'{sum(sum(l != -100 for l in d["labels"]) for d in data):,} trained (assistant) tokens', flush=True)
 
@@ -111,7 +111,9 @@ def main():
     warm = max(1, int(0.03 * total_steps))
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / total_steps))))
     ckpt_every = max(1, total_steps // max(1, a.checkpoints))
-    json.dump(dict(vars(a), n_examples=len(data), total_steps=total_steps, lora=dict(r=a.rank, alpha=a.alpha, targets='all-linear')),
+    revision = getattr(model.config, '_commit_hash', None)
+    json.dump(dict(vars(a), n_examples=len(data), total_steps=total_steps, base_revision=revision,
+                   lora=dict(r=a.rank, alpha=a.alpha, targets='all-linear')),
               open(out / 'run_config.json', 'w'), indent=1)
     sketch = CountSketch(params, seed=a.seed) if a.sketch_examples else None
 
@@ -119,7 +121,20 @@ def main():
         if not sketch:
             return
         model.train()
-        idx = sorted(random.Random(a.seed).sample(range(len(data)), min(a.sketch_examples, len(data))))
+        # Stratified by (answer type, metric tag) so every skill group gets gradient sketches; same ids at mid and final.
+        groups = {}
+        for j, d in enumerate(data):
+            groups.setdefault((d['gold_type'], d['tags'].get('metric')), []).append(j)
+        rng = random.Random(a.seed)
+        for g in groups.values():
+            rng.shuffle(g)
+        idx, k = [], 0
+        while len(idx) < min(a.sketch_examples, len(data)):
+            for g in groups.values():
+                if k < len(g) and len(idx) < a.sketch_examples:
+                    idx.append(g[k])
+            k += 1
+        idx = sorted(idx)
         vecs = []
         for i in idx:
             d = data[i]
@@ -131,7 +146,8 @@ def main():
         model.zero_grad(set_to_none=True)
         import numpy as np
         np.save(out / f'grad_sketch_{tag}.npy', np.stack(vecs).astype('float16'))
-        json.dump([data[i]['id'] for i in idx], open(out / 'grad_index.json', 'w'))
+        json.dump([dict(id=data[i]['id'], gold_type=data[i]['gold_type'], tags=data[i]['tags']) for i in idx],
+                  open(out / 'grad_index.json', 'w'), ensure_ascii=False)
         print(f'gradient sketch {tag}: {len(idx)} examples', flush=True)
 
     log = open(out / 'train_log.jsonl', 'a')

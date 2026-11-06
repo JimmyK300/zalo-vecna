@@ -6,7 +6,7 @@ examples downsampled to ~2.5%, loss on assistant turns only. LoRA r=16, alpha=32
 2 epochs, lr 1e-4 cosine, 3% warmup, 16 conversations per step, max 30k tokens, bf16 + gradient checkpointing.
 Final checkpoint is used. The 3 validation businesses and the 80 eval questions (`eval80.json`) are never trained on.
 
-**Data file** (not in git: contains competition data rows): `sft_nothink.jsonl` — put it on Google Drive.
+**Data file** (not in git: contains competition data rows): `sft_nothink.jsonl` (each example has `tags`: period, metric, op, SQL features; used for stratified gradient sketches and weight-space analysis) — put it on Google Drive.
 
 ## Colab
 ```bash

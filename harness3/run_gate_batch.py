@@ -7,6 +7,7 @@ with merge_lora_full, scale alpha/r), THINK is on|off.
       stock_off=Qwen/Qwen3.5-9B:off ft1_s128=adapter:/content/drive/MyDrive/zalo_eval/ft1/s128.safetensors:off ...
 """
 import argparse
+import threading
 import queue as _queue
 import os
 import shutil
@@ -19,6 +20,9 @@ from pathlib import Path
 import requests
 
 BASE = 'Qwen/Qwen3.5-9B'
+# vLLM profiles free GPU memory at startup and aborts if another server frees memory meanwhile:
+# only one server may be starting up or shutting down at any time.
+GPU_LOCK = threading.Lock()
 
 
 def merged_dir(tag, adapter, cfg):
@@ -36,6 +40,8 @@ def run_one(spec, port, a):
     source, think = rest.rsplit(':', 1)
     model = merged_dir(tag, source[len('adapter:'):], a.adapter_config) if source.startswith('adapter:') else source
     log = open(f'/content/vllm_{tag}.log', 'w')
+    GPU_LOCK.acquire()
+    locked = True
     p = subprocess.Popen(['vllm', 'serve', model, '--port', str(port), '--dtype', 'bfloat16', '--max-model-len', '32768',
                           '--gpu-memory-utilization', str(a.mem), '--max-num-seqs', '28', '--seed', '47',
                           '--enable-prefix-caching', '--served-model-name', model,
@@ -46,6 +52,8 @@ def run_one(spec, port, a):
             time.sleep(5)
             try:
                 if requests.get(f'http://127.0.0.1:{port}/v1/models', timeout=5).ok:
+                    GPU_LOCK.release()
+                    locked = False
                     break
             except Exception:
                 pass
@@ -59,11 +67,15 @@ def run_one(spec, port, a):
             cmd.append('--thinking')
         subprocess.run(cmd, check=True)
     finally:
+        if not locked:
+            GPU_LOCK.acquire()
         p.terminate()
         try:
             p.wait(90)
         except Exception:
             p.kill()
+        time.sleep(5)
+        GPU_LOCK.release()
     if a.copy_to:
         os.makedirs(a.copy_to, exist_ok=True)
         for f in (f'{tag}.jsonl', f'{tag}.meta.json'):

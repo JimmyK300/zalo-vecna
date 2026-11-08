@@ -3,6 +3,9 @@
 Answers Vietnamese questions over messy business data (CSV / Excel / SQLite / docs).
 The LLM decides **how** to compute; DuckDB / pandas do the computing.
 
+**FT2 research update (2026-11-08):** [overnight results, checkpoint selection,
+weight-analysis preview and CPU limitations](docs/ft2/README.md).
+
 **Colab submission (GitHub + Drive, no new fine-tuning):** open
 [`notebooks/DataMate_Submission_Colab.ipynb`](notebooks/DataMate_Submission_Colab.ipynb)
 and follow [`SUBMISSION_GUIDE_VI.md`](notebooks/SUBMISSION_GUIDE_VI.md).

@@ -1,0 +1,1082 @@
+{
+  "version": 2,
+  "purpose": "Catalog ngữ nghĩa để ghép truy vấn DataMate và sinh câu hỏi có đáp án kiểm chứng được.",
+  "sources": {
+    "entities": "1_entities_catalog.json",
+    "shop_schema": "2_schema_and_capabilities.json",
+    "primitives": "query_rulebook.json",
+    "train": "train/rulebook.md",
+    "public_test": "public_test/rulebook.md",
+    "shop": "<dataset>/data/<business_id>/README.md"
+  },
+  "conventions": {
+    "precedence": "Điều kiện nói rõ trong câu hỏi được ưu tiên. Nếu câu hỏi không nêu, dùng luật ngành của bộ đang xét trước luật chung của bộ đó. README shop cung cấp cách đọc và nối dữ liệu.",
+    "scope": "Dùng Rulebook đúng bộ dữ liệu và primitive có scope tương ứng. Với luật ngành, đối chiếu industry_code và industry_primitive_group trong shop_bindings.",
+    "identifiers": "Nối hai catalog của nhóm bằng business_id. Lấy tên, mã và hệ số quy đổi ở catalog entity. Lấy bảng, cột, khả năng và khoảng dữ liệu ở schema của cùng shop.",
+    "plans": "operations chạy theo thứ tự. input trỏ tới facts (dữ liệu chọn theo entity hoặc metric, time và filters), baseline (dữ liệu đối chiếu theo baseline) hoặc id bước trước. Bước tổng hợp giữ khóa nhóm và đặt tên giá trị bằng id của bước. group_by rỗng nghĩa là tổng hợp toàn bộ đầu vào.",
+    "templates": "Thay tham số trước khi chạy mẫu. month, year, n và ngưỡng đếm là số nguyên. Các trường ngày dùng ISO YYYY-MM-DD. Top N yêu cầu n lớn hơn 0.",
+    "generation": "Chỉ ghép mẫu khi shop có dữ liệu và trường cần thiết. Kiểm tra kết quả trên dữ liệu thật trước khi dùng làm nhãn. Nếu mẫu không định nghĩa cách xử lý mẫu số 0, loại mẫu đó khỏi lượt sinh.",
+    "date_coverage": "as_of_date đến từ câu hỏi. Dùng date_coverage.min_order_date và max_order_date cho kỳ theo ngày đặt, readme_as_of_cutoff là mốc của dữ liệu shop. Với nghiệp vụ khác như nhập và giao, kiểm tra phạm vi bảng tương ứng.",
+    "eligibility": "Chỉ sinh truy vấn khi capabilities của shop thỏa requires_capabilities của metric, intent và mẫu. Sau đó kiểm tra bảng/cột và khoảng ngày. Với câu hỏi có sẵn mà nguồn thiếu thông tin, áp data_coverage.",
+    "industry_bindings": "shop_bindings là ánh xạ cho schema mà nhóm cung cấp. Kiểm tra bảng thực tế trước khi chạy, kể cả bảng đã qua bước chuẩn hoá.",
+    "primitive_sql": "Các đoạn sql trong query_rulebook là công thức hoặc mẫu SQL. Tên bảng chuẩn bị và trường logic cần được ánh xạ sang schema thật trước khi chạy.",
+    "shop_bindings": "shop_bindings bổ sung các ánh xạ đặc thù cho 8 shop thuộc 6 nhóm ngành. Các shop còn lại dùng schema và luật chung. Các file 1 và 2 được cung cấp riêng."
+  },
+  "query_fields": {
+    "entity": "Loại đối tượng truy vấn. Tên hoặc mã cụ thể nằm trong filters.",
+    "metric": "Chỉ số mặc định lấy từ metrics. Bỏ qua cho truy vấn chỉ lấy thuộc tính.",
+    "time": "Danh sách phạm vi thời gian. Mỗi phần tử có mode và field, ví dụ order_date hoặc delivery_date. period dùng tên primitive ở nhóm thời gian. Khi gọi datamate.primitives.period, dùng runtime_kind nếu có, và truyền end_date làm mốc cho until_date_X.",
+    "filters": "Điều kiện trên dữ liệu trước khi tổng hợp. Điều kiện sau tổng hợp đặt ở bước filter trong operations.",
+    "group_by": "Khóa nhóm hoặc biểu thức chia nhóm. Bước tổng hợp có thể chỉ rõ nhóm riêng.",
+    "operations": "Các bước tính, lọc sau tổng hợp, xếp hạng hoặc chọn trường trả về.",
+    "baseline": "Kỳ đối chiếu hoặc quần thể mẫu số. Giữ hoặc bỏ từng điều kiện lọc tùy câu hỏi.",
+    "output": "Kiểu đáp án, trường trả về, thứ tự cột hoặc thứ tự phần tử khi cần. Dùng khóa nhóm để tra lại tên hiển thị trong catalog hoặc dữ liệu shop.",
+    "rule_refs": "Tên primitive hoặc khóa nhóm ngành trong query_rulebook.json.",
+    "business_id": "Khóa để tra entity và schema của shop cho truy vấn thực tế. Điền khi sinh từ mẫu hoặc lấy từ câu hỏi đầu vào."
+  },
+  "entities": {
+    "shop": "Một business_id.",
+    "product": "Mặt hàng, món hoặc SKU. Dùng mã nếu shop có mã.",
+    "product_group": "Nhóm hàng theo giá trị ghi trong cột nhóm hàng.",
+    "batch": "Lô hàng gắn với mặt hàng, có hạn dùng nếu dữ liệu ghi.",
+    "customer": "Khách đã định danh theo luật customer_identity.",
+    "customer_group": "Nhóm khách ghi trong dữ liệu.",
+    "order": "Một đơn theo khóa đơn của shop. Một đơn có thể có nhiều dòng.",
+    "sales_channel": "Kênh bán ghi trên đơn.",
+    "payment_method": "Hình thức thanh toán ghi trên đơn.",
+    "employee": "Nhân viên, người bán hoặc thợ theo sổ của shop.",
+    "supplier": "Nhà cung cấp của phiếu nhập.",
+    "purchase_receipt": "Phiếu nhập hàng theo khóa phiếu.",
+    "delivery": "Đợt giao theo khóa đơn và số đợt.",
+    "vehicle": "Xe định danh theo biển số tại tiệm sửa xe.",
+    "service_ticket": "Một phiếu hoặc lượt xe trong sổ sửa xe.",
+    "device": "Máy theo định danh shop, chẳng hạn IMEI.",
+    "day": "Ngày lịch.",
+    "hour_of_day": "Khung một giờ tròn trong ngày."
+  },
+  "time_modes": {
+    "period": "Khoảng phát sinh, tính cả ngày đầu và ngày cuối.",
+    "relative_period": "Kỳ tính từ as_of_date, như tháng này, tuần trước hoặc N ngày gần nhất.",
+    "as_of": "Trạng thái cuối ngày, tính các phát sinh từ đầu dữ liệu tới hết ngày chốt.",
+    "event_window": "Khoảng quanh một sự kiện xác định từ dữ liệu, như lần tăng giá đầu tiên lên mức giá được hỏi."
+  },
+  "operations": {
+    "sum": "Cộng giá trị theo nhóm đã chọn.",
+    "count_distinct": "Đếm khóa khác nhau ở đúng cấp dữ liệu, như mã đơn, ngày mua hoặc biển số.",
+    "mean": "Trung bình theo tập quan sát đã xác định.",
+    "weighted_mean": "Tổng giá trị nhân trọng số chia tổng trọng số.",
+    "filter": "Giữ bản ghi hoặc nhóm thỏa điều kiện, như order_count >= 4.",
+    "exists": "Kiểm tra có bản ghi hoặc nhóm thỏa điều kiện.",
+    "set_difference": "Giữ đối tượng thuộc tập thứ nhất và không thuộc tập thứ hai.",
+    "top_n": "Sắp xếp theo tiêu chí và chiều đã chọn, áp dụng luật đồng hạng rồi lấy tối đa n đối tượng.",
+    "difference": "Giá trị kỳ hỏi trừ giá trị kỳ so.",
+    "share_percent": "100 nhân tử số chia mẫu số. Tử và mẫu có thể có bộ lọc khác nhau.",
+    "change_percent": "100 nhân chênh lệch giữa kỳ hỏi và kỳ so chia giá trị kỳ so.",
+    "strictly_increasing": "Kiểm tra các giá trị theo thứ tự thời gian, mỗi giá trị sau lớn hơn giá trị trước.",
+    "select": "Trả trường hoặc các trường được hỏi từ đối tượng đã chọn."
+  },
+  "output_types": {
+    "number": "Số JSON. Tiền làm tròn tới đồng, các giá trị trung bình khác theo Rulebook.",
+    "percent": "Số JSON theo đơn vị phần trăm, ví dụ 12,4% trả 12.4. Giữ dấu âm của mức giảm và làm tròn 2 chữ số thập phân.",
+    "boolean": "true hoặc false.",
+    "date": "YYYY-MM-DD hoặc YYYY-MM nếu hỏi theo tháng.",
+    "string": "Tên đúng theo dữ liệu shop hoặc mã hợp lệ theo Rulebook.",
+    "list": "Mảng theo thứ tự câu hỏi hoặc quy tắc sắp xếp, kể cả khi chỉ có một phần tử.",
+    "table": "Đối tượng có columns và rows. Cột đầu là tên đối tượng, các cột sau theo thứ tự số đo được hỏi.",
+    "unanswerable": "Dùng khi dữ liệu phát hành không đủ, theo luật data_coverage."
+  },
+  "shop_bindings": {
+    "dev_002": {
+      "industry_code": "coffee_tea",
+      "tables": {
+        "sales_lines": {
+          "table": "lines_unpacked",
+          "columns": {
+            "item": "item",
+            "item_code": "item_code",
+            "quantity_sold": "qty_base",
+            "revenue": "amount",
+            "order_date": "order_date"
+          }
+        }
+      },
+      "industry_primitive_group": "coffee_tea (dev_002)"
+    },
+    "dev_004": {
+      "industry_code": "building_materials",
+      "tables": {
+        "orders": {
+          "table": "orders",
+          "columns": {
+            "order_id": "order_id",
+            "order_date": "order_date"
+          }
+        },
+        "deliveries": {
+          "table": "sogiaohang",
+          "columns": {
+            "order_id": "so_don",
+            "delivery_number": "luot_giao",
+            "delivery_date": "thoi_gian_giao__date",
+            "delivered_quantity": "so_luong_giao",
+            "product": "hang_hoa",
+            "base_unit": "dv_goc"
+          }
+        }
+      },
+      "industry_primitive_group": "building_materials (dev_004)"
+    },
+    "dev_005": {
+      "industry_code": "pharmacy_excel",
+      "tables": {
+        "pharmacy_product": {
+          "table": "danhsachthuoc",
+          "columns": {
+            "product_code": "ma_sku",
+            "active_ingredient": "hoat_chat",
+            "is_prescription": "thuoc_ke_don"
+          }
+        }
+      },
+      "industry_primitive_group": "pharmacy (dev_005, dev_006)"
+    },
+    "dev_006": {
+      "industry_code": "pharmacy_sqlite",
+      "tables": {
+        "pharmacy_product": {
+          "table": "thong_tin_thuoc",
+          "columns": {
+            "product_code": "mahanghoa",
+            "active_ingredient": "thanhphanchinh",
+            "is_prescription": "bantheodon"
+          }
+        }
+      },
+      "industry_primitive_group": "pharmacy (dev_005, dev_006)"
+    },
+    "dev_011": {
+      "industry_code": "phone_shop_basic",
+      "tables": {
+        "sales_lines": {
+          "table": "lines_enriched",
+          "columns": {
+            "item": "ten_day_du",
+            "device_condition": "loai_hang",
+            "device_model": "dong_may",
+            "brand": "hang_sx",
+            "quantity_sold": "qty_base",
+            "order_date": "order_date"
+          }
+        }
+      },
+      "industry_primitive_group": "phone_shop (dev_011, dev_014)"
+    },
+    "dev_012": {
+      "industry_code": "motorbike_repair",
+      "tables": {
+        "tickets": {
+          "table": "phieu_sua_xe",
+          "columns": {
+            "service_ticket_id": "phieu_id",
+            "service_date": "ngay__date",
+            "plate": "bien_so",
+            "mechanic": "ho_ten_tho",
+            "amount": "tien",
+            "is_warranty": "is_bao_hanh",
+            "is_paid": "co_thu_tien"
+          }
+        },
+        "jobs": {
+          "table": "viec_sua_xe",
+          "columns": {
+            "service_ticket_id": "phieu_id",
+            "service_date": "ngay__date",
+            "job": "nhom_viec_chuan",
+            "count_as_job": "tinh_luot_lam_viec"
+          }
+        }
+      },
+      "industry_primitive_group": "motorbike_repair (dev_012)"
+    },
+    "dev_013": {
+      "industry_code": "mother_and_baby",
+      "tables": {
+        "sales_lines": {
+          "table": "lines_clean",
+          "columns": {
+            "item": "item",
+            "item_code": "item_code",
+            "quantity_sold": "qty_base",
+            "revenue": "amount",
+            "order_date": "order_date"
+          }
+        },
+        "adjustments": {
+          "table": "order_adjustments",
+          "columns": {
+            "order_date": "order_date",
+            "in_revenue": "in_revenue",
+            "voucher_discount": "voucher_discount",
+            "points_discount": "points_discount",
+            "shipping_fee": "ship_fee"
+          }
+        },
+        "products": {
+          "table": "quanly_danhmuc",
+          "columns": {
+            "product_name": "ten_hang",
+            "product_group": "nhom",
+            "size": "so_size",
+            "brand": "hang"
+          }
+        },
+        "members": {
+          "table": "quanly_khachhang",
+          "columns": {
+            "registration_date": "ngay_dang_ky__date"
+          }
+        }
+      },
+      "industry_primitive_group": "mother_and_baby (dev_013)"
+    },
+    "dev_014": {
+      "industry_code": "phone_shop_full",
+      "tables": {
+        "sales_lines": {
+          "table": "lines_enriched",
+          "columns": {
+            "item": "ten_day_du",
+            "device_condition": "loai_hang",
+            "device_model": "dong_may",
+            "brand": "hang_sx",
+            "quantity_sold": "qty_base",
+            "order_date": "order_date"
+          }
+        },
+        "normal_debt": {
+          "table": "sono_so_no",
+          "columns": {
+            "order_date": "ngay__date",
+            "payment_date": "ngay_tra__date",
+            "amount_paid": "da_tra",
+            "initial_debt": "no"
+          }
+        },
+        "installments": {
+          "table": "sono_tra_gop",
+          "columns": {
+            "contract_id": "order_key",
+            "purchase_date": "ngay__date",
+            "payment_date": "ngay_gop__date",
+            "amount_paid": "da_gop",
+            "installment_count": "so_ky",
+            "installment_amount": "gop_thang",
+            "due_day_of_month": "han_gop_ngay"
+          }
+        },
+        "warranty": {
+          "table": "sono_bao_hanh",
+          "columns": {
+            "received_date": "ngay_nhan__date",
+            "imei": "imei"
+          }
+        },
+        "trade_in": {
+          "table": "thumaycu",
+          "columns": {
+            "order_ref": "tru_vao_stt_so_ban",
+            "trade_in_value": "gia_thu"
+          }
+        }
+      },
+      "industry_primitive_group": "phone_shop (dev_011, dev_014)"
+    }
+  },
+  "metrics": {
+    "revenue": {
+      "grain": "order_or_sale_line",
+      "time_field": "order_date",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "order_revenue"
+      ],
+      "grain_note": "Tổng theo đơn dùng revenue_lines nếu schema shop có và hỗ trợ. Theo mặt hàng phải dùng cấp dòng đúng bảng của shop."
+    },
+    "gross_profit": {
+      "grain": "sale_line",
+      "time_field": "order_date",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "gross_profit"
+      ],
+      "requires_capabilities": [
+        "has_cost_or_margin",
+        "has_item_lines"
+      ]
+    },
+    "net_profit": {
+      "grain": "month",
+      "time_field": "month",
+      "unit": "VND",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "gross_profit",
+        "net_profit_month"
+      ],
+      "requires_capabilities": [
+        "has_cost_or_margin",
+        "has_item_lines",
+        "has_expense_book"
+      ]
+    },
+    "quantity_sold": {
+      "grain": "sale_line",
+      "time_field": "order_date",
+      "unit": "base_unit",
+      "default_operation": "sum",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "unit_conversion"
+      ],
+      "requires_capabilities": [
+        "has_item_lines"
+      ]
+    },
+    "order_count": {
+      "grain": "order",
+      "time_field": "order_date",
+      "distinct_key": "order_id",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "source_grain"
+      ]
+    },
+    "cancelled_order_count": {
+      "grain": "order",
+      "time_field": "order_date",
+      "distinct_key": "order_id",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "cancellation_rate"
+      ]
+    },
+    "buyer_count": {
+      "grain": "customer",
+      "time_field": "order_date",
+      "distinct_key": "customer_id",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "customer_identity",
+        "distinct_buying_customers"
+      ]
+    },
+    "purchase_day_count": {
+      "grain": "order",
+      "time_field": "order_date",
+      "distinct_key": "order_date",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "customer_identity"
+      ]
+    },
+    "average_order_value": {
+      "grain": "order",
+      "time_field": "order_date",
+      "unit": "VND",
+      "default_operation": "mean",
+      "rule_refs": [
+        "valid_revenue_orders",
+        "order_revenue",
+        "avg_order_value"
+      ]
+    },
+    "debt_balance": {
+      "grain": "order",
+      "time_mode": "as_of",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "order_owed_at_date_X",
+        "total_debt_at_date_X"
+      ],
+      "requires_capabilities": [
+        "has_debt"
+      ]
+    },
+    "debt_added": {
+      "grain": "order",
+      "time_field": "order_date",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "debt_movements_in_period",
+        "debt_age_days"
+      ],
+      "requires_capabilities": [
+        "has_debt"
+      ]
+    },
+    "debt_collected": {
+      "grain": "debt_payment",
+      "time_field": "payment_date",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "debt_movements_in_period",
+        "debt_age_days"
+      ],
+      "requires_capabilities": [
+        "has_debt"
+      ]
+    },
+    "purchase_spend": {
+      "grain": "purchase_receipt",
+      "time_field": "receipt_date",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "purchase_amount_in_period"
+      ],
+      "source_note": "Kiểm tra bảng phiếu nhập và ngày phiếu trong schema. Catalog nhóm không có cờ has_purchase riêng."
+    },
+    "purchase_receipt_count": {
+      "grain": "purchase_receipt",
+      "time_field": "receipt_date",
+      "distinct_key": "receipt_id",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "purchase_receipt_count"
+      ],
+      "source_note": "Kiểm tra bảng phiếu nhập và ngày phiếu trong schema. Catalog nhóm không có cờ has_purchase riêng."
+    },
+    "inventory_quantity": {
+      "grain": "product",
+      "time_mode": "as_of",
+      "unit": "base_unit",
+      "rule_refs": [
+        "inventory_at_day_end",
+        "unit_conversion"
+      ],
+      "requires_capabilities": [
+        "has_inventory"
+      ]
+    },
+    "inventory_value": {
+      "grain": "product",
+      "time_mode": "as_of",
+      "unit": "VND",
+      "default_operation": "sum",
+      "rule_refs": [
+        "inventory_value_end_of_day"
+      ],
+      "requires_capabilities": [
+        "has_inventory",
+        "has_cost_or_margin"
+      ]
+    },
+    "delivered_quantity": {
+      "grain": "delivery_line",
+      "time_field": "delivery_date",
+      "unit": "base_unit",
+      "default_operation": "sum",
+      "rule_refs": [
+        "building_materials (dev_004)",
+        "unit_conversion"
+      ],
+      "requires_capabilities": [
+        "has_delivery_trips"
+      ]
+    },
+    "delivery_count": {
+      "grain": "delivery",
+      "time_field": "delivery_date",
+      "distinct_key": [
+        "order_id",
+        "delivery_number"
+      ],
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "building_materials (dev_004)"
+      ],
+      "requires_capabilities": [
+        "has_delivery_trips"
+      ]
+    },
+    "service_visit_count": {
+      "grain": "service_ticket",
+      "time_field": "service_date",
+      "distinct_key": "service_ticket_id",
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "motorbike_repair (dev_012)"
+      ],
+      "requires_capabilities": [
+        "is_motorbike_repair"
+      ]
+    },
+    "overdue_installment_count": {
+      "grain": "installment",
+      "time_mode": "as_of",
+      "distinct_key": [
+        "contract_id",
+        "installment_number"
+      ],
+      "default_operation": "count_distinct",
+      "rule_refs": [
+        "phone_shop (dev_011, dev_014)"
+      ],
+      "requires_capabilities": [
+        "has_installments"
+      ]
+    }
+  },
+  "intents": {
+    "best_selling_product": {
+      "phrases": [
+        "bán chạy nhất",
+        "bán được nhiều nhất",
+        "hot nhất"
+      ],
+      "entity": "product",
+      "metric": "quantity_sold",
+      "rule_refs": [
+        "best_selling_items",
+        "result_order"
+      ]
+    },
+    "most_profitable_product": {
+      "phrases": [
+        "hàng lời nhất"
+      ],
+      "entity": "product",
+      "metric": "gross_profit",
+      "rule_refs": [
+        "gross_profit",
+        "eligible_ranked_product",
+        "result_order"
+      ]
+    },
+    "highest_spending_customer": {
+      "phrases": [
+        "khách mua nhiều tiền nhất"
+      ],
+      "entity": "customer",
+      "metric": "revenue",
+      "rule_refs": [
+        "customer_identity",
+        "result_order"
+      ]
+    },
+    "top_employee_sales": {
+      "phrases": [
+        "nhân viên bán giỏi nhất"
+      ],
+      "entity": "employee",
+      "metric": "revenue",
+      "rule_refs": [
+        "order_revenue",
+        "result_order"
+      ]
+    },
+    "largest_supplier_spend": {
+      "phrases": [
+        "nhà cung cấp nhập nhiều nhất"
+      ],
+      "entity": "supplier",
+      "metric": "purchase_spend",
+      "rule_refs": [
+        "purchase_amount_in_period",
+        "result_order",
+        "main_supplier_vs_top_amount_supplier"
+      ]
+    },
+    "main_supplier": {
+      "phrases": [
+        "nhà cung cấp chính"
+      ],
+      "scope": "public_test",
+      "section": "§5",
+      "entity": "supplier",
+      "metric": "purchase_receipt_count",
+      "rule_refs": [
+        "purchase_amount_in_period",
+        "result_order",
+        "main_supplier_vs_top_amount_supplier"
+      ]
+    },
+    "most_popular_product": {
+      "phrases": [
+        "mặt hàng được ưa chuộng nhất"
+      ],
+      "scope": "public_test",
+      "entity": "product",
+      "metric": "order_count",
+      "rule_refs": [
+        "most_popular_item_by_orders",
+        "eligible_ranked_product",
+        "result_order"
+      ],
+      "requires_capabilities": [
+        "has_item_lines"
+      ]
+    },
+    "most_loyal_customer": {
+      "phrases": [
+        "khách trung thành nhất"
+      ],
+      "scope": "public_test",
+      "entity": "customer",
+      "metric": "purchase_day_count",
+      "rule_refs": [
+        "customer_identity",
+        "customer_rankings",
+        "result_order"
+      ]
+    },
+    "highest_average_basket_customer": {
+      "phrases": [
+        "khách sộp nhất"
+      ],
+      "scope": "public_test",
+      "entity": "customer",
+      "metric": "average_order_value",
+      "after_aggregate_filter": {
+        "field": "order_count",
+        "operator": ">=",
+        "value": 3
+      },
+      "rule_refs": [
+        "customer_identity",
+        "customer_rankings",
+        "result_order",
+        "avg_order_value"
+      ]
+    },
+    "customer_with_most_cancellations": {
+      "phrases": [
+        "khách hay đổi ý nhất"
+      ],
+      "scope": "public_test",
+      "entity": "customer",
+      "metric": "cancelled_order_count",
+      "rule_refs": [
+        "customer_identity",
+        "customer_rankings",
+        "result_order"
+      ]
+    },
+    "busiest_day": {
+      "phrases": [
+        "ngày đắt khách nhất"
+      ],
+      "scope": "public_test",
+      "entity": "day",
+      "metric": "order_count",
+      "rule_refs": [
+        "busiest_day",
+        "result_order"
+      ]
+    },
+    "peak_hour": {
+      "phrases": [
+        "giờ cao điểm"
+      ],
+      "scope": "public_test",
+      "entity": "hour_of_day",
+      "metric": "order_count",
+      "rule_refs": [
+        "peak_hour",
+        "result_order"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "id": "top_products",
+      "question_template": "Tháng {month}/{year}, {n} món nào bán chạy nhất?",
+      "entity": "product",
+      "metric": "quantity_sold",
+      "time": [
+        {
+          "mode": "period",
+          "field": "order_date",
+          "period": "month_M_Y",
+          "month": "{month}",
+          "year": "{year}"
+        }
+      ],
+      "group_by": [
+        "product_id"
+      ],
+      "operations": [
+        {
+          "id": "volume",
+          "op": "sum",
+          "input": "facts",
+          "value": "quantity_sold"
+        },
+        {
+          "id": "leaders",
+          "op": "top_n",
+          "input": "volume",
+          "by": "volume",
+          "direction": "desc",
+          "n": "{n}"
+        }
+      ],
+      "output": {
+        "type": "list",
+        "fields": [
+          "product_name"
+        ]
+      },
+      "rule_refs": [
+        "best_selling_items",
+        "result_order"
+      ]
+    },
+    {
+      "id": "repeat_buyer_share",
+      "question_template": "Trong tháng {month}/{year}, khách mua từ {min_orders} đơn trở lên chiếm bao nhiêu phần trăm số khách đã mua?",
+      "entity": "customer",
+      "metric": "order_count",
+      "time": [
+        {
+          "mode": "period",
+          "field": "order_date",
+          "period": "month_M_Y",
+          "month": "{month}",
+          "year": "{year}"
+        }
+      ],
+      "filters": [
+        {
+          "field": "customer_id",
+          "operator": "is_known"
+        }
+      ],
+      "group_by": [
+        "customer_id"
+      ],
+      "baseline": {
+        "description": "Tất cả khách đã mua trong cùng kỳ, không áp ngưỡng số đơn."
+      },
+      "operations": [
+        {
+          "id": "orders_per_customer",
+          "op": "count_distinct",
+          "input": "facts",
+          "value": "order_id",
+          "group_by": [
+            "customer_id"
+          ]
+        },
+        {
+          "id": "repeat_buyers",
+          "op": "filter",
+          "input": "orders_per_customer",
+          "condition": {
+            "field": "orders_per_customer",
+            "operator": ">=",
+            "value": "{min_orders}"
+          }
+        },
+        {
+          "id": "numerator",
+          "op": "count_distinct",
+          "input": "repeat_buyers",
+          "value": "customer_id",
+          "group_by": []
+        },
+        {
+          "id": "denominator",
+          "op": "count_distinct",
+          "input": "orders_per_customer",
+          "value": "customer_id",
+          "group_by": []
+        },
+        {
+          "id": "share",
+          "op": "share_percent",
+          "numerator": "numerator",
+          "denominator": "denominator"
+        }
+      ],
+      "output": {
+        "type": "percent",
+        "fields": [
+          "share"
+        ]
+      },
+      "rule_refs": [
+        "valid_revenue_orders",
+        "customer_identity"
+      ]
+    },
+    {
+      "id": "month_to_date_growth",
+      "question_template": "Doanh thu từ đầu tháng tới hôm nay tăng hay giảm bao nhiêu phần trăm so với cùng kỳ tháng trước?",
+      "entity": "shop",
+      "metric": "revenue",
+      "time": [
+        {
+          "mode": "relative_period",
+          "field": "order_date",
+          "period": "this_month",
+          "anchor": "{as_of_date}"
+        }
+      ],
+      "baseline": {
+        "time": [
+          {
+            "mode": "relative_period",
+            "field": "order_date",
+            "period": "last_month_same_days",
+            "anchor": "{as_of_date}"
+          }
+        ]
+      },
+      "operations": [
+        {
+          "id": "current_revenue",
+          "op": "sum",
+          "input": "facts",
+          "value": "revenue"
+        },
+        {
+          "id": "prior_revenue",
+          "op": "sum",
+          "input": "baseline",
+          "value": "revenue"
+        },
+        {
+          "id": "growth",
+          "op": "change_percent",
+          "current": "current_revenue",
+          "prior": "prior_revenue"
+        }
+      ],
+      "output": {
+        "type": "percent",
+        "fields": [
+          "growth"
+        ]
+      },
+      "rule_refs": [
+        "this_month",
+        "last_month_same_days",
+        "pct_growth",
+        "data_coverage"
+      ]
+    },
+    {
+      "id": "delivery_count_by_order_period",
+      "question_template": "Các đơn đặt tháng {month}/{year} đã được giao bao nhiêu đợt tính tới hôm nay?",
+      "entity": "delivery",
+      "metric": "delivery_count",
+      "time": [
+        {
+          "mode": "period",
+          "field": "order_date",
+          "period": "month_M_Y",
+          "month": "{month}",
+          "year": "{year}"
+        },
+        {
+          "mode": "as_of",
+          "field": "delivery_date",
+          "end_date": "{as_of_date}",
+          "period": "until_date_X"
+        }
+      ],
+      "operations": [
+        {
+          "id": "deliveries",
+          "op": "count_distinct",
+          "input": "facts",
+          "value": [
+            "order_id",
+            "delivery_number"
+          ]
+        }
+      ],
+      "output": {
+        "type": "number",
+        "fields": [
+          "deliveries"
+        ]
+      },
+      "rule_refs": [
+        "building_materials (dev_004)",
+        "data_coverage"
+      ],
+      "industry_primitive_group": "building_materials (dev_004)"
+    },
+    {
+      "id": "top_customer_debt_table",
+      "question_template": "Tính đến hết {date}, {n} khách nào còn nợ nhiều nhất và mỗi người còn nợ bao nhiêu?",
+      "entity": "customer",
+      "metric": "debt_balance",
+      "time": [
+        {
+          "mode": "as_of",
+          "field": "debt_events",
+          "end_date": "{date}",
+          "period": "until_date_X"
+        }
+      ],
+      "filters": [
+        {
+          "field": "customer_id",
+          "operator": "is_known"
+        }
+      ],
+      "group_by": [
+        "customer_id"
+      ],
+      "operations": [
+        {
+          "id": "balance",
+          "op": "sum",
+          "input": "facts",
+          "value": "debt_balance"
+        },
+        {
+          "id": "leaders",
+          "op": "top_n",
+          "input": "balance",
+          "by": "balance",
+          "direction": "desc",
+          "n": "{n}"
+        }
+      ],
+      "output": {
+        "type": "table",
+        "fields": [
+          "customer_name",
+          "balance"
+        ],
+        "columns": [
+          "khach_hang",
+          "so_tien_no"
+        ]
+      },
+      "rule_refs": [
+        "order_owed_at_date_X",
+        "total_debt_at_date_X",
+        "customer_debt_table",
+        "customer_identity",
+        "result_order"
+      ]
+    },
+    {
+      "id": "earliest_expiry_date",
+      "question_template": "Lô {product_name} gần hết hạn nhất có hạn dùng ngày nào?",
+      "entity": "batch",
+      "time": [
+        {
+          "mode": "as_of",
+          "field": "inventory_events",
+          "end_date": "{as_of_date}",
+          "period": "until_date_X"
+        }
+      ],
+      "filters": [
+        {
+          "field": "product_id",
+          "operator": "=",
+          "value": "{product_id}"
+        },
+        {
+          "field": "inventory_quantity",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "field": "expiry_date",
+          "operator": ">=",
+          "value": "{as_of_date}"
+        }
+      ],
+      "operations": [
+        {
+          "id": "batch",
+          "op": "top_n",
+          "input": "facts",
+          "by": "expiry_date",
+          "direction": "asc",
+          "n": 1
+        },
+        {
+          "id": "expiry_date",
+          "op": "select",
+          "input": "batch",
+          "fields": [
+            "expiry_date"
+          ]
+        }
+      ],
+      "output": {
+        "type": "date",
+        "fields": [
+          "expiry_date"
+        ]
+      },
+      "rule_refs": [
+        "pharmacy (dev_005, dev_006)",
+        "data_coverage"
+      ],
+      "industry_primitive_group": "pharmacy (dev_005, dev_006)",
+      "requires_capabilities": [
+        "has_lot_expiry"
+      ]
+    },
+    {
+      "id": "sold_quantity_by_base_unit",
+      "question_template": "Tháng {month}/{year}, shop bán được bao nhiêu {unit}?",
+      "entity": "product",
+      "metric": "quantity_sold",
+      "time": [
+        {
+          "mode": "period",
+          "field": "order_date",
+          "period": "month_M_Y",
+          "month": "{month}",
+          "year": "{year}"
+        }
+      ],
+      "filters": [
+        {
+          "field": "base_unit",
+          "operator": "=",
+          "value": "{unit}"
+        }
+      ],
+      "operations": [
+        {
+          "id": "volume",
+          "op": "sum",
+          "input": "facts",
+          "value": "quantity_sold"
+        }
+      ],
+      "output": {
+        "type": "number",
+        "fields": [
+          "volume"
+        ]
+      },
+      "rule_refs": [
+        "unit_filtered_quantity",
+        "unit_conversion"
+      ]
+    }
+  ]
+}

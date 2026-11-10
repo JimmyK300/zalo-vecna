@@ -1,0 +1,4165 @@
+{
+  "dev_001": {
+    "business_id": "dev_001",
+    "industry_code": "grocery_beverage",
+    "industry_label": "Tạp hoá / Nước giải khát",
+    "duckdb_file": "duckdb/dev_001.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-07-08",
+      "readme_as_of_cutoff": "2026-07-08"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "danh_sach_hang_hoa": {
+        "rows": 60,
+        "source": "Danh sách hàng hóa.xlsx#Sheet1",
+        "roles": {
+          "item_code": "ma_hang_hoa",
+          "item": "ten_hang_hoa",
+          "item_group": "nhom_hang_hoa",
+          "base_unit": "don_vi_tinh",
+          "cost": "gia_von"
+        },
+        "columns": [
+          "vi_tri",
+          "ma_hang_hoa",
+          "dinh_muc_ton_toi_da",
+          "duoc_ban_truc_tiep",
+          "ghi_chu",
+          "thuoc_tinh",
+          "ten_hang_hoa",
+          "ma_barcode",
+          "mo_ta_san_pham",
+          "ma_hh_lien_quan",
+          "bao_hanh",
+          "nhom_hang_hoa",
+          "don_vi_tinh",
+          "trong_luong",
+          "dinh_muc_ton_toi_thieu",
+          "mau_ghi_chu",
+          "gia_ban",
+          "hinh_anh",
+          "gia_von"
+        ]
+      },
+      "so_chi_tiet_ban_hang": {
+        "rows": 90297,
+        "source": "So_chi_tiet_ban_hang.xlsx#Sheet1",
+        "roles": {
+          "sale_date": "ngay",
+          "order_id": "ma_don_hang",
+          "item": "ten_hang_hoa",
+          "unit": "don_vi_tinh",
+          "qty": "so_luong",
+          "line_amount": "thanh_tien",
+          "status": "trang_thai",
+          "qty_base": "so_luong_quy_doi",
+          "customer": "khach_hang",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "ngay",
+          "ma_don_hang",
+          "ten_hang_hoa",
+          "don_vi_tinh",
+          "so_luong",
+          "don_gia",
+          "thanh_tien",
+          "trang_thai",
+          "so_luong_quy_doi",
+          "khach_hang",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_hang_is_walkin"
+        ]
+      },
+      "orders": {
+        "rows": 35564,
+        "source": "derived: one row per order from so_chi_tiet_ban_hang",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_don_hang",
+          "ngay",
+          "trang_thai",
+          "khach_hang",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_hang_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 90297,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "group",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-07-08 (README chốt đến 2026-07-08).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_002": {
+    "business_id": "dev_002",
+    "industry_code": "coffee_tea",
+    "industry_label": "Quán Cà phê & Trà sữa",
+    "duckdb_file": "duckdb/dev_002.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-05-24",
+      "readme_as_of_cutoff": "2026-05-24"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": false,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "banhang_t10_2025": {
+        "rows": 5273,
+        "source": "BanHang_T10_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t11_2025": {
+        "rows": 5009,
+        "source": "BanHang_T11_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t12_2025": {
+        "rows": 5150,
+        "source": "BanHang_T12_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t1_2025": {
+        "rows": 4889,
+        "source": "BanHang_T1_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t1_2026": {
+        "rows": 5053,
+        "source": "BanHang_T1_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t2_2025": {
+        "rows": 4561,
+        "source": "BanHang_T2_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t2_2026": {
+        "rows": 3615,
+        "source": "BanHang_T2_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t3_2025": {
+        "rows": 5617,
+        "source": "BanHang_T3_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t3_2026": {
+        "rows": 4974,
+        "source": "BanHang_T3_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t4_2025": {
+        "rows": 5335,
+        "source": "BanHang_T4_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t4_2026": {
+        "rows": 4767,
+        "source": "BanHang_T4_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t5_2025": {
+        "rows": 5599,
+        "source": "BanHang_T5_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t5_2026": {
+        "rows": 3857,
+        "source": "BanHang_T5_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t6_2025": {
+        "rows": 5167,
+        "source": "BanHang_T6_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t7_2025": {
+        "rows": 5277,
+        "source": "BanHang_T7_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t8_2025": {
+        "rows": 5404,
+        "source": "BanHang_T8_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_t9_2025": {
+        "rows": 5019,
+        "source": "BanHang_T9_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "danhsachquydoi": {
+        "rows": 2,
+        "source": "DanhSachQuyDoi.xlsx#Sheet1",
+        "roles": {
+          "item": "ten_san_pham",
+          "big_unit": "don_vi_quy_doi",
+          "factor": "ti_le_quy_doi",
+          "base_unit": "don_vi_co_ban"
+        },
+        "columns": [
+          "ten_san_pham",
+          "don_vi_quy_doi",
+          "ti_le_quy_doi",
+          "don_vi_co_ban"
+        ]
+      },
+      "orders": {
+        "rows": 53165,
+        "source": "derived: one row per order from banhang_t10_2025, banhang_t11_2025, banhang_t12_2025, banhang_t1_2025, banhang_t1_2026, banhang_t2_2025, banhang_t2_2026, banhang_t3_2025, banhang_t3_2026, banhang_t4_2025, banhang_t4_2026, banhang_t5_2025, banhang_t5_2026, banhang_t6_2025, banhang_t7_2025, banhang_t8_2025, banhang_t9_2025",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_don_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 84163,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      },
+      "lines_unpacked": {
+        "rows": 85258,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee",
+          "is_inline_topping"
+        ]
+      }
+    },
+    "special_traps": [
+      "Cột Tên sản phẩm có 1.095 dòng gộp Topping ('Món + [N] Topping (tiền)'). Đã tách sẵn trong bảng `lines_unpacked`: tiền món chính đã trừ tiền topping, và topping thành dòng riêng theo Rulebook §6."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-05-24 (README chốt đến 2026-05-24).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_003": {
+    "business_id": "dev_003",
+    "industry_code": "general_retail_multi_source",
+    "industry_label": "Tạp hoá tổng hợp (POS + Sổ tay + Báo cáo ca)",
+    "duckdb_file": "duckdb/dev_003.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-03-01",
+      "max_order_date": "2026-08-21",
+      "readme_as_of_cutoff": "2026-08-21"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": true,
+      "has_inventory": true,
+      "has_lot_expiry": false,
+      "has_price_history": true,
+      "has_expense_book": true,
+      "has_shift_cash_report": true,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "banhang_phieuthu": {
+        "rows": 62580,
+        "source": "BanHang_PhieuThu.xlsx#Sheet1",
+        "roles": {
+          "pay_method": "pttt",
+          "pay_date": "ngay_tt",
+          "order_id": "ma_don",
+          "pay_amount": "tien_thu"
+        },
+        "columns": [
+          "pttt",
+          "ma_thanh_toan",
+          "ngay_tt",
+          "ma_don",
+          "tien_thu",
+          "ngay_tt__date",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "banhang_tonghop_2025_banhang": {
+        "rows": 56061,
+        "source": "BanHang_TongHop_2025.xlsx#BanHang",
+        "roles": {
+          "order_id": "don_so",
+          "channel": "nguon",
+          "order_total": "tong_thanh_toan",
+          "sale_date": "ngay_hd",
+          "status": "trang_thai_giao",
+          "customer": "khach_hang_ten",
+          "customer_code": "ma_khach",
+          "pay_method": "hinh_thuc_thanh_toan",
+          "item": "hang_hoa",
+          "line_amount": "thanh_tien_d",
+          "qty_base": "sl_dv_co_ban",
+          "qty": "s_l",
+          "sale_date_parsed": "ngay_hd__date",
+          "cost": "gia_von_luc_ban"
+        },
+        "columns": [
+          "don_so",
+          "phi_ship",
+          "cong_no",
+          "tien_hang_truoc_giam",
+          "nguon",
+          "tien_giam",
+          "tong_thanh_toan",
+          "ma_nv_ban",
+          "da_tra",
+          "ngay_hd",
+          "trang_thai_giao",
+          "gio_tao_don",
+          "khach_hang_ten",
+          "ma_khach",
+          "hinh_thuc_thanh_toan",
+          "sdt",
+          "dong",
+          "dv",
+          "hang_hoa",
+          "giam_d",
+          "thanh_tien_d",
+          "gia_1_dv",
+          "barcode",
+          "sl_dv_co_ban",
+          "gia_von_luc_ban",
+          "s_l",
+          "ngay_hd__date",
+          "gio_tao_don__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_hang_ten_is_walkin",
+          "ma_khach_is_walkin"
+        ]
+      },
+      "banhang_tonghop_2025_banhang_hanghoa": {
+        "rows": 50,
+        "source": "BanHang_TongHop_2025.xlsx#BanHang_HangHoa",
+        "roles": {
+          "item": "ten_hang_hoa"
+        },
+        "columns": [
+          "thuoc_tinh",
+          "trong_luong",
+          "nhom_hang",
+          "gia_le",
+          "ma_h_hoa",
+          "duoc_ban_truc_tiep",
+          "gia_von_hien_tai",
+          "hinh_anh_url1_url2",
+          "dvt",
+          "bao_hanh",
+          "mo_ta_san_pham",
+          "loai_hang_hoa",
+          "ton_lon_nhat",
+          "dinh_muc_ton_toi_thieu",
+          "vi_tri_ke",
+          "ma_barcode",
+          "mau_ghi_chu",
+          "ten_hang_hoa"
+        ]
+      },
+      "banhang_tonghop_2025_banhang_khachhang": {
+        "rows": 220,
+        "source": "BanHang_TongHop_2025.xlsx#BanHang_KhachHang",
+        "roles": {
+          "customer_code": "ma_kh_mua",
+          "status": "trang_thai"
+        },
+        "columns": [
+          "nguoi_tao",
+          "email",
+          "sdt",
+          "dia_chi",
+          "khach_hang_mua",
+          "doi_tuong_kh",
+          "ghi_chu",
+          "ma_kh_mua",
+          "mst",
+          "kieu_khach",
+          "tong_diem",
+          "cccd",
+          "diem_hien_tai",
+          "sinh_nhat",
+          "trang_thai",
+          "cong_ty",
+          "tra_cuu_thong_tin_bo_sung",
+          "status_norm",
+          "ma_kh_mua_is_walkin"
+        ]
+      },
+      "banhang_tonghop_2025_banhang_donviquydoi": {
+        "rows": 2,
+        "source": "BanHang_TongHop_2025.xlsx#BanHang_DonViQuyDoi",
+        "roles": {},
+        "columns": [
+          "gia_ban_theo_don_vi_quy_doi",
+          "ma_vach",
+          "bang",
+          "quy_cach"
+        ]
+      },
+      "banhang_tonghop_2025_banhang_lichsugia": {
+        "rows": 79,
+        "source": "BanHang_TongHop_2025.xlsx#BanHang_LichSuGia",
+        "roles": {},
+        "columns": [
+          "gia_cu",
+          "item",
+          "ma_h_hoa",
+          "ngay_ap_dung",
+          "gia_moi",
+          "ngay_ap_dung__date"
+        ]
+      },
+      "banhang_tonghop_2026": {
+        "rows": 46143,
+        "source": "BanHang_TongHop_2026.xlsx#BanHang",
+        "roles": {
+          "order_id": "don_so",
+          "channel": "nguon",
+          "order_total": "tong_thanh_toan",
+          "sale_date": "ngay_hd",
+          "status": "trang_thai_giao",
+          "customer": "khach_hang_ten",
+          "customer_code": "ma_khach",
+          "pay_method": "hinh_thuc_thanh_toan",
+          "item": "hang_hoa",
+          "line_amount": "thanh_tien_d",
+          "qty_base": "sl_dv_co_ban",
+          "qty": "s_l",
+          "sale_date_parsed": "ngay_hd__date",
+          "cost": "gia_von_luc_ban"
+        },
+        "columns": [
+          "don_so",
+          "phi_ship",
+          "cong_no",
+          "tien_hang_truoc_giam",
+          "nguon",
+          "tien_giam",
+          "tong_thanh_toan",
+          "ma_nv_ban",
+          "da_tra",
+          "ngay_hd",
+          "trang_thai_giao",
+          "gio_tao_don",
+          "khach_hang_ten",
+          "ma_khach",
+          "hinh_thuc_thanh_toan",
+          "sdt",
+          "dong",
+          "dv",
+          "hang_hoa",
+          "giam_d",
+          "thanh_tien_d",
+          "gia_1_dv",
+          "barcode",
+          "sl_dv_co_ban",
+          "gia_von_luc_ban",
+          "s_l",
+          "ngay_hd__date",
+          "gio_tao_don__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_hang_ten_is_walkin",
+          "ma_khach_is_walkin"
+        ]
+      },
+      "baocaoca": {
+        "rows": 1078,
+        "source": "BaoCaoCa.xlsx#Sheet1",
+        "roles": {
+          "sale_date": "ngay",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "ngay",
+          "ca",
+          "ma_nv",
+          "tien_mat_thu",
+          "tien_mat_hoan_khach",
+          "tien_mat_rong_cua_ca",
+          "ngay__date"
+        ]
+      },
+      "sotay_chiphi": {
+        "rows": 77,
+        "source": "SoTay_ChiPhi.xlsx#Sheet1",
+        "roles": {},
+        "columns": [
+          "ngay_mua",
+          "luu_y",
+          "tien_chi",
+          "nhom",
+          "ngay_mua__date"
+        ]
+      },
+      "sotay_nhaphang": {
+        "rows": 1484,
+        "source": "SoTay_NhapHang.xlsx#Sheet1",
+        "roles": {
+          "line_amount": "thanh_tien"
+        },
+        "columns": [
+          "so_phieu",
+          "product",
+          "nha_cung_cap",
+          "thanh_tien",
+          "luu_y",
+          "gia_nhap",
+          "sl_nhap",
+          "dvt_nhap",
+          "ngay_nhap",
+          "ngay_nhap__date"
+        ]
+      },
+      "ton_kho": {
+        "rows": 50,
+        "source": "ton_kho.csv",
+        "roles": {
+          "item": "ten_hang"
+        },
+        "columns": [
+          "ton_kho",
+          "ma_sp",
+          "ten_hang",
+          "dvt"
+        ]
+      },
+      "orders": {
+        "rows": 62839,
+        "source": "derived: one row per order from banhang_tonghop_2025_banhang, banhang_tonghop_2026",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "customer_code",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "don_so",
+          "phi_ship",
+          "cong_no",
+          "tien_hang_truoc_giam",
+          "nguon",
+          "tien_giam",
+          "tong_thanh_toan",
+          "ma_nv_ban",
+          "da_tra",
+          "ngay_hd",
+          "trang_thai_giao",
+          "gio_tao_don",
+          "khach_hang_ten",
+          "ma_khach",
+          "hinh_thuc_thanh_toan",
+          "sdt",
+          "giam_d",
+          "ngay_hd__date",
+          "gio_tao_don__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_hang_ten_is_walkin",
+          "ma_khach_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 100210,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-03-01 hoặc sau 2026-08-21 (README chốt đến 2026-08-21)."
+    ]
+  },
+  "dev_004": {
+    "business_id": "dev_004",
+    "industry_code": "building_materials",
+    "industry_label": "Cửa hàng Vật liệu xây dựng",
+    "duckdb_file": "duckdb/dev_004.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-06-10",
+      "readme_as_of_cutoff": "2026-06-10"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": true,
+      "has_inventory": true,
+      "has_lot_expiry": false,
+      "has_price_history": true,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": true,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "banggia": {
+        "rows": 99,
+        "source": "BangGia.xlsx#Sheet1",
+        "roles": {
+          "item": "dien_giai"
+        },
+        "columns": [
+          "gia_cu",
+          "ngay_ap_dung",
+          "gia_moi",
+          "dien_giai",
+          "ngay_ap_dung__date"
+        ]
+      },
+      "danhmuc": {
+        "rows": 14,
+        "source": "DanhMuc.xlsx#Sheet1",
+        "roles": {
+          "item": "hang",
+          "factor": "he_so",
+          "base_unit": "dv_goc",
+          "big_unit": "loai_dv"
+        },
+        "columns": [
+          "hang",
+          "he_so",
+          "dv_goc",
+          "loai_dv"
+        ]
+      },
+      "sobanhang": {
+        "rows": 33457,
+        "source": "SoBanHang.xlsx (sheets: T01-2025, T02-2025, T03-2025, T04-2025, T05-2025, T06-2025, T07-2025, T08-2025, T09-2025, T10-2025, T11-2025, T12-2025, T01-2026, T02-2026, T03-2026, T04-2026, T05-2026, T06-2026)",
+        "roles": {
+          "customer": "khach_hang_ten",
+          "sale_time": "gio",
+          "sale_date": "thoi_gian",
+          "order_id": "ma_don",
+          "qty": "sl_ban",
+          "unit": "dvt",
+          "item": "hang_ban",
+          "status": "trang_thai_xu_ly",
+          "line_amount": "amount",
+          "sale_date_parsed": "thoi_gian__date"
+        },
+        "columns": [
+          "_sheet",
+          "khach_hang_ten",
+          "gio",
+          "thoi_gian",
+          "ma_don",
+          "sl_ban",
+          "dvt",
+          "hang_ban",
+          "trang_thai_xu_ly",
+          "gia_1_dv",
+          "amount",
+          "tong_phieu",
+          "gio__date",
+          "thoi_gian__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_hang_ten_is_walkin"
+        ]
+      },
+      "sogiaohang": {
+        "rows": 28398,
+        "source": "SoGiaoHang.xlsx#Sheet1",
+        "roles": {
+          "qty_base": "so_luong_giao",
+          "order_id": "so_don",
+          "item": "hang_hoa",
+          "base_unit": "dv_goc"
+        },
+        "columns": [
+          "so_luong_giao",
+          "bien_so_xe",
+          "luot_giao",
+          "so_don",
+          "thoi_gian_giao",
+          "hang_hoa",
+          "lai_xe",
+          "dv_goc",
+          "thoi_gian_giao__date",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "sohanno": {
+        "rows": 2568,
+        "source": "SoHanNo.xlsx#Sheet1",
+        "roles": {
+          "order_id": "ma_don_hang"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ky_han",
+          "ngay_phai_tra",
+          "ngay_phai_tra__date",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "sonhaphang": {
+        "rows": 1070,
+        "source": "SoNhapHang.xlsx#Sheet1",
+        "roles": {
+          "item": "product",
+          "line_amount": "thanh_tien",
+          "qty": "sl_nhap"
+        },
+        "columns": [
+          "product",
+          "dvt",
+          "so_phieu",
+          "ghi_chu",
+          "nha_cung_cap",
+          "thanh_tien",
+          "gia_nhap",
+          "ngay_nhap",
+          "sl_nhap",
+          "ngay_nhap__date"
+        ]
+      },
+      "tonkho": {
+        "rows": 60,
+        "source": "TonKho.xlsx#Sheet1",
+        "roles": {
+          "base_unit": "dv_goc",
+          "item": "ten_san_pham"
+        },
+        "columns": [
+          "ton_cuoi",
+          "dv_goc",
+          "ten_san_pham"
+        ]
+      },
+      "orders": {
+        "rows": 14681,
+        "source": "derived: one row per order from sobanhang",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_don",
+          "_sheet",
+          "khach_hang_ten",
+          "gio",
+          "thoi_gian",
+          "trang_thai_xu_ly",
+          "tong_phieu",
+          "gio__date",
+          "thoi_gian__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_hang_ten_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 32887,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-06-10 (README chốt đến 2026-06-10).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_005": {
+    "business_id": "dev_005",
+    "industry_code": "pharmacy_excel",
+    "industry_label": "Nhà thuốc (Excel theo tháng + Lô/Hạn dùng)",
+    "duckdb_file": "duckdb/dev_005.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-05-10",
+      "readme_as_of_cutoff": "2026-05-10"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": false,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": true,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "banhang_thang01_2025": {
+        "rows": 4955,
+        "source": "BanHang_Thang01_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang01_2026": {
+        "rows": 4990,
+        "source": "BanHang_Thang01_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang02_2025": {
+        "rows": 4310,
+        "source": "BanHang_Thang02_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang02_2026": {
+        "rows": 4339,
+        "source": "BanHang_Thang02_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang03_2025": {
+        "rows": 4544,
+        "source": "BanHang_Thang03_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang03_2026": {
+        "rows": 4740,
+        "source": "BanHang_Thang03_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang04_2025": {
+        "rows": 4443,
+        "source": "BanHang_Thang04_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang04_2026": {
+        "rows": 4664,
+        "source": "BanHang_Thang04_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang05_2025": {
+        "rows": 4841,
+        "source": "BanHang_Thang05_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang05_2026": {
+        "rows": 1673,
+        "source": "BanHang_Thang05_2026.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang06_2025": {
+        "rows": 4550,
+        "source": "BanHang_Thang06_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang07_2025": {
+        "rows": 4846,
+        "source": "BanHang_Thang07_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang08_2025": {
+        "rows": 4599,
+        "source": "BanHang_Thang08_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang09_2025": {
+        "rows": 4453,
+        "source": "BanHang_Thang09_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang10_2025": {
+        "rows": 4693,
+        "source": "BanHang_Thang10_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang11_2025": {
+        "rows": 4548,
+        "source": "BanHang_Thang11_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "banhang_thang12_2025": {
+        "rows": 4782,
+        "source": "BanHang_Thang12_2025.xlsx#DonHang_ChiTiet",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "sale_date": "ngay_dat_hang",
+          "status": "trang_thai_don_hang",
+          "customer": "ten_khach_hang",
+          "item": "ten_san_pham",
+          "qty": "so_luong_san_pham",
+          "line_amount": "tong_tien",
+          "unit": "don_vi_tinh",
+          "sale_date_parsed": "ngay_dat_hang__date"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ten_san_pham",
+          "so_luong_san_pham",
+          "gia_san_pham",
+          "tong_tien",
+          "don_vi_tinh",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "danhsachquydoi": {
+        "rows": 83,
+        "source": "DanhSachQuyDoi.xlsx#Sheet1",
+        "roles": {
+          "item": "ten_san_pham",
+          "big_unit": "don_vi_quy_doi",
+          "factor": "ti_le_quy_doi",
+          "base_unit": "don_vi_co_ban"
+        },
+        "columns": [
+          "ten_san_pham",
+          "don_vi_quy_doi",
+          "ti_le_quy_doi",
+          "don_vi_co_ban"
+        ]
+      },
+      "danhsachsanpham": {
+        "rows": 80,
+        "source": "DanhSachSanPham.xlsx#Sheet1",
+        "roles": {
+          "item_code": "ma_sku",
+          "base_unit": "don_vi",
+          "item_group": "loai_san_pham"
+        },
+        "columns": [
+          "dinh_muc_ton_toi_thieu",
+          "ma_sku",
+          "duoc_ban_truc_tiep",
+          "ghi_chu",
+          "mau_ghi_chu",
+          "bao_hanh",
+          "ten_san_pham",
+          "ma_hh_lien_quan",
+          "mo_ta_chi_tiet",
+          "thuong_hieu",
+          "ton_lon_nhat",
+          "don_vi",
+          "thuoc_tinh",
+          "ma_vach_ean",
+          "loai_san_pham",
+          "trong_luong",
+          "vi_tri",
+          "loai_hang_hoa"
+        ]
+      },
+      "danhsachthuoc": {
+        "rows": 80,
+        "source": "DanhSachThuoc.xlsx#Sheet1",
+        "roles": {
+          "item_code": "ma_sku"
+        },
+        "columns": [
+          "ma_sku",
+          "hoat_chat",
+          "thuoc_ke_don"
+        ]
+      },
+      "donhang_lo": {
+        "rows": 77653,
+        "source": "DonHang_Lo.xlsx#Sheet1",
+        "roles": {
+          "order_id": "ma_don_hang",
+          "qty": "so_luong",
+          "qty_returned": "so_luong_tra"
+        },
+        "columns": [
+          "ma_don_hang",
+          "ma_lo",
+          "so_luong",
+          "so_luong_tra",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "donnhaphang": {
+        "rows": 492,
+        "source": "DonNhapHang.xlsx#Sheet1",
+        "roles": {},
+        "columns": [
+          "ma_don_nhap",
+          "ngay_nhap",
+          "ma_nha_cung_cap",
+          "ngay_nhap__date"
+        ]
+      },
+      "donnhaphang_chitiet": {
+        "rows": 3312,
+        "source": "DonNhapHang_ChiTiet.xlsx#Sheet1",
+        "roles": {
+          "item_code": "ma_sku",
+          "qty": "so_luong_nhap"
+        },
+        "columns": [
+          "ma_don_nhap",
+          "ma_sku",
+          "ma_lo",
+          "han_su_dung",
+          "so_luong_nhap",
+          "han_su_dung__date"
+        ]
+      },
+      "orders": {
+        "rows": 40330,
+        "source": "derived: one row per order from banhang_thang01_2025, banhang_thang01_2026, banhang_thang02_2025, banhang_thang02_2026, banhang_thang03_2025, banhang_thang03_2026, banhang_thang04_2025, banhang_thang04_2026, banhang_thang05_2025, banhang_thang05_2026, banhang_thang06_2025, banhang_thang07_2025, banhang_thang08_2025, banhang_thang09_2025, banhang_thang10_2025, banhang_thang11_2025, banhang_thang12_2025",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_don_hang",
+          "ngay_dat_hang",
+          "trang_thai_don_hang",
+          "ten_khach_hang",
+          "ngay_dat_hang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "ten_khach_hang_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 75970,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-05-10 (README chốt đến 2026-05-10).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_006": {
+    "business_id": "dev_006",
+    "industry_code": "pharmacy_sqlite",
+    "industry_label": "Nhà thuốc (POS SQLite 17 bảng)",
+    "duckdb_file": "duckdb/dev_006.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-04-01",
+      "max_order_date": "2026-08-08",
+      "readme_as_of_cutoff": "2026-08-08"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": true,
+      "has_inventory": true,
+      "has_lot_expiry": true,
+      "has_price_history": true,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "chi_nhanh": {
+        "rows": 1,
+        "source": "pos.sqlite#chi_nhanh",
+        "roles": {},
+        "columns": [
+          "idcuahang",
+          "machinhanh",
+          "tengoi",
+          "diachilienhe",
+          "ngaykhaitruong",
+          "ngaykhaitruong__date"
+        ]
+      },
+      "nhan_vien": {
+        "rows": 3,
+        "source": "pos.sqlite#nhan_vien",
+        "roles": {},
+        "columns": [
+          "idcuahang",
+          "manhanvien",
+          "tengoi",
+          "machinhanh",
+          "chucvu",
+          "ngaynhanviec",
+          "ngaythoiviec",
+          "ngaynhanviec__date"
+        ]
+      },
+      "khach_hang": {
+        "rows": 320,
+        "source": "pos.sqlite#khach_hang",
+        "roles": {
+          "customer_code": "makhachhang"
+        },
+        "columns": [
+          "idcuahang",
+          "makhachhang",
+          "tengoi",
+          "trang_thai_kh",
+          "tong_diem",
+          "diem_hien_tai",
+          "loai_hinh_kh",
+          "cccd",
+          "sodienthoai",
+          "email",
+          "ghi_chu_kh",
+          "namnu",
+          "loaikhachhang",
+          "cong_ty",
+          "taoluc",
+          "ma_so_thue",
+          "diachilienhe",
+          "nguoi_tao",
+          "makhachhang_is_walkin"
+        ]
+      },
+      "nha_cung_cap": {
+        "rows": 5,
+        "source": "pos.sqlite#nha_cung_cap",
+        "roles": {},
+        "columns": [
+          "email",
+          "idcuahang",
+          "nhom_ncc",
+          "manhacungcap",
+          "ma_so_thue",
+          "nguoi_tao",
+          "trang_thai_ncc",
+          "tengoi",
+          "sodienthoai",
+          "diachilienhe"
+        ]
+      },
+      "san_pham": {
+        "rows": 80,
+        "source": "pos.sqlite#san_pham",
+        "roles": {
+          "item_code": "mahanghoa"
+        },
+        "columns": [
+          "mo_ta",
+          "ghi_chu_hh",
+          "idcuahang",
+          "mahanghoa",
+          "ma_hh_lien_quan",
+          "thuoc_tinh",
+          "ban_truc_tiep",
+          "mau_ghi_chu",
+          "vi_tri",
+          "trong_luong",
+          "ton_nho_nhat",
+          "tengoi",
+          "ma_vach_ean",
+          "danhmuc",
+          "donvicoso",
+          "giabanle",
+          "hinh_anh",
+          "giavonhang",
+          "ton_lon_nhat",
+          "tylethue",
+          "bao_hanh",
+          "thuong_hieu",
+          "loai_hang_hoa",
+          "conkinhdoanh",
+          "taoluc"
+        ]
+      },
+      "don_vi_sp": {
+        "rows": 83,
+        "source": "pos.sqlite#don_vi_sp",
+        "roles": {
+          "item_code": "mahanghoa"
+        },
+        "columns": [
+          "idcuahang",
+          "mahanghoa",
+          "donvitinh",
+          "hesoquydoi",
+          "giadonvi"
+        ]
+      },
+      "phieu_nhap": {
+        "rows": 494,
+        "source": "pos.sqlite#phieu_nhap",
+        "roles": {
+          "status": "tinhtrang"
+        },
+        "columns": [
+          "idcuahang",
+          "maphieunhap",
+          "manhacungcap",
+          "machinhanh",
+          "ngaynhapkho",
+          "tinhtrang",
+          "tonggiatrinhap",
+          "diengiai",
+          "ngaynhapkho__date",
+          "status_norm"
+        ]
+      },
+      "chi_tiet_nhap": {
+        "rows": 3234,
+        "source": "pos.sqlite#chi_tiet_nhap",
+        "roles": {
+          "item_code": "mahanghoa",
+          "qty": "sl"
+        },
+        "columns": [
+          "idcuahang",
+          "maphieunhap",
+          "sothutu",
+          "mahanghoa",
+          "donvitinh",
+          "sl",
+          "dongianhap",
+          "malo",
+          "hansudung"
+        ]
+      },
+      "don_hang": {
+        "rows": 37833,
+        "source": "pos.sqlite#don_hang",
+        "roles": {
+          "order_id": "mahoadon",
+          "customer_code": "makhachhang",
+          "channel": "kenhbanhang",
+          "sale_date": "thoigianlap",
+          "status": "tinhtrang",
+          "order_total": "tongthanhtoan",
+          "pay_method": "phuongthuctt"
+        },
+        "columns": [
+          "idcuahang",
+          "mahoadon",
+          "machinhanh",
+          "makhachhang",
+          "manhanvien",
+          "macalam",
+          "kenhbanhang",
+          "thoigianlap",
+          "ngaylap",
+          "tinhtrang",
+          "tongtienhang",
+          "chietkhau",
+          "phivanchuyen",
+          "thuegtgt",
+          "tongthanhtoan",
+          "khachdatra",
+          "conphaithu",
+          "phuongthuctt",
+          "sohoadondientu",
+          "tinhtranghddt",
+          "makhuyenmai",
+          "diengiai",
+          "ngaylap__date",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "makhachhang_is_walkin"
+        ]
+      },
+      "chi_tiet_don": {
+        "rows": 72411,
+        "source": "pos.sqlite#chi_tiet_don",
+        "roles": {
+          "order_id": "mahoadon",
+          "item_code": "mahanghoa",
+          "qty": "sl",
+          "qty_base": "slquydoi",
+          "line_amount": "trigia",
+          "cost": "giavonlucban"
+        },
+        "columns": [
+          "idcuahang",
+          "mahoadon",
+          "sothutu",
+          "mahanghoa",
+          "donvitinh",
+          "sl",
+          "slquydoi",
+          "giadonvi",
+          "chietkhau",
+          "trigia",
+          "giavonlucban",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "thanh_toan": {
+        "rows": 37939,
+        "source": "pos.sqlite#thanh_toan",
+        "roles": {
+          "order_id": "mahoadon",
+          "pay_date": "ngaygiothu",
+          "pay_method": "phuongthuc",
+          "pay_amount": "sotienthu"
+        },
+        "columns": [
+          "idcuahang",
+          "maphieuthu",
+          "mahoadon",
+          "ngaygiothu",
+          "sotienthu",
+          "phuongthuc",
+          "diengiai",
+          "ngaygiothu__date",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "tra_hang": {
+        "rows": 352,
+        "source": "pos.sqlite#tra_hang",
+        "roles": {
+          "order_id": "mahoadon"
+        },
+        "columns": [
+          "idcuahang",
+          "maphieutra",
+          "mahoadon",
+          "ngaygiotra",
+          "nguyennhan",
+          "tienhoantra",
+          "cachhoantien",
+          "ngaygiotra__date",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "the_kho": {
+        "rows": 73901,
+        "source": "pos.sqlite#the_kho",
+        "roles": {
+          "item_code": "mahanghoa",
+          "qty_base": "slquydoi"
+        },
+        "columns": [
+          "idcuahang",
+          "magiaodichkho",
+          "mahanghoa",
+          "machinhanh",
+          "ngaygiophatsinh",
+          "loaigiaodich",
+          "slquydoi",
+          "kieuchungtu",
+          "machungtu",
+          "toncuoi",
+          "ngaygiophatsinh__date"
+        ]
+      },
+      "lich_su_gia": {
+        "rows": 120,
+        "source": "pos.sqlite#lich_su_gia",
+        "roles": {
+          "item_code": "mahanghoa"
+        },
+        "columns": [
+          "idcuahang",
+          "mahanghoa",
+          "ngayapdung",
+          "giabanle",
+          "ngayapdung__date"
+        ]
+      },
+      "lo_hang": {
+        "rows": 3234,
+        "source": "pos.sqlite#lo_hang",
+        "roles": {
+          "item_code": "mahanghoa"
+        },
+        "columns": [
+          "idcuahang",
+          "mahanghoa",
+          "malo",
+          "maphieunhap",
+          "hansudung",
+          "slnhapquydoi",
+          "dongianhap"
+        ]
+      },
+      "chi_tiet_don_lo": {
+        "rows": 72710,
+        "source": "pos.sqlite#chi_tiet_don_lo",
+        "roles": {
+          "order_id": "mahoadon",
+          "qty_base": "slquydoi"
+        },
+        "columns": [
+          "idcuahang",
+          "mahoadon",
+          "sothutu",
+          "malo",
+          "slquydoi",
+          "sltraquydoi",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "thong_tin_thuoc": {
+        "rows": 80,
+        "source": "pos.sqlite#thong_tin_thuoc",
+        "roles": {
+          "item_code": "mahanghoa"
+        },
+        "columns": [
+          "idcuahang",
+          "mahanghoa",
+          "thanhphanchinh",
+          "bantheodon"
+        ]
+      },
+      "orders": {
+        "rows": 37833,
+        "source": "derived: one row per order from don_hang, line amounts from detail table",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "customer_code",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "mahoadon",
+          "idcuahang",
+          "machinhanh",
+          "makhachhang",
+          "manhanvien",
+          "macalam",
+          "kenhbanhang",
+          "thoigianlap",
+          "ngaylap",
+          "tinhtrang",
+          "tongtienhang",
+          "chietkhau",
+          "phivanchuyen",
+          "thuegtgt",
+          "tongthanhtoan",
+          "khachdatra",
+          "conphaithu",
+          "phuongthuctt",
+          "sohoadondientu",
+          "tinhtranghddt",
+          "makhuyenmai",
+          "diengiai",
+          "ngaylap__date",
+          "status_norm",
+          "order_status",
+          "makhachhang_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 71061,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-04-01 hoặc sau 2026-08-08 (README chốt đến 2026-08-08).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_007": {
+    "business_id": "dev_007",
+    "industry_code": "restaurant_csv",
+    "industry_label": "Nhà hàng / Quán ăn (CSV)",
+    "duckdb_file": "duckdb/dev_007.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-02-01",
+      "max_order_date": "2026-09-19",
+      "readme_as_of_cutoff": "2026-09-19"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": true,
+      "has_inventory": true,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "chi_tiet_hoa_don": {
+        "rows": 120451,
+        "source": "chi_tiet_hoa_don.csv",
+        "roles": {
+          "line_amount": "thanh_tien",
+          "item": "mat_hang",
+          "channel": "nguon",
+          "empty": "noi_dung",
+          "sale_date": "gio_ban",
+          "status": "tien_do",
+          "item_code": "ma_vach",
+          "paid": "khach_tra",
+          "customer": "ho_ten_khach",
+          "customer_code": "ma_khach_mua",
+          "order_id": "ma_bill",
+          "qty": "sluong",
+          "item_group": "phan_loai",
+          "qty_base": "so_luong_le",
+          "sale_date_parsed": "gio_ban__date"
+        },
+        "columns": [
+          "ban",
+          "thanh_tien",
+          "nhom_khach_hang",
+          "mat_hang",
+          "khu_vuc",
+          "nguon",
+          "noi_dung",
+          "gio_ban",
+          "gioi_tinh",
+          "no",
+          "ngay_giao_dich",
+          "tien_do",
+          "trang_thai_hddt",
+          "ma_vach",
+          "khach_tra",
+          "ho_ten_khach",
+          "ma_khach_mua",
+          "con_no",
+          "tien_giam",
+          "ma_bill",
+          "so_khach",
+          "sluong",
+          "nhan_vien_ban",
+          "phone",
+          "tong_tien_hang",
+          "giam_gia_hd",
+          "addr",
+          "phan_loai",
+          "so_luong_le",
+          "don_gia_d",
+          "gio_ban__date",
+          "ngay_giao_dich__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ho_ten_khach_is_walkin",
+          "ma_khach_mua_is_walkin"
+        ]
+      },
+      "chi_tiet_nhap_hang": {
+        "rows": 1731,
+        "source": "chi_tiet_nhap_hang.csv",
+        "roles": {
+          "qty": "sl_nhap",
+          "item": "hang_hoa",
+          "item_code": "ma_hang_ban",
+          "line_amount": "thanh_tien"
+        },
+        "columns": [
+          "ma_ncc",
+          "tong_tien_phieu",
+          "sl_nhap",
+          "hang_hoa",
+          "stt",
+          "dvt_nhap",
+          "ma_hang_ban",
+          "gia_nhap",
+          "note",
+          "ngay_nhap",
+          "thanh_tien",
+          "ma_phieu_nhap",
+          "trang_thai_phieu",
+          "ngay_nhap__date"
+        ]
+      },
+      "danh_muc_hang": {
+        "rows": 61,
+        "source": "danh_muc_hang.csv",
+        "roles": {
+          "base_unit": "dvt",
+          "cost": "gia_von",
+          "item": "hang_ban",
+          "item_group": "nhom",
+          "item_code": "ma_sku"
+        },
+        "columns": [
+          "tra_cuu_thong_tin_bo_sung",
+          "dang_kinh_doanh",
+          "dvt",
+          "gia_von",
+          "hang_ban",
+          "nhom",
+          "gia",
+          "ton_cuoi",
+          "ma_sku"
+        ]
+      },
+      "orders": {
+        "rows": 32022,
+        "source": "derived: one row per order from chi_tiet_hoa_don",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer_code",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_bill",
+          "ban",
+          "nhom_khach_hang",
+          "khu_vuc",
+          "nguon",
+          "noi_dung",
+          "gio_ban",
+          "gioi_tinh",
+          "tien_do",
+          "trang_thai_hddt",
+          "khach_tra",
+          "ma_khach_mua",
+          "con_no",
+          "so_khach",
+          "nhan_vien_ban",
+          "phone",
+          "tong_tien_hang",
+          "giam_gia_hd",
+          "addr",
+          "gio_ban__date",
+          "ngay_giao_dich__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "ho_ten_khach_is_walkin",
+          "ma_khach_mua_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 119070,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-02-01 hoặc sau 2026-09-19 (README chốt đến 2026-09-19).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_008": {
+    "business_id": "dev_008",
+    "industry_code": "restaurant_excel",
+    "industry_label": "Nhà hàng / Quán ăn (Excel)",
+    "duckdb_file": "duckdb/dev_008.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-07-22",
+      "readme_as_of_cutoff": "2026-07-22"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": false,
+      "has_inventory": true,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "chitiethoadon_1": {
+        "rows": 99607,
+        "source": "ChiTietHoaDon_1.xlsx#Sheet1",
+        "roles": {
+          "order_id": "bill",
+          "empty": "trang_thai_hddt",
+          "customer_code": "ma_nguoi_mua",
+          "unit": "don_vi_tinh",
+          "line_amount": "thanh_tien",
+          "sale_date": "gio_ban",
+          "item_group": "nhom_hang",
+          "customer": "khach",
+          "item": "ten_hang",
+          "qty_base": "sl_le",
+          "status": "tt_don",
+          "qty": "slg",
+          "channel": "kenh_ban",
+          "item_code": "ma_hang",
+          "pay_method": "thanh_toan_bang",
+          "sale_date_parsed": "gio_ban__date"
+        },
+        "columns": [
+          "bill",
+          "trang_thai_hddt",
+          "ma_nguoi_mua",
+          "ban",
+          "don_vi_tinh",
+          "phi_ship",
+          "thanh_tien",
+          "giam_d",
+          "gio_ban",
+          "tong_tien_hang",
+          "addr",
+          "gioi_tinh",
+          "giam_gia_hd",
+          "nhom_hang",
+          "khach",
+          "so_dong",
+          "ten_hang",
+          "nhom_khach_hang",
+          "so_dt",
+          "sl_le",
+          "tt_don",
+          "slg",
+          "note",
+          "ngay_xuat",
+          "nhan_vien_ban",
+          "tong_tien",
+          "kenh_ban",
+          "don_gia_d",
+          "ma_hang",
+          "thanh_toan_bang",
+          "so_khach",
+          "khu_vuc",
+          "gio_ban__date",
+          "ngay_xuat__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin",
+          "ma_nguoi_mua_is_walkin"
+        ]
+      },
+      "chitiethoadon_2": {
+        "rows": 53132,
+        "source": "ChiTietHoaDon_2.xlsx#Sheet1",
+        "roles": {
+          "order_id": "bill",
+          "empty": "trang_thai_hddt",
+          "customer_code": "ma_nguoi_mua",
+          "unit": "don_vi_tinh",
+          "line_amount": "thanh_tien",
+          "sale_date": "gio_ban",
+          "item_group": "nhom_hang",
+          "customer": "khach",
+          "item": "ten_hang",
+          "qty_base": "sl_le",
+          "status": "tt_don",
+          "qty": "slg",
+          "channel": "kenh_ban",
+          "item_code": "ma_hang",
+          "pay_method": "thanh_toan_bang",
+          "sale_date_parsed": "gio_ban__date"
+        },
+        "columns": [
+          "bill",
+          "trang_thai_hddt",
+          "ma_nguoi_mua",
+          "ban",
+          "don_vi_tinh",
+          "phi_ship",
+          "thanh_tien",
+          "giam_d",
+          "gio_ban",
+          "tong_tien_hang",
+          "addr",
+          "gioi_tinh",
+          "giam_gia_hd",
+          "nhom_hang",
+          "khach",
+          "so_dong",
+          "ten_hang",
+          "nhom_khach_hang",
+          "so_dt",
+          "sl_le",
+          "tt_don",
+          "slg",
+          "note",
+          "ngay_xuat",
+          "nhan_vien_ban",
+          "tong_tien",
+          "kenh_ban",
+          "don_gia_d",
+          "ma_hang",
+          "thanh_toan_bang",
+          "so_khach",
+          "khu_vuc",
+          "gio_ban__date",
+          "ngay_xuat__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin",
+          "ma_nguoi_mua_is_walkin"
+        ]
+      },
+      "chitietnhaphang": {
+        "rows": 1836,
+        "source": "ChiTietNhapHang.xlsx#Sheet1",
+        "roles": {
+          "item": "ten_mat_hang",
+          "item_code": "ma_vach",
+          "line_amount": "thanh_tien",
+          "qty": "sl_nhap"
+        },
+        "columns": [
+          "gia_nhap",
+          "ma_ncc",
+          "trang_thai_phieu",
+          "ngay_nhap",
+          "stt",
+          "ma_phieu_nhap",
+          "tong_tien_phieu",
+          "luu_y",
+          "ten_mat_hang",
+          "ma_vach",
+          "thanh_tien",
+          "sl_nhap",
+          "dvt_nhap",
+          "ngay_nhap__date"
+        ]
+      },
+      "danhmuchang": {
+        "rows": 61,
+        "source": "DanhMucHang.xlsx#Sheet1",
+        "roles": {
+          "item": "hang",
+          "item_code": "ma_san_pham_ban",
+          "base_unit": "dvt",
+          "item_group": "loai_hang",
+          "cost": "gia_von"
+        },
+        "columns": [
+          "hang",
+          "dang_kinh_doanh",
+          "ma_san_pham_ban",
+          "dvt",
+          "ton_thuc",
+          "loai_hang",
+          "gia_von",
+          "gia_hien_tai"
+        ]
+      },
+      "orders": {
+        "rows": 40154,
+        "source": "derived: one row per order from chitiethoadon_1, chitiethoadon_2",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer_code",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "bill",
+          "trang_thai_hddt",
+          "ma_nguoi_mua",
+          "ban",
+          "phi_ship",
+          "gio_ban",
+          "tong_tien_hang",
+          "addr",
+          "gioi_tinh",
+          "giam_gia_hd",
+          "nhom_khach_hang",
+          "so_dt",
+          "tt_don",
+          "note",
+          "ngay_xuat",
+          "nhan_vien_ban",
+          "tong_tien",
+          "kenh_ban",
+          "thanh_toan_bang",
+          "so_khach",
+          "khu_vuc",
+          "gio_ban__date",
+          "ngay_xuat__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_is_walkin",
+          "ma_nguoi_mua_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 151392,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-07-22 (README chốt đến 2026-07-22).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_009": {
+    "business_id": "dev_009",
+    "industry_code": "order_summary_only",
+    "industry_label": "Sổ hoá đơn tổng hợp (Không có chi tiết mặt hàng)",
+    "duckdb_file": "duckdb/dev_009.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-01-01",
+      "max_order_date": "2026-06-24",
+      "readme_as_of_cutoff": "2026-06-24"
+    },
+    "capabilities": {
+      "has_item_lines": false,
+      "has_cost_or_margin": false,
+      "has_debt": true,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "danh_sach_hoa_don": {
+        "rows": 22798,
+        "source": "danh_sach_hoa_don.csv",
+        "roles": {
+          "sale_date": "ngay_thang",
+          "status": "trang_thai_don",
+          "order_total": "tongtien",
+          "order_id": "ma_hoa_don",
+          "balance_end": "no",
+          "paid": "da_thu",
+          "customer": "doi_tac",
+          "goods_amount": "gia_tri_hang",
+          "sale_date_parsed": "ngay_thang__date"
+        },
+        "columns": [
+          "ngay_thang",
+          "trang_thai_don",
+          "tongtien",
+          "ma_hoa_don",
+          "no",
+          "da_thu",
+          "doi_tac",
+          "gia_tri_hang",
+          "ngay_thang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "doi_tac_is_walkin"
+        ]
+      },
+      "orders": {
+        "rows": 22490,
+        "source": "derived: one row per order from danh_sach_hoa_don, line amounts from detail table",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "ma_hoa_don",
+          "ngay_thang",
+          "trang_thai_don",
+          "tongtien",
+          "no",
+          "da_thu",
+          "doi_tac",
+          "gia_tri_hang",
+          "ngay_thang__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "doi_tac_is_walkin"
+        ]
+      }
+    },
+    "special_traps": [
+      "Chỉ có bảng cấp đơn hàng (`danh_sach_hoa_don`), hoàn toàn KHÔNG CÓ bảng chi tiết mặt hàng. Mọi câu hỏi về mặt hàng/sản phẩm phải trả về `unanswerable`."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-01-01 hoặc sau 2026-06-24 (README chốt đến 2026-06-24).",
+      "Mọi câu hỏi về mặt hàng, sản phẩm, nhóm hàng, giá vốn, tồn kho (do chỉ có bảng tổng hợp hoá đơn).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_010": {
+    "business_id": "dev_010",
+    "industry_code": "retail_csv",
+    "industry_label": "Cửa hàng bán lẻ (CSV 5 bảng)",
+    "duckdb_file": "duckdb/dev_010.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-05-01",
+      "max_order_date": "2026-09-06",
+      "readme_as_of_cutoff": "2026-09-06"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": false,
+      "has_debt": true,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "chi_tiet_don": {
+        "rows": 45251,
+        "source": "chi_tiet_don.csv",
+        "roles": {
+          "order_id": "ma_bill",
+          "line_amount": "cong",
+          "qty": "soluong",
+          "item_code": "ma_h_hoa",
+          "qty_base": "sl_quy_doi",
+          "unit": "dvt"
+        },
+        "columns": [
+          "ma_bill",
+          "cong",
+          "ck",
+          "soluong",
+          "ma_h_hoa",
+          "sl_quy_doi",
+          "no",
+          "don_gia_d",
+          "dvt",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "don_hang": {
+        "rows": 25191,
+        "source": "don_hang.csv",
+        "roles": {
+          "channel": "kenh_dat",
+          "order_total": "thanh_tien",
+          "order_id": "so_ct",
+          "sale_date": "date",
+          "pay_method": "phuong_thuc_tt",
+          "paid": "khach_tra",
+          "customer_code": "ma_the",
+          "status": "xu_ly",
+          "sale_date_parsed": "date__date"
+        },
+        "columns": [
+          "kenh_dat",
+          "thanh_tien",
+          "so_ct",
+          "con_no",
+          "date",
+          "phuong_thuc_tt",
+          "tien_giam",
+          "phi_van_chuyen",
+          "khach_tra",
+          "ma_the",
+          "xu_ly",
+          "date__date",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "ma_the_is_walkin"
+        ]
+      },
+      "khach_hang": {
+        "rows": 260,
+        "source": "khach_hang.csv",
+        "roles": {
+          "customer_code": "ma_khach",
+          "status": "trang_thai"
+        },
+        "columns": [
+          "nguoi_tao",
+          "ghi_chu_kh",
+          "khach_le_si",
+          "loai_khach",
+          "ma_so_thue",
+          "loai_hinh_khach",
+          "ma_khach",
+          "email",
+          "tong_diem",
+          "trang_thai",
+          "so_cmnd_cccd",
+          "phone",
+          "cong_ty",
+          "status_norm",
+          "ma_khach_is_walkin"
+        ]
+      },
+      "san_pham": {
+        "rows": 60,
+        "source": "san_pham.csv",
+        "roles": {
+          "base_unit": "don_vi_tinh",
+          "item_group": "nhom_hang",
+          "item": "ten_hang",
+          "item_code": "ma_vach"
+        },
+        "columns": [
+          "mo_ta_chi_tiet",
+          "mau_ghi_chu",
+          "loai_hang_hoa",
+          "thuong_hieu",
+          "don_vi_tinh",
+          "ghi_chu",
+          "bao_hanh",
+          "nhom_hang",
+          "ma_vach_ean",
+          "hinh_anh_url1_url2",
+          "ten_hang",
+          "thuoc_tinh",
+          "trong_luong",
+          "gia_ban",
+          "ma_vach",
+          "duoc_ban_truc_tiep",
+          "ma_hh_lien_quan"
+        ]
+      },
+      "thanh_toan": {
+        "rows": 26246,
+        "source": "thanh_toan.csv",
+        "roles": {
+          "pay_method": "loai_tt",
+          "pay_date": "ngay_thu",
+          "pay_amount": "so_tien",
+          "order_id": "ma_don",
+          "pay_id": "ma_tt"
+        },
+        "columns": [
+          "loai_tt",
+          "ngay_thu",
+          "so_tien",
+          "ma_don",
+          "ma_tt",
+          "ngay_thu__date",
+          "is_dup_line",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "orders": {
+        "rows": 25191,
+        "source": "derived: one row per order from don_hang, line amounts from detail table",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "customer_code",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "so_ct",
+          "kenh_dat",
+          "thanh_tien",
+          "con_no",
+          "date",
+          "phuong_thuc_tt",
+          "tien_giam",
+          "phi_van_chuyen",
+          "khach_tra",
+          "ma_the",
+          "xu_ly",
+          "date__date",
+          "status_norm",
+          "order_status",
+          "ma_the_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 43935,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "group",
+          "is_fee"
+        ]
+      }
+    },
+    "special_traps": [],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-05-01 hoặc sau 2026-09-06 (README chốt đến 2026-09-06).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_011": {
+    "business_id": "dev_011",
+    "industry_code": "phone_shop_basic",
+    "industry_label": "Cửa hàng Điện thoại (Sổ bán + Ghi tắt + Thu máy cũ)",
+    "duckdb_file": "duckdb/dev_011.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-06-01",
+      "max_order_date": "2026-07-31",
+      "readme_as_of_cutoff": "2026-07-31"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": false,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": true,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "sobanhang_ghi_tat": {
+        "rows": 59,
+        "source": "SoBanHang.xlsx#Ghi tắt",
+        "roles": {
+          "item": "ten_hang"
+        },
+        "columns": [
+          "ghi_tat",
+          "ten_hang",
+          "loai"
+        ]
+      },
+      "sobanhang_so_ban_hang": {
+        "rows": 6043,
+        "source": "SoBanHang.xlsx#Sổ bán hàng",
+        "roles": {
+          "sale_date": "ngay",
+          "order_id": "stt",
+          "customer": "khach",
+          "qty": "sl",
+          "line_amount": "thanh_tien",
+          "item": "hang",
+          "sale_date_parsed": "ngay__date",
+          "note_status": "ghi_chu"
+        },
+        "columns": [
+          "ngay",
+          "stt",
+          "khach",
+          "hang",
+          "imei",
+          "sl",
+          "gia",
+          "thanh_tien",
+          "bot",
+          "thu_may_cu",
+          "khach_tra",
+          "ghi_chu",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin"
+        ]
+      },
+      "orders": {
+        "rows": 3819,
+        "source": "derived: one row per order from sobanhang_so_ban_hang",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "stt",
+          "ngay",
+          "khach",
+          "bot",
+          "thu_may_cu",
+          "khach_tra",
+          "ghi_chu",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 6043,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      },
+      "lines_enriched": {
+        "rows": 6043,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee",
+          "ten_day_du",
+          "loai_hang",
+          "dong_may",
+          "hang_sx"
+        ]
+      }
+    },
+    "special_traps": [
+      "Tên hàng trong sổ bán dùng chữ viết tắt (59 mã trong sheet `Ghi tắt`). Đã join sẵn vào bảng `lines_enriched` gồm `ten_day_du`, `loai_hang` (máy mới/máy cũ/phụ kiện), `dong_may` (trước ...GB) và `hang_sx` (iPhone -> Apple)."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-06-01 hoặc sau 2026-07-31 (README chốt đến 2026-07-31).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_012": {
+    "business_id": "dev_012",
+    "industry_code": "motorbike_repair",
+    "industry_label": "Tiệm Sửa xe máy",
+    "duckdb_file": "duckdb/dev_012.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-07-01",
+      "max_order_date": "2026-08-31",
+      "readme_as_of_cutoff": "2026-08-31"
+    },
+    "capabilities": {
+      "has_item_lines": false,
+      "has_cost_or_margin": false,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": true,
+      "is_motorbike_repair": true
+    },
+    "tables": {
+      "danhsachtho": {
+        "rows": 4,
+        "source": "DanhSachTho.xlsx#Sheet1",
+        "roles": {},
+        "columns": [
+          "ho_ten",
+          "ngay_vao_lam",
+          "hoa_hong",
+          "ngay_vao_lam__date"
+        ]
+      },
+      "sosuaxe": {
+        "rows": 6078,
+        "source": "SoSuaXe.xlsx (sheets: T7-2025, T8-2025, T9-2025, T10-2025, T11-2025, T12-2025, T1-2026, T2-2026, T3-2026, T4-2026, T5-2026, T6-2026, T7-2026, T8-2026)",
+        "roles": {
+          "sale_date": "ngay",
+          "order_total": "tien",
+          "sale_date_parsed": "ngay__date",
+          "note_status": "ghi_chu"
+        },
+        "columns": [
+          "_sheet",
+          "ngay",
+          "xe",
+          "lam_gi",
+          "tho",
+          "tien",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "orders": {
+        "rows": 6078,
+        "source": "derived: one row per order from sosuaxe, line amounts from detail table",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "row_id",
+          "_sheet",
+          "ngay",
+          "xe",
+          "lam_gi",
+          "tho",
+          "tien",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status"
+        ]
+      },
+      "phieu_sua_xe": {
+        "rows": 6078,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "_sheet",
+          "ngay",
+          "xe",
+          "lam_gi",
+          "tho",
+          "tien",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "dong_xe",
+          "bien_so",
+          "ho_ten_tho",
+          "hoa_hong_pct",
+          "is_bao_hanh",
+          "co_thu_tien",
+          "phieu_id"
+        ]
+      },
+      "viec_sua_xe": {
+        "rows": 11261,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "phieu_id",
+          "ngay__date",
+          "dong_xe",
+          "bien_so",
+          "ho_ten_tho",
+          "viec_goc",
+          "nhom_viec_chuan",
+          "is_bao_hanh",
+          "tinh_luot_lam_viec"
+        ]
+      }
+    },
+    "special_traps": [
+      "Sổ sửa xe không có mã phiếu, cột `xe` gộp dòng xe + biển số, cột `lam_gi` gộp nhiều việc, cột `tho` ghi tên gọi (A.Đức, Phúc...). Đã tách sẵn bảng `phieu_sua_xe` (có `dong_xe`, `bien_so`, `ho_ten_tho`, `is_bao_hanh`, `co_thu_tien`) và `viec_sua_xe` (chuẩn hoá 20 nhóm việc theo Rulebook §6)."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-07-01 hoặc sau 2026-08-31 (README chốt đến 2026-08-31).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_013": {
+    "business_id": "dev_013",
+    "industry_code": "mother_and_baby",
+    "industry_label": "Cửa hàng Mẹ và Bé",
+    "duckdb_file": "duckdb/dev_013.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-05-01",
+      "max_order_date": "2026-06-30",
+      "readme_as_of_cutoff": "2026-06-30"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": true,
+      "has_debt": false,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": false,
+      "has_installments": false,
+      "has_warranty": false,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "banhang_2025": {
+        "rows": 18050,
+        "source": "BanHang_2025.xlsx (sheets: T05-2025, T06-2025, T07-2025, T08-2025, T09-2025, T10-2025, T11-2025, T12-2025)",
+        "roles": {
+          "line_amount": "tt",
+          "qty": "sl",
+          "unit": "dvt",
+          "item": "ten_hang",
+          "order_id": "hd",
+          "sale_date": "ngay",
+          "customer": "khach",
+          "channel": "kenh",
+          "note_status": "ghi_chu",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "_sheet",
+          "dg",
+          "tt",
+          "sl",
+          "dvt",
+          "ten_hang",
+          "hd",
+          "ngay",
+          "khach",
+          "kenh",
+          "ghi_chu",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin"
+        ]
+      },
+      "banhang_2026": {
+        "rows": 14124,
+        "source": "BanHang_2026.xlsx (sheets: T01-2026, T02-2026, T03-2026, T04-2026, T05-2026, T06-2026)",
+        "roles": {
+          "line_amount": "tt",
+          "qty": "sl",
+          "unit": "dvt",
+          "item": "ten_hang",
+          "order_id": "hd",
+          "sale_date": "ngay",
+          "customer": "khach",
+          "channel": "kenh",
+          "note_status": "ghi_chu",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "_sheet",
+          "dg",
+          "tt",
+          "sl",
+          "dvt",
+          "ten_hang",
+          "hd",
+          "ngay",
+          "khach",
+          "kenh",
+          "ghi_chu",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin"
+        ]
+      },
+      "quanly_danhmuc": {
+        "rows": 77,
+        "source": "QuanLy.xlsx#DanhMuc",
+        "roles": {
+          "item": "ten_hang",
+          "item_group": "nhom",
+          "base_unit": "dvt"
+        },
+        "columns": [
+          "ten_hang",
+          "ten_goi_khac",
+          "nhom",
+          "hang",
+          "so_size",
+          "dvt",
+          "quy_doi"
+        ]
+      },
+      "quanly_khachhang": {
+        "rows": 420,
+        "source": "QuanLy.xlsx#KhachHang",
+        "roles": {
+          "customer": "ten_kh"
+        },
+        "columns": [
+          "ten_kh",
+          "sdt",
+          "ten_be",
+          "ngay_dang_ky",
+          "diem_hien_co",
+          "ngay_dang_ky__date",
+          "ten_kh_is_walkin"
+        ]
+      },
+      "quanly_nhaphang": {
+        "rows": 1503,
+        "source": "QuanLy.xlsx#NhapHang",
+        "roles": {
+          "sale_date": "ngay",
+          "item": "hang",
+          "qty": "sl",
+          "line_amount": "thanh_tien",
+          "sale_date_parsed": "ngay__date",
+          "note_status": "ghi_chu"
+        },
+        "columns": [
+          "ngay",
+          "so_phieu",
+          "nha_cung_cap",
+          "hang",
+          "sl",
+          "dvt",
+          "don_gia",
+          "thanh_tien",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status",
+          "in_revenue"
+        ]
+      },
+      "quanly_khuyenmai": {
+        "rows": 10,
+        "source": "QuanLy.xlsx#KhuyenMai",
+        "roles": {},
+        "columns": [
+          "chuong_trinh",
+          "hang_ap_dung",
+          "tu_ngay",
+          "den_ngay",
+          "tu_ngay__date",
+          "den_ngay__date"
+        ]
+      },
+      "orders": {
+        "rows": 11834,
+        "source": "derived: one row per order from banhang_2025, banhang_2026",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "customer",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "hd",
+          "_sheet",
+          "ngay",
+          "khach",
+          "kenh",
+          "ghi_chu",
+          "ngay__date",
+          "is_dup_line",
+          "status_norm",
+          "order_status",
+          "khach_is_walkin",
+          "revenue_lines_raw_with_adjustments"
+        ]
+      },
+      "lines": {
+        "rows": 32008,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      },
+      "lines_clean": {
+        "rows": 20664,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      },
+      "order_adjustments": {
+        "rows": 9098,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "in_revenue",
+          "status",
+          "voucher_discount",
+          "points_used",
+          "points_discount",
+          "ship_fee"
+        ]
+      }
+    },
+    "special_traps": [
+      "Trong sổ bán hàng có 11.344 dòng giả không phải mặt hàng ('Voucher', 'Dùng <n> điểm', 'Phí ship'). Đã lọc sạch khỏi `orders.revenue_lines`, xuất bảng dòng hàng sạch `lines_clean` và bảng `order_adjustments` lưu riêng tiền giảm voucher, điểm và phí ship."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-05-01 hoặc sau 2026-06-30 (README chốt đến 2026-06-30).",
+      "Câu hỏi về công nợ khách hàng, tuổi nợ, thu nợ (do shop không ghi nhận công nợ).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  },
+  "dev_014": {
+    "business_id": "dev_014",
+    "industry_code": "phone_shop_full",
+    "industry_label": "Cửa hàng Điện thoại (Sổ bán + Thu máy cũ + Sổ nợ/Trả góp/Bảo hành)",
+    "duckdb_file": "duckdb/dev_014.duckdb",
+    "date_coverage": {
+      "min_order_date": "2025-07-01",
+      "max_order_date": "2026-09-30",
+      "readme_as_of_cutoff": "2026-09-30"
+    },
+    "capabilities": {
+      "has_item_lines": true,
+      "has_cost_or_margin": false,
+      "has_debt": true,
+      "has_inventory": false,
+      "has_lot_expiry": false,
+      "has_price_history": false,
+      "has_expense_book": false,
+      "has_shift_cash_report": false,
+      "has_delivery_trips": false,
+      "has_trade_in": true,
+      "has_installments": true,
+      "has_warranty": true,
+      "is_motorbike_repair": false
+    },
+    "tables": {
+      "sobanhang_ghi_tat": {
+        "rows": 59,
+        "source": "SoBanHang.xlsx#Ghi tắt",
+        "roles": {
+          "item": "ten_hang"
+        },
+        "columns": [
+          "ghi_tat",
+          "ten_hang",
+          "loai"
+        ]
+      },
+      "sobanhang_t7_2025": {
+        "rows": 10306,
+        "source": "SoBanHang.xlsx (sheets: T7-2025, T8-2025, T9-2025, T10-2025, T11-2025, T12-2025, T1-2026, T2-2026, T3-2026, T4-2026, T5-2026, T6-2026, T7-2026, T8-2026, T9-2026)",
+        "roles": {
+          "sale_date": "ngay",
+          "customer": "khach",
+          "qty": "sl",
+          "line_amount": "thanh_tien",
+          "item": "hang",
+          "sale_date_parsed": "ngay__date",
+          "note_status": "ghi_chu",
+          "order_id": "order_key"
+        },
+        "columns": [
+          "_sheet",
+          "ngay",
+          "stt",
+          "khach",
+          "hang",
+          "imei",
+          "sl",
+          "gia",
+          "thanh_tien",
+          "bot",
+          "khach_tra",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status",
+          "in_revenue",
+          "khach_is_walkin",
+          "order_key"
+        ]
+      },
+      "sono_so_no": {
+        "rows": 337,
+        "source": "SoNo.xlsx#Sổ nợ",
+        "roles": {
+          "sale_date": "ngay",
+          "customer": "khach",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "ngay",
+          "khach",
+          "sdt",
+          "no",
+          "da_tra",
+          "ngay_tra",
+          "ghi_chu",
+          "ngay__date",
+          "ngay_tra__date",
+          "khach_is_walkin"
+        ]
+      },
+      "sono_tra_gop": {
+        "rows": 1155,
+        "source": "SoNo.xlsx#Trả góp",
+        "roles": {
+          "sale_date": "ngay",
+          "customer": "khach",
+          "sale_date_parsed": "ngay__date",
+          "order_id": "order_key"
+        },
+        "columns": [
+          "ngay",
+          "stt",
+          "khach",
+          "sdt",
+          "may",
+          "gia",
+          "tra_truoc",
+          "so_ky",
+          "gop_thang",
+          "han_gop_ngay",
+          "ngay_gop",
+          "da_gop",
+          "ngay__date",
+          "ngay_gop__date",
+          "khach_is_walkin",
+          "order_key"
+        ]
+      },
+      "sono_bao_hanh": {
+        "rows": 192,
+        "source": "SoNo.xlsx#Bảo hành",
+        "roles": {
+          "customer": "khach"
+        },
+        "columns": [
+          "ngay_nhan",
+          "khach",
+          "sdt",
+          "may",
+          "imei",
+          "ngay_mua",
+          "loi",
+          "xu_ly",
+          "ngay_nhan__date",
+          "ngay_mua__date",
+          "khach_is_walkin"
+        ]
+      },
+      "thumaycu": {
+        "rows": 300,
+        "source": "ThuMayCu.xlsx#Sheet1",
+        "roles": {
+          "sale_date": "ngay",
+          "customer": "khach",
+          "status": "tinh_trang",
+          "sale_date_parsed": "ngay__date"
+        },
+        "columns": [
+          "ngay",
+          "khach",
+          "sdt",
+          "may_thu",
+          "tinh_trang",
+          "imei",
+          "gia_thu",
+          "tru_vao_stt_so_ban",
+          "ngay__date",
+          "status_norm",
+          "khach_is_walkin"
+        ]
+      },
+      "orders": {
+        "rows": 6334,
+        "source": "derived: one row per order from sobanhang_t7_2025",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "order_date",
+          "is_walkin",
+          "status",
+          "in_revenue",
+          "revenue_lines",
+          "n_lines",
+          "order_key",
+          "_sheet",
+          "stt",
+          "bot",
+          "khach_tra",
+          "ghi_chu",
+          "ngay__date",
+          "status_norm",
+          "order_status",
+          "khach_is_walkin"
+        ]
+      },
+      "lines": {
+        "rows": 10282,
+        "source": "derived: one row per sale line (orders joined)",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee"
+        ]
+      },
+      "lines_enriched": {
+        "rows": 10282,
+        "source": "derived_public_test_enrichment",
+        "roles": {},
+        "columns": [
+          "order_id",
+          "item",
+          "item_code",
+          "unit",
+          "qty",
+          "qty_base",
+          "source",
+          "amount",
+          "cost",
+          "order_date",
+          "in_revenue",
+          "status",
+          "is_fee",
+          "ten_day_du",
+          "loai_hang",
+          "dong_may",
+          "hang_sx"
+        ]
+      }
+    },
+    "special_traps": [
+      "Tên hàng trong sổ bán dùng chữ viết tắt (59 mã trong sheet `Ghi tắt`). Đã join sẵn vào bảng `lines_enriched` gồm `ten_day_du`, `loai_hang` (máy mới/máy cũ/phụ kiện), `dong_may` (trước ...GB) và `hang_sx` (iPhone -> Apple).",
+      "Sổ công nợ của dev_014 gồm cả `sono_so_no` (nợ thường) VÀ `sono_tra_gop` (đơn trả góp). Theo Rulebook §6, câu hỏi về khách nợ/mua chịu/thu nợ phải tính gộp cả đơn trả góp."
+    ],
+    "unanswerable_triggers": [
+      "Kỳ hỏi nằm hoàn toàn trước 2025-07-01 hoặc sau 2026-09-30 (README chốt đến 2026-09-30).",
+      "Câu hỏi về giá vốn, lãi gộp, lãi ròng, mặt hàng lời nhất (do shop không ghi giá vốn/giá nhập).",
+      "Câu hỏi về số lượng/giá trị tồn kho cuối ngày (do shop không có sổ tồn kho).",
+      "Câu hỏi về lãi ròng tháng (trừ chi phí vận hành) (do shop không có sổ chi phí)."
+    ]
+  }
+}

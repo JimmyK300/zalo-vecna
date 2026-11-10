@@ -1,0 +1,346 @@
+{
+  "1_temporal_primitives": {
+    "description": "Quy đổi mọi cách nói thời gian trong câu hỏi theo mốc `as_of_date` (Rulebook §2).",
+    "module_ref": "datamate/primitives.py:period, datamate/metrics.py:find_periods, previous_period",
+    "functions": [
+      {
+        "name": "today",
+        "formula": "[as_of, as_of]",
+        "note": "Chỉ tính phát sinh trong ngày hôm nay"
+      },
+      {
+        "name": "yesterday",
+        "formula": "[as_of - 1d, as_of - 1d]",
+        "note": "Ngày hôm qua"
+      },
+      {
+        "name": "this_week",
+        "formula": "[Monday(as_of), as_of]",
+        "note": "Tuần bắt đầu từ thứ Hai"
+      },
+      {
+        "name": "last_week",
+        "formula": "[Monday(as_of) - 7d, Sunday(as_of) - 7d]",
+        "note": "Cả tuần liền trước (Thứ 2 -> Chủ nhật)"
+      },
+      {
+        "name": "this_month",
+        "formula": "[YYYY-MM-01, as_of]",
+        "note": "So với tháng trước phải lấy CÙNG SỐ NGÀY (last_month_same_days)"
+      },
+      {
+        "name": "last_month_same_days",
+        "formula": "[prev_YYYY-MM-01, min(as_of.day, last_day_of_prev_month)]",
+        "note": "Dùng khi so sánh 'tháng này so với tháng trước'"
+      },
+      {
+        "name": "month_M_Y",
+        "runtime_kind": "month",
+        "formula": "[Y-M-01, end_of_month(Y, M)]",
+        "note": "Không ghi năm -> năm của as_of nếu <= as_of, ngược lại năm trước"
+      },
+      {
+        "name": "quarter_Q_Y",
+        "runtime_kind": "quarter",
+        "formula": "[first_day_of_Q, last_day_of_Q]",
+        "note": "Quý dương lịch 3 tháng"
+      },
+      {
+        "name": "year_to_date",
+        "formula": "[as_of.year-01-01, as_of]",
+        "note": "'Từ đầu năm', 'từ đầu năm tới nay'"
+      },
+      {
+        "name": "last_n_days",
+        "formula": "[as_of - (N-1)d, as_of]",
+        "note": "'N ngày gần nhất': gồm cả hôm nay"
+      },
+      {
+        "name": "until_date_X",
+        "runtime_kind": "until",
+        "formula": "[beginning_of_data, X]",
+        "note": "'Đến hết ngày X', 'tính đến hôm nay': dùng cho số dư (còn nợ, còn tồn)"
+      },
+      {
+        "name": "tet_window",
+        "runtime_kind": "tet",
+        "formula": "[lunar(Y-1, 12, 23), lunar(Y, 1, 10)]",
+        "note": "Tra calendar.csv; so với trước Tết = cùng số ngày ngay trước 23 tháng Chạp"
+      },
+      {
+        "name": "shift_window",
+        "formula": "ca_sang=[06:00, 13:59], ca_chieu=[14:00, 21:59]",
+        "note": "Theo giờ tạo đơn; so ca chiều với ca sáng thì mẫu số là ca sáng"
+      },
+      {
+        "name": "weekday_average",
+        "note": "Bình quân mỗi ngày thứ X chia cho số ngày thứ X trong kỳ, kể cả ngày không có giao dịch.",
+        "rulebook_section": "§2",
+        "scope": "public_test"
+      },
+      {
+        "name": "data_coverage",
+        "note": "Kỳ hoàn toàn ngoài vùng dữ liệu hoặc dữ liệu không ghi loại thông tin cần thiết thì unanswerable. Nếu chỉ giao một phần vùng dữ liệu, tính phần giao. Chỉ dùng 0 khi dữ liệu đủ để kết luận không có phát sinh.",
+        "rulebook_section": "§7"
+      }
+    ]
+  },
+  "2_order_and_revenue_primitives": {
+    "description": "Các phép tính cấp đơn hàng trên bảng `orders` (Rulebook §1).",
+    "module_ref": "datamate/primitives.py:build_orders, datamate/metrics.py:Metrics, datamate/filters.py:dimensions",
+    "functions": [
+      {
+        "name": "valid_revenue_orders",
+        "sql": "WHERE in_revenue = TRUE AND order_date BETWEEN :start AND :end",
+        "note": "Đơn không huỷ và không trả hàng (trả 1 phần cũng bỏ cả đơn); đơn đang giao vẫn tính Dùng trạng thái ghi trên đơn, kể cả khi trả sau ngày chốt."
+      },
+      {
+        "name": "order_revenue",
+        "sql": "SUM(revenue_lines)",
+        "note": "Tổng thành tiền các dòng hàng sau giảm giá dòng; KHÔNG trừ voucher/giảm giá cả đơn, KHÔNG cộng VAT, KHÔNG gồm phí ship Nếu chia theo phương thức thanh toán thì dùng phương thức ghi trên đơn, tách COD thành nhóm riêng. Khi lấy doanh thu phải áp điều kiện valid_revenue_orders. Dùng bảng dòng đã xử lý nếu chia theo mặt hàng."
+      },
+      {
+        "name": "order_count",
+        "sql": "COUNT(DISTINCT order_id) WHERE in_revenue = TRUE",
+        "note": "Chỉ đếm đơn không huỷ, không trả"
+      },
+      {
+        "name": "avg_order_value",
+        "sql": "ROUND(SUM(revenue_lines) * 1.0 / COUNT(DISTINCT order_id))",
+        "note": "Làm tròn về đồng, nửa đồng làm tròn lên"
+      },
+      {
+        "name": "cancellation_rate",
+        "sql": "ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'huy') / COUNT(*), 2)",
+        "note": "Mẫu số là MỌI đơn đặt trong kỳ (cả hoàn thành, huỷ, trả hàng, đang giao); đơn trả hàng không phải đơn huỷ SQL dùng dữ liệu cấp đơn trong kỳ."
+      },
+      {
+        "name": "distinct_buying_customers",
+        "sql": "COUNT(DISTINCT customer_key) WHERE in_revenue = TRUE AND NOT is_walkin",
+        "note": "Có mã khách thì theo mã; không có mã thì theo tên chuẩn hoá; bỏ khách lẻ Hai khách trùng tên có mã khác nhau vẫn là hai khách."
+      },
+      {
+        "name": "pct_growth",
+        "sql": "ROUND(100.0 * (curr - prev) / NULLIF(prev, 0), 2)",
+        "note": "Giảm ra số âm. Khi kỳ so bằng 0, cần quy tắc xử lý rõ ràng trước khi sinh mẫu có nhãn."
+      },
+      {
+        "name": "abs_diff",
+        "sql": "curr - prev",
+        "note": "Kỳ hỏi trừ kỳ so; ít hơn ra số âm"
+      },
+      {
+        "name": "peak_hour",
+        "sql": "SELECT EXTRACT(HOUR FROM created_time) AS hour FROM prepared_orders WHERE in_revenue GROUP BY 1 ORDER BY COUNT(*) DESC, 1 ASC LIMIT 1",
+        "note": "Trả về giờ bắt đầu khung (type number) created_time là giờ đặt đơn được ánh xạ từ schema shop. Chỉ dùng nguồn có đủ giờ, giữ một dòng mỗi đơn.",
+        "scope": "public_test"
+      },
+      {
+        "name": "customer_group_share",
+        "note": "Đơn vãng lai không thuộc nhóm khách. Mẫu số tỉ trọng nhóm là doanh thu toàn shop cùng kỳ, gồm cả đơn vãng lai.",
+        "rulebook_section": "§1"
+      },
+      {
+        "name": "source_grain",
+        "note": "Chỉ bỏ dòng giống hệt trong cùng một đơn. Các dòng giống nhau ở hai đơn khác nhau hoặc trong sổ không theo đơn vẫn là các phát sinh riêng. Giá trị trống ở các dòng sau của một nhóm đơn kế thừa thông tin cấp đơn từ dòng đầu.",
+        "rulebook_section": "§8"
+      },
+      {
+        "name": "busiest_day",
+        "formula": "Đếm đơn hợp lệ theo ngày đặt và lấy ngày có nhiều đơn nhất.",
+        "scope": "public_test",
+        "rulebook_section": "§3"
+      },
+      {
+        "name": "working_day_count",
+        "formula": "Đếm ngày khác nhau có ít nhất một đơn hoặc phiếu do người được hỏi bán hoặc làm, gồm cả phiếu bảo hành.",
+        "scope": "public_test",
+        "rulebook_section": "§3"
+      }
+    ]
+  },
+  "3_item_and_ranking_primitives": {
+    "description": "Các phép tính cấp mặt hàng và xếp hạng trên bảng `lines` (Rulebook §3, §9).",
+    "module_ref": "datamate/items.py:Items",
+    "functions": [
+      {
+        "name": "best_selling_items",
+        "sql": "SELECT item_key, SUM(qty_base) AS q FROM prepared_lines WHERE in_revenue AND NOT is_fee GROUP BY item_key ORDER BY q DESC, item_key ASC LIMIT :k",
+        "note": "Xếp theo số lượng đơn vị cơ bản (qty_base); bỏ dòng 'Phí phục vụ'; bằng nhau xếp theo mã tăng dần item_key là khóa logic tính theo mã, hoặc theo tên khi không có mã. Lấy tên hiển thị từ catalog. prepared_lines là bảng dòng đã chọn đúng shop."
+      },
+      {
+        "name": "most_popular_item_by_orders",
+        "sql": "COUNT(DISTINCT order_id) WHERE in_revenue AND NOT is_fee",
+        "note": "'Mặt hàng được ưa chuộng nhất' = có mặt trong nhiều đơn nhất Nhóm theo khóa mặt hàng, đếm đơn khác nhau có mặt hàng.",
+        "scope": "public_test"
+      },
+      {
+        "name": "most_profitable_item",
+        "sql": "SUM(amount - qty * cost) WHERE in_revenue AND NOT is_fee",
+        "note": "'Hàng lời nhất' = theo tổng lãi gộp của mặt hàng"
+      },
+      {
+        "name": "unsold_items_in_period",
+        "sql": "items sold before :start (in_revenue) EXCEPT items sold in [:start, :end] (in_revenue)",
+        "note": "'Mặt hàng ế / không bán được trong kỳ': đã từng bán trước kỳ nhưng trong kỳ không có đơn nào"
+      },
+      {
+        "name": "unit_filtered_quantity",
+        "sql": "SUM(qty_base) WHERE base_unit = :target_unit AND in_revenue",
+        "note": "'Bán được bao nhiêu <đơn vị>': chỉ cộng mặt hàng có đơn vị cơ bản là <đơn vị> (kể cả dòng bán theo đơn vị lớn đã quy đổi) Nếu bảng dòng không có base_unit thì tra catalog theo mã mặt hàng của cùng shop."
+      },
+      {
+        "name": "group_revenue_share",
+        "sql": "ROUND(100.0 * SUM(amount) FILTER (WHERE group = :g) / SUM(amount), 2)",
+        "note": "Mẫu số tổng doanh thu gồm cả dòng Phí phục vụ"
+      },
+      {
+        "name": "customer_rankings",
+        "variants": {
+          "top_revenue_customer": "Cộng doanh thu các đơn hợp lệ theo từng khách đã định danh.",
+          "most_loyal_customer": "Đếm ngày mua khác nhau theo khách, chỉ xét đơn hợp lệ.",
+          "biggest_spender_aov": "Trung bình giá trị của các đơn hợp lệ theo khách, chỉ xét khách có ít nhất 3 đơn khác nhau.",
+          "most_cancelling_customer": "Đếm đơn huỷ theo từng khách đã định danh."
+        },
+        "note": "Các biến thể khách trung thành, khách sộp và khách hay đổi ý chỉ áp dụng theo Rulebook public_test."
+      },
+      {
+        "name": "unit_conversion",
+        "note": "Tra hệ số theo từng shop và mặt hàng. Khi có nhiều cấp đơn vị, đi theo các mức quy đổi trong danh mục. Dùng đơn vị yêu cầu khi trả lời.",
+        "rulebook_section": "§10"
+      },
+      {
+        "name": "result_order",
+        "note": "Khi bằng tiêu chí xếp hạng, dùng mã tăng dần hoặc tên nếu không có mã. Danh sách theo đúng thứ tự được hỏi. Bảng giữ thứ tự cột theo yêu cầu. Tra Rulebook để sắp xếp câu liệt kê theo số đo, hạn dùng hoặc mã.",
+        "rulebook_section": "§9"
+      },
+      {
+        "name": "customer_identity",
+        "note": "Dùng mã khách nếu có. Hai mã trùng tên vẫn là hai khách. Nếu shop không có mã, dùng tên ghi trên đơn và gộp biến thể của cùng người. Khách vãng lai không tham gia đếm hoặc xếp hạng khách.",
+        "rulebook_section": "§3"
+      },
+      {
+        "name": "eligible_ranked_product",
+        "note": "Dùng mã mặt hàng nếu có và loại dòng Phí phục vụ khỏi xếp hạng hoặc đếm mặt hàng. Phí phục vụ vẫn tính vào tổng doanh thu.",
+        "rulebook_section": "§3"
+      }
+    ]
+  },
+  "4_debt_and_ledger_primitives": {
+    "description": "Công nợ luỹ kế tính đến hết ngày X và phát sinh nợ/trả nợ trong kỳ (Rulebook §4).",
+    "module_ref": "datamate/recipes.py:DebtLedger",
+    "functions": [
+      {
+        "name": "order_owed_at_date_X",
+        "formula": "order_total - SUM(payments.amount WHERE pay_date <= X)",
+        "note": "Tính đơn không huỷ (đơn trả hàng vẫn tính nếu còn nợ); BỎ đơn COD và đơn sàn TMĐT Chỉ xét đơn đặt đến hết ngày X và dùng tổng đơn sau giảm giá toàn đơn, gồm phí giao."
+      },
+      {
+        "name": "total_debt_at_date_X",
+        "formula": "SUM(owed) WHERE owed > 0",
+        "note": "Tổng nợ cả shop tính cả đơn khách lẻ"
+      },
+      {
+        "name": "customer_debt_table",
+        "formula": "Lọc owed > 0 ở cấp đơn, bỏ khách lẻ, nhóm theo customer_key, cộng owed rồi xếp giảm dần theo số nợ.",
+        "note": "Bảng nợ theo khách KHÔNG có dòng khách lẻ; columns=['khach_hang', 'so_tien_no'] Đồng hạng dùng mã tăng dần, hoặc tên nếu không có mã."
+      },
+      {
+        "name": "debt_age_days",
+        "formula": "(as_of_date - order_date).days",
+        "note": "Tính từ ngày đặt đơn (không tính từ hạn thanh toán); đặt hôm nay = 0 ngày"
+      },
+      {
+        "name": "debt_movements_in_period",
+        "formula": "[new_debt, repaid]",
+        "note": "Chỉ xét đơn ghi nợ: Nợ thêm = phần chưa trả ngay trong ngày mua của đơn đặt trong kỳ; Trả nợ = khoản trả SAU ngày mua có ngày trả trong kỳ"
+      }
+    ]
+  },
+  "5_inventory_purchase_cost_primitives": {
+    "description": "Kho, nhập hàng, giá vốn, lãi gộp, lãi ròng, hiệu ứng tăng giá (Rulebook §5).",
+    "functions": [
+      {
+        "name": "purchase_amount_in_period",
+        "formula": "SUM(thanh_tien) FROM phieu_nhap WHERE status != 'huy' AND ngay_nhap BETWEEN :start AND :end",
+        "note": "Tính cả phiếu 'nhập đầu kỳ' nếu có ngày phiếu trong kỳ"
+      },
+      {
+        "name": "main_supplier_vs_top_amount_supplier",
+        "formula": "Nhà cung cấp chính = COUNT(DISTINCT so_phieu) DESC; Nhà cung cấp nhập nhiều nhất = SUM(thanh_tien) DESC",
+        "note": "Hai khái niệm khác nhau trong Rulebook §5 Cách gọi 'nhà cung cấp chính' theo số phiếu áp dụng theo Rulebook public_test."
+      },
+      {
+        "name": "inventory_value_end_of_day",
+        "formula": "SUM(ton_cuoi_dv_co_ban * gia_von_danh_muc) WHERE ton_cuoi > 0",
+        "note": "Nhân với giá vốn 1 đơn vị cơ bản ghi trong danh mục hàng"
+      },
+      {
+        "name": "gross_profit",
+        "formula": "SUM(line_amount - qty * line_cost) WHERE in_revenue",
+        "note": "Dùng giá vốn ghi trên dòng bán, không tự tính lại từ phiếu nhập"
+      },
+      {
+        "name": "net_profit_month",
+        "formula": "gross_profit(month) - SUM(sotay_chiphi.tien_chi in month)",
+        "note": "Trừ mọi khoản ghi trong sổ chi phí của tháng đó (kể cả sửa chữa, mua thiết bị)"
+      },
+      {
+        "name": "price_increase_effect",
+        "formula": " Compare qty_base in [D, D + N - 1] vs [D - N, D - 1] around first price increase date D",
+        "note": "Tăng lên cùng 1 giá nhiều lần thì lấy lần đầu"
+      },
+      {
+        "name": "train_price_and_stock",
+        "note": "Giá nhập bình quân gia quyền theo số lượng nhập. Giá bán ngày X dùng giá trước chiết khấu dòng, tính cả dòng đơn huỷ và trả, quy về một đơn vị cơ bản. Tồn theo đơn vị lớn trả [phần nguyên đơn vị lớn, phần lẻ theo đơn vị cơ bản].",
+        "rulebook_section": "§5",
+        "scope": "train"
+      },
+      {
+        "name": "inventory_at_day_end",
+        "formula": "Số lượng tồn sau mọi phát sinh đến hết ngày D, theo dữ liệu của shop.",
+        "note": "Hết hàng cuối ngày chỉ xét hàng mua về để bán có tồn bằng 0."
+      },
+      {
+        "name": "purchase_receipt_count",
+        "formula": "Đếm khóa phiếu nhập khác nhau có ngày phiếu trong kỳ, loại phiếu huỷ.",
+        "rulebook_section": "§5"
+      }
+    ]
+  },
+  "6_industry_specific_primitives": {
+    "coffee_tea (dev_002)": [
+      "Size M / Size L: lọc theo hậu tố `(M)` hoặc `(L)` không phân biệt hoa thường.",
+      "Inline Topping: dùng bảng `lines_unpacked` (đã tách phần `+ [N] Topping (tiền)` ra khỏi món chính)."
+    ],
+    "pharmacy (dev_005, dev_006)": [
+      "Thuốc kê đơn: tra `danhsachthuoc.thuoc_ke_don` (`dev_005`) hoặc `thong_tin_thuoc.bantheodon` (`dev_006`). Tỉ lệ kê đơn tính theo doanh thu.",
+      "Doanh thu theo hoạt chất: khớp chính xác chuỗi hoạt chất; thuốc phối hợp nhiều hoạt chất là 1 loại riêng, không cộng vào từng hoạt chất lẻ.",
+      "Hàng hết hạn trong N ngày tới: lô còn tồn có `han_su_dung` từ `D` đến `D + N`; tiền vốn tính theo `dongianhap` của chính lô đó quy về ĐV cơ bản.",
+      "Lô gần hết hạn nhất của một thuốc: chọn lô còn tồn và chưa quá hạn tại ngày hỏi."
+    ],
+    "building_materials (dev_004)": [
+      "Số đợt giao trong tháng X (`sogiaohang`): đếm số đợt `(so_don, luot_giao)` có `thoi_gian_giao` trong tháng X, tính cả đợt của đơn sau đó trả hàng.",
+      "Khi hỏi đơn đặt trong kỳ đã chở tới ngày D, áp kỳ trên ngày đặt và ngày chốt trên ngày giao."
+    ],
+    "mother_and_baby (dev_013)": [
+      "Doanh thu & mặt hàng: bắt buộc dùng `lines_clean` (đã loại bỏ 11.344 dòng `Voucher`, `Dùng <n> điểm`, `Phí ship`).",
+      "Tiền giảm voucher / điểm / phí ship: tra bảng `order_adjustments`, chỉ tính hoá đơn `in_revenue = TRUE`, trả về số dương.",
+      "Số sữa / size bỉm: lấy từ cột `so_size` trong `quanly_danhmuc` (trống thì không xếp dù tên hàng có số). Tỉ trọng chia cho tổng số bịch mọi hàng nhóm `Bỉm - Tã` cùng kỳ.",
+      "Khách thành viên mới trong tháng: đếm `quanly_khachhang` có `ngay_dang_ky__date` trong tháng (kể cả chưa mua lần nào)."
+    ],
+    "motorbike_repair (dev_012)": [
+      "Dùng bảng `phieu_sua_xe` và `viec_sua_xe`.",
+      "Số lượt xe / số phiếu (của tiệm hoặc của thợ): đếm mọi dòng (KỂ CẢ phiếu bảo hành `is_bao_hanh = TRUE`).",
+      "Tiền trung bình 1 phiếu: chỉ chia cho số phiếu `co_thu_tien = TRUE` (không tính phiếu bảo hành).",
+      "Số lượt xe làm việc X: đếm trên `viec_sua_xe` với `tinh_luot_lam_viec = TRUE` (phiếu bảo hành không tính; `Nhớt` = nhớt máy; `ruột` = thay ruột mới; `Sửa điện` không gồm bóng đèn/ắc quy).",
+      "Số chiếc xe: `COUNT(DISTINCT bien_so)` (tính cả xe bảo hành). Xe khách quen = `bien_so` có `>= 2` phiếu `co_thu_tien = TRUE` trong kỳ."
+    ],
+    "phone_shop (dev_011, dev_014)": [
+      "Dùng bảng `lines_enriched` để có sẵn `ten_day_du`, `loai_hang` (máy mới/máy cũ/phụ kiện), `dong_may` (trước ...GB), `hang_sx` (iPhone -> Apple).",
+      "Thu máy cũ: tiền thu máy cũ không trừ vào doanh thu; tổng khách phải trả = tiền đơn sau bớt và sau trừ máy cũ (chỉ tính đơn `in_revenue = TRUE`).",
+      "Trả góp (`dev_014.sono_tra_gop`): đơn trả góp là đơn ghi nợ; tiền góp mỗi kỳ tính vào thu nợ, không tính vào doanh thu. Kỳ góp có hạn `< as_of_date` mà chưa góp đủ là quá hạn.",
+      "Tỉ lệ bảo hành quý (`dev_014.sono_bao_hanh`): số lượt bảo hành có `ngay_nhan` trong quý chia cho tổng số máy (`loai_hang IN ('máy mới', 'máy cũ')`) bán trong quý (`in_revenue = TRUE`)."
+    ]
+  }
+}

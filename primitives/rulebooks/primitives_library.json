@@ -1,0 +1,2873 @@
+[
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_BAN_UOC_BAO_NHIEU_TIEN_THU_VE_BAO_NHIEU_TIEN",
+    "category": "CALCULATION",
+    "name": "Bán được bao nhiêu tiền, thu về bao nhiêu tiền",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Bán được bao nhiêu tiền, thu về bao nhiêu tiền | là **doanh thu** theo mục này, không phải tiền khách đã trả"
+    },
+    "description": "là **doanh thu** theo mục này, không phải tiền khách đã trả",
+    "trigger_keywords": [
+      "Bán được bao nhiêu tiền, thu về bao nhiêu tiền"
+    ],
+    "logic_intent": "là **doanh thu** theo mục này, không phải tiền khách đã trả",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 11,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Bán được bao nhiêu tiền, thu về bao nhiêu tiền | là **doanh thu** theo mục này, không phải tiền khách đã trả"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_BAO_CAO_TIEN_MAT_THEO_CA",
+    "category": "TEMPORAL",
+    "name": "Báo cáo tiền mặt theo ca",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Báo cáo tiền mặt theo ca | chỉ ghi **tiền mặt**, theo **giờ thu tiền**, gồm cả tiền khách trả nợ. Doanh thu, số đơn tính từ đơn hàng theo ngày, giờ đặt như trên, không tính từ báo cáo ca"
+    },
+    "description": "chỉ ghi **tiền mặt**, theo **giờ thu tiền**, gồm cả tiền khách trả nợ. Doanh thu, số đơn tính từ đơn hàng theo ngày, giờ đặt như trên, không tính từ báo cáo ca",
+    "trigger_keywords": [
+      "Báo cáo tiền mặt theo ca"
+    ],
+    "logic_intent": "chỉ ghi **tiền mặt**, theo **giờ thu tiền**, gồm cả tiền khách trả nợ. Doanh thu, số đơn tính từ đơn hàng theo ngày, giờ đặt như trên, không tính từ báo cáo ca",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 18
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_CHENH_LECH_HON_KEM_TANG_GIAM_BAO_NHIEU_SO_KHONG_PHAI",
+    "category": "CALCULATION",
+    "name": "Chênh lệch, hơn / kém, tăng / giảm bao nhiêu (số, không phải %)",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Chênh lệch, hơn / kém, tăng / giảm bao nhiêu (số, không phải %) | **kỳ hỏi − kỳ so**: ít hơn ra số âm, giữ đơn vị của số đo"
+    },
+    "description": "**kỳ hỏi − kỳ so**: ít hơn ra số âm, giữ đơn vị của số đo",
+    "trigger_keywords": [
+      "Chênh lệch, hơn / kém, tăng / giảm bao nhiêu (số, không phải %)"
+    ],
+    "logic_intent": "**kỳ hỏi − kỳ so**: ít hơn ra số âm, giữ đơn vị của số đo",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 21,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Chênh lệch, hơn / kém, tăng / giảm bao nhiêu (số, không phải %) | **kỳ hỏi − kỳ so**: ít hơn ra số âm, giữ đơn vị của số đo"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_DOANH_THU_MOT_ON",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Doanh thu một đơn",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Doanh thu một đơn | tổng **thành tiền các dòng hàng** (đã trừ giảm giá trên từng dòng). **Không** trừ giảm giá trên cả đơn (khuyến mãi theo tổng tiền đơn, voucher shop), **không** cộng thuế VAT, **không** gồm phí giao hàng. **Tiền hàng**, **tiền bán** của đơn bán cùng nghĩa với doanh thu"
+    },
+    "description": "tổng **thành tiền các dòng hàng** (đã trừ giảm giá trên từng dòng). **Không** trừ giảm giá trên cả đơn (khuyến mãi theo tổng tiền đơn, voucher shop), **không** cộng thuế VAT, **không** gồm phí giao hàng. **Tiền hàng**, **tiền bán** của đơn bán cùng nghĩa với doanh thu",
+    "trigger_keywords": [
+      "Doanh thu một đơn",
+      "bán được bao nhiêu tiền",
+      "thu về bao nhiêu tiền",
+      "tiền hàng",
+      "tiền bán"
+    ],
+    "logic_intent": "tổng **thành tiền các dòng hàng** (đã trừ giảm giá trên từng dòng). **Không** trừ giảm giá trên cả đơn (khuyến mãi theo tổng tiền đơn, voucher shop), **không** cộng thuế VAT, **không** gồm phí giao hàng. **Tiền hàng**, **tiền bán** của đơn bán cùng nghĩa với doanh thu",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 15,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Doanh thu một đơn | tổng **thành tiền các dòng hàng** (đã trừ giảm giá trên từng dòng). **Không** trừ giảm giá trên cả đơn (khuyến mãi theo tổng tiền đơn, voucher shop), **không** cộng thuế VAT, **không** gồm phí giao hàng. **Tiền hàng**, **tiền bán** của đơn bán cùng nghĩa với doanh thu"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_DOANH_THU_THEO_HINH_THUC_THANH_TOAN",
+    "category": "CALCULATION",
+    "name": "Doanh thu theo hình thức thanh toán",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Doanh thu theo hình thức thanh toán | theo hình thức **ghi trên đơn**, không theo lần trả nợ về sau: đơn ghi nợ không tính vào tiền mặt hay chuyển khoản. Đơn **COD** là hình thức riêng, không tính vào tiền mặt"
+    },
+    "description": "theo hình thức **ghi trên đơn**, không theo lần trả nợ về sau: đơn ghi nợ không tính vào tiền mặt hay chuyển khoản. Đơn **COD** là hình thức riêng, không tính vào tiền mặt",
+    "trigger_keywords": [
+      "Doanh thu theo hình thức thanh toán",
+      "bán được bao nhiêu tiền",
+      "thu về bao nhiêu tiền",
+      "tiền hàng",
+      "tiền bán"
+    ],
+    "logic_intent": "theo hình thức **ghi trên đơn**, không theo lần trả nợ về sau: đơn ghi nợ không tính vào tiền mặt hay chuyển khoản. Đơn **COD** là hình thức riêng, không tính vào tiền mặt",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 16,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Doanh thu theo hình thức thanh toán | theo hình thức **ghi trên đơn**, không theo lần trả nợ về sau: đơn ghi nợ không tính vào tiền mặt hay chuyển khoản. Đơn **COD** là hình thức riêng, không tính vào tiền mặt"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_DOANH_THU_THEO_NHOM_KHACH",
+    "category": "CALCULATION",
+    "name": "Doanh thu theo nhóm khách",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Doanh thu theo nhóm khách | nhóm theo cột nhóm khách. Đơn không ghi khách (khách vãng lai) **không thuộc nhóm nào**, kể cả nhóm `lẻ`. Tỉ trọng của nhóm chia cho doanh thu **cả shop** cùng kỳ, tính cả đơn vãng lai"
+    },
+    "description": "nhóm theo cột nhóm khách. Đơn không ghi khách (khách vãng lai) **không thuộc nhóm nào**, kể cả nhóm `lẻ`. Tỉ trọng của nhóm chia cho doanh thu **cả shop** cùng kỳ, tính cả đơn vãng lai",
+    "trigger_keywords": [
+      "Doanh thu theo nhóm khách",
+      "bán được bao nhiêu tiền",
+      "thu về bao nhiêu tiền",
+      "tiền hàng",
+      "tiền bán"
+    ],
+    "logic_intent": "nhóm theo cột nhóm khách. Đơn không ghi khách (khách vãng lai) **không thuộc nhóm nào**, kể cả nhóm `lẻ`. Tỉ trọng của nhóm chia cho doanh thu **cả shop** cùng kỳ, tính cả đơn vãng lai",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 17,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Doanh thu theo nhóm khách | nhóm theo cột nhóm khách. Đơn không ghi khách (khách vãng lai) **không thuộc nhóm nào**, kể cả nhóm `lẻ`. Tỉ trọng của nhóm chia cho doanh thu **cả shop** cùng kỳ, tính cả đơn vãng lai"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_ON_BI_HUY",
+    "category": "CALCULATION",
+    "name": "Đơn bị huỷ",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn bị huỷ | đơn có trạng thái huỷ. Đơn trả hàng **không** phải đơn huỷ"
+    },
+    "description": "đơn có trạng thái huỷ. Đơn trả hàng **không** phải đơn huỷ",
+    "trigger_keywords": [
+      "Đơn bị huỷ"
+    ],
+    "logic_intent": "đơn có trạng thái huỷ. Đơn trả hàng **không** phải đơn huỷ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 13,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn bị huỷ | đơn có trạng thái huỷ. Đơn trả hàng **không** phải đơn huỷ"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_ON_THUOC_KY_NAO",
+    "category": "TEMPORAL",
+    "name": "Đơn thuộc kỳ nào",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn thuộc kỳ nào | theo **ngày đặt**, không theo ngày giao hay ngày thu tiền. Đơn trả hàng sau kỳ, kể cả trả sau hôm nay, vẫn bị loại khỏi doanh thu kỳ đặt"
+    },
+    "description": "theo **ngày đặt**, không theo ngày giao hay ngày thu tiền. Đơn trả hàng sau kỳ, kể cả trả sau hôm nay, vẫn bị loại khỏi doanh thu kỳ đặt",
+    "trigger_keywords": [
+      "Đơn thuộc kỳ nào"
+    ],
+    "logic_intent": "theo **ngày đặt**, không theo ngày giao hay ngày thu tiền. Đơn trả hàng sau kỳ, kể cả trả sau hôm nay, vẫn bị loại khỏi doanh thu kỳ đặt",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 12,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn thuộc kỳ nào | theo **ngày đặt**, không theo ngày giao hay ngày thu tiền"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_ON_TINH_VAO_DOANH_THU",
+    "category": "CALCULATION",
+    "name": "Đơn tính vào doanh thu",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn tính vào doanh thu | đơn **không huỷ** và **không trả hàng**. Đơn có trả hàng, **kể cả chỉ trả một phần**, là đơn trả hàng: bỏ **cả đơn**. Đơn đang giao vẫn tính"
+    },
+    "description": "đơn **không huỷ** và **không trả hàng**. Đơn có trả hàng, **kể cả chỉ trả một phần**, là đơn trả hàng: bỏ **cả đơn**. Đơn đang giao vẫn tính",
+    "trigger_keywords": [
+      "Đơn tính vào doanh thu",
+      "bán được bao nhiêu tiền",
+      "thu về bao nhiêu tiền",
+      "tiền hàng",
+      "tiền bán"
+    ],
+    "logic_intent": "đơn **không huỷ** và **không trả hàng**. Đơn có trả hàng, **kể cả chỉ trả một phần**, là đơn trả hàng: bỏ **cả đơn**. Đơn đang giao vẫn tính",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 10,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn tính vào doanh thu | đơn **không huỷ** và **không trả hàng**. Đơn có trả hàng, **kể cả chỉ trả một phần**, là đơn trả hàng: bỏ **cả đơn**. Đơn đang giao vẫn tính"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_PHAN_TRAM_THAY_OI_TANG_TRUONG",
+    "category": "TEMPORAL",
+    "name": "Phần trăm thay đổi, tăng trưởng",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Phần trăm thay đổi, tăng trưởng | so với **kỳ trước**; giảm thì ra **số âm**"
+    },
+    "description": "so với **kỳ trước**; giảm thì ra **số âm**",
+    "trigger_keywords": [
+      "Phần trăm thay đổi, tăng trưởng"
+    ],
+    "logic_intent": "so với **kỳ trước**; giảm thì ra **số âm**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 20,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Phần trăm thay đổi, tăng trưởng | so với **kỳ trước**; giảm thì ra **số âm**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_SO_ON",
+    "category": "CALCULATION",
+    "name": "Số đơn",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Số đơn | chỉ tính đơn không huỷ, không trả; cả khi đếm số đơn có một mặt hàng, số đơn của một khách. **Khách đã mua** trong kỳ là khách có ít nhất một đơn như vậy trong kỳ"
+    },
+    "description": "chỉ tính đơn không huỷ, không trả; cả khi đếm số đơn có một mặt hàng, số đơn của một khách. **Khách đã mua** trong kỳ là khách có ít nhất một đơn như vậy trong kỳ",
+    "trigger_keywords": [
+      "Số đơn"
+    ],
+    "logic_intent": "chỉ tính đơn không huỷ, không trả; cả khi đếm số đơn có một mặt hàng, số đơn của một khách. **Khách đã mua** trong kỳ là khách có ít nhất một đơn như vậy trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 14,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Số đơn | chỉ tính đơn không huỷ, không trả; cả khi đếm số đơn có một mặt hàng, số đơn của một khách. **Khách đã mua** trong kỳ là khách có ít nhất một đơn như vậy trong kỳ"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_1_ON_HANG_VA_DOANH_THU_TI_LE_ON_HUY_TRONG_KY",
+    "category": "TEMPORAL",
+    "name": "Tỉ lệ đơn huỷ trong kỳ",
+    "rulebook_origin": {
+      "section": "1. Đơn hàng và doanh thu",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tỉ lệ đơn huỷ trong kỳ | phần trăm đơn huỷ trong **mọi đơn đặt trong kỳ** (theo ngày đặt, **mọi trạng thái**: cả đơn huỷ, đơn trả, đơn đang giao). Làm tròn 2 chữ số thập phân."
+    },
+    "description": "phần trăm đơn huỷ trong **mọi đơn đặt trong kỳ** (theo ngày đặt, **mọi trạng thái**: cả đơn huỷ, đơn trả, đơn đang giao). Làm tròn 2 chữ số thập phân.",
+    "trigger_keywords": [
+      "Tỉ lệ đơn huỷ trong kỳ"
+    ],
+    "logic_intent": "phần trăm đơn huỷ trong **mọi đơn đặt trong kỳ** (theo ngày đặt, **mọi trạng thái**: cả đơn huỷ, đơn trả, đơn đang giao). Làm tròn 2 chữ số thập phân.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 19,
+    "other_origins": [
+      {
+        "section": "1. Đơn hàng và doanh thu",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tỉ lệ đơn huỷ trong kỳ | phần trăm đơn huỷ trong **mọi đơn đặt trong kỳ** (theo ngày đặt, **mọi trạng thái**: cả đơn huỷ, đơn trả, đơn đang giao). Làm tròn 2 chữ số thập phân."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_10_TU_NGU_ON_VI_CO_BAN_ON_VI_LON",
+    "category": "TEMPORAL",
+    "name": "Đơn vị cơ bản, đơn vị lớn",
+    "rulebook_origin": {
+      "section": "10. Từ ngữ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn vị cơ bản, đơn vị lớn | mỗi mặt hàng có một **đơn vị cơ bản** (đơn vị nhỏ nhất shop đếm) và có thể có **đơn vị lớn**. Hệ số quy đổi khác nhau theo shop và theo mặt hàng, luôn đọc ở bảng quy đổi hoặc README của shop; đơn vị không có dòng quy đổi nào là đơn vị cơ bản, hệ số 1"
+    },
+    "description": "mỗi mặt hàng có một **đơn vị cơ bản** (đơn vị nhỏ nhất shop đếm) và có thể có **đơn vị lớn**. Hệ số quy đổi khác nhau theo shop và theo mặt hàng, luôn đọc ở bảng quy đổi hoặc README của shop; đơn vị không có dòng quy đổi nào là đơn vị cơ bản, hệ số 1",
+    "trigger_keywords": [
+      "Đơn vị cơ bản, đơn vị lớn"
+    ],
+    "logic_intent": "mỗi mặt hàng có một **đơn vị cơ bản** (đơn vị nhỏ nhất shop đếm) và có thể có **đơn vị lớn**. Hệ số quy đổi khác nhau theo shop và theo mặt hàng, luôn đọc ở bảng quy đổi hoặc README của shop; đơn vị không có dòng quy đổi nào là đơn vị cơ bản, hệ số 1",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 176,
+    "other_origins": [
+      {
+        "section": "10. Từ ngữ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn vị cơ bản, đơn vị lớn | mỗi mặt hàng có một **đơn vị cơ bản** (đơn vị nhỏ nhất shop đếm) và có thể có **đơn vị lớn**. Hệ số quy đổi khác nhau theo shop và theo mặt hàng, luôn đọc ở bảng quy đổi hoặc README của shop; đơn vị không có dòng quy đổi nào là đơn vị cơ bản, hệ số 1"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_CA_SANG_CA_CHIEU",
+    "category": "TEMPORAL",
+    "name": "Ca sáng, ca chiều",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Ca sáng, ca chiều | theo giờ tạo đơn: ca sáng 06:00–13:59, ca chiều 14:00–21:59. So ca chiều với ca sáng: mốc là **ca sáng**"
+    },
+    "description": "theo giờ tạo đơn: ca sáng 06:00–13:59, ca chiều 14:00–21:59. So ca chiều với ca sáng: mốc là **ca sáng**",
+    "trigger_keywords": [
+      "Ca sáng, ca chiều"
+    ],
+    "logic_intent": "theo giờ tạo đơn: ca sáng 06:00–13:59, ca chiều 14:00–21:59. So ca chiều với ca sáng: mốc là **ca sáng**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 37,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Ca sáng, ca chiều | theo giờ tạo đơn: ca sáng 06:00–13:59, ca chiều 14:00–21:59. So ca chiều với ca sáng: mốc là **ca sáng**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_EN_HET_NGAY_X_TINH_EN_HOM_NAY",
+    "category": "TEMPORAL",
+    "name": "Đến hết ngày X, tính đến hôm nay",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đến hết ngày X, tính đến hôm nay | hỏi số còn lại (còn nợ, còn tồn, còn hàng, chưa giao…): **tình trạng lúc hết ngày đó**, tính mọi phát sinh **từ đầu dữ liệu** đến hết ngày đó; không phải kỳ **tháng này**"
+    },
+    "description": "hỏi số còn lại (còn nợ, còn tồn, còn hàng, chưa giao…): **tình trạng lúc hết ngày đó**, tính mọi phát sinh **từ đầu dữ liệu** đến hết ngày đó; không phải kỳ **tháng này**",
+    "trigger_keywords": [
+      "Đến hết ngày X, tính đến hôm nay"
+    ],
+    "logic_intent": "hỏi số còn lại (còn nợ, còn tồn, còn hàng, chưa giao…): **tình trạng lúc hết ngày đó**, tính mọi phát sinh **từ đầu dữ liệu** đến hết ngày đó; không phải kỳ **tháng này**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 27,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đến hết ngày X, tính đến hôm nay | hỏi số còn lại (còn nợ, còn tồn, còn hàng…): **tình trạng lúc hết ngày đó**, tính mọi phát sinh **từ đầu dữ liệu** đến hết ngày đó; không phải kỳ **tháng này**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_NGAY_X_HOM_NAY_HOM_QUA",
+    "category": "TEMPORAL",
+    "name": "Ngày X, hôm nay, hôm qua",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Ngày X, hôm nay, hôm qua | hỏi số phát sinh (doanh thu, số đơn, giá bán…): chỉ **trong** ngày đó"
+    },
+    "description": "hỏi số phát sinh (doanh thu, số đơn, giá bán…): chỉ **trong** ngày đó",
+    "trigger_keywords": [
+      "Ngày X, hôm nay, hôm qua",
+      "hôm nay",
+      "hôm qua",
+      "ngày X"
+    ],
+    "logic_intent": "hỏi số phát sinh (doanh thu, số đơn, giá bán…): chỉ **trong** ngày đó",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 26,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Ngày X, hôm nay, hôm qua | hỏi số phát sinh (doanh thu, số đơn, giá bán…): chỉ **trong** ngày đó"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_N_NGAY_GAN_NHAT",
+    "category": "TEMPORAL",
+    "name": "N ngày gần nhất",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "N ngày gần nhất | N ngày liền nhau **kể cả hôm nay**, ngày cuối là hôm nay"
+    },
+    "description": "N ngày liền nhau **kể cả hôm nay**, ngày cuối là hôm nay",
+    "trigger_keywords": [
+      "N ngày gần nhất"
+    ],
+    "logic_intent": "N ngày liền nhau **kể cả hôm nay**, ngày cuối là hôm nay",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 29,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "N ngày gần nhất | N ngày liền nhau **kể cả hôm nay**, ngày cuối là hôm nay"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_QUA_N_HON_N_TREN_N_DUOI_N",
+    "category": "BUSINESS_LOGIC",
+    "name": "Quá N, hơn N, trên N, dưới N",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Quá N, hơn N, trên N, dưới N | **không** gồm N. **Từ N trở lên** thì gồm N"
+    },
+    "description": "**không** gồm N. **Từ N trở lên** thì gồm N",
+    "trigger_keywords": [
+      "Quá N, hơn N, trên N, dưới N"
+    ],
+    "logic_intent": "**không** gồm N. **Từ N trở lên** thì gồm N",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 30,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Quá N, hơn N, trên N, dưới N | **không** gồm N. **Từ N trở lên** thì gồm N"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_TET_NAM_Y_DIP_TET_MUA_TET",
+    "category": "TEMPORAL",
+    "name": "Tết năm Y, dịp Tết, mùa Tết",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tết năm Y, dịp Tết, mùa Tết | từ ngày dương của **23 tháng Chạp** (năm âm Y − 1) đến **hết** ngày dương của **mùng 10 tháng Giêng** (năm âm Y). **So với trước Tết** = cùng số ngày ngay trước 23 tháng Chạp. Tra lịch âm trong `calendar.csv` cùng thư mục."
+    },
+    "description": "từ ngày dương của **23 tháng Chạp** (năm âm Y − 1) đến **hết** ngày dương của **mùng 10 tháng Giêng** (năm âm Y). **So với trước Tết** = cùng số ngày ngay trước 23 tháng Chạp. Tra lịch âm trong `calendar.csv` cùng thư mục.",
+    "trigger_keywords": [
+      "Tết năm Y, dịp Tết, mùa Tết"
+    ],
+    "logic_intent": "từ ngày dương của **23 tháng Chạp** (năm âm Y − 1) đến **hết** ngày dương của **mùng 10 tháng Giêng** (năm âm Y). **So với trước Tết** = cùng số ngày ngay trước 23 tháng Chạp. Tra lịch âm trong `calendar.csv` cùng thư mục.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 36,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tết năm Y, dịp Tết, mùa Tết | từ ngày dương của **23 tháng Chạp** (năm âm Y − 1) đến **hết** ngày dương của **mùng 10 tháng Giêng** (năm âm Y). **So với trước Tết** = cùng số ngày ngay trước 23 tháng Chạp. Tra lịch âm trong `calendar.csv` cùng thư mục."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_THANG_M_QUY_Q_KHONG_GHI_NAM",
+    "category": "TEMPORAL",
+    "name": "Tháng M, quý Q không ghi năm",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tháng M, quý Q không ghi năm | của **năm nay** nếu không sau hôm nay; sau hôm nay thì của **năm trước**. Quý theo dương lịch, mỗi quý 3 tháng tính từ tháng 1"
+    },
+    "description": "của **năm nay** nếu không sau hôm nay; sau hôm nay thì của **năm trước**. Quý theo dương lịch, mỗi quý 3 tháng tính từ tháng 1",
+    "trigger_keywords": [
+      "Tháng M, quý Q không ghi năm"
+    ],
+    "logic_intent": "của **năm nay** nếu không sau hôm nay; sau hôm nay thì của **năm trước**. Quý theo dương lịch, mỗi quý 3 tháng tính từ tháng 1",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 35,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tháng M, quý Q không ghi năm | của **năm nay** nếu không sau hôm nay; sau hôm nay thì của **năm trước**. Quý theo dương lịch, mỗi quý 3 tháng tính từ tháng 1"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_THANG_M_Y",
+    "category": "TEMPORAL",
+    "name": "Tháng M/Y",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tháng M/Y | cả tháng, từ ngày 1 đến hết ngày cuối tháng"
+    },
+    "description": "cả tháng, từ ngày 1 đến hết ngày cuối tháng",
+    "trigger_keywords": [
+      "Tháng M/Y"
+    ],
+    "logic_intent": "cả tháng, từ ngày 1 đến hết ngày cuối tháng",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 32,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tháng M/Y | cả tháng, từ ngày 1 đến hết ngày cuối tháng"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_THANG_NAY",
+    "category": "TEMPORAL",
+    "name": "Tháng này",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tháng này | từ ngày 1 đến **hết hôm nay**. So với tháng trước thì lấy **cùng số ngày** của tháng trước: từ ngày 1 đến hết ngày trùng số với hôm nay; tháng trước không có ngày đó thì đến hết tháng trước"
+    },
+    "description": "từ ngày 1 đến **hết hôm nay**. So với tháng trước thì lấy **cùng số ngày** của tháng trước: từ ngày 1 đến hết ngày trùng số với hôm nay; tháng trước không có ngày đó thì đến hết tháng trước",
+    "trigger_keywords": [
+      "Tháng này"
+    ],
+    "logic_intent": "từ ngày 1 đến **hết hôm nay**. So với tháng trước thì lấy **cùng số ngày** của tháng trước: từ ngày 1 đến hết ngày trùng số với hôm nay; tháng trước không có ngày đó thì đến hết tháng trước",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 33,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tháng này | từ ngày 1 đến **hết hôm nay**. So với tháng trước thì lấy **cùng số ngày** của tháng trước: từ ngày 1 đến hết ngày trùng số với hôm nay; tháng trước không có ngày đó thì đến hết tháng trước"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_TRUNG_BINH_MOI_NGAY_THU_X_CUA_KY",
+    "category": "TEMPORAL",
+    "name": "Trung bình mỗi ngày thứ X của kỳ",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Trung bình mỗi ngày thứ X của kỳ | chia cho **số ngày thứ X** trong kỳ, kể cả ngày không có đơn, phiếu"
+    },
+    "description": "chia cho **số ngày thứ X** trong kỳ, kể cả ngày không có đơn, phiếu",
+    "trigger_keywords": [
+      "Trung bình mỗi ngày thứ X của kỳ"
+    ],
+    "logic_intent": "chia cho **số ngày thứ X** trong kỳ, kể cả ngày không có đơn, phiếu",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 38
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_TUAN",
+    "category": "TEMPORAL",
+    "name": "Tuần",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tuần | bắt đầu **thứ Hai**. **Tuần này**: từ thứ Hai của tuần chứa hôm nay đến hết hôm nay. **Tuần trước, tuần rồi**: **cả** tuần liền trước, thứ Hai đến Chủ nhật"
+    },
+    "description": "bắt đầu **thứ Hai**. **Tuần này**: từ thứ Hai của tuần chứa hôm nay đến hết hôm nay. **Tuần trước, tuần rồi**: **cả** tuần liền trước, thứ Hai đến Chủ nhật",
+    "trigger_keywords": [
+      "Tuần"
+    ],
+    "logic_intent": "bắt đầu **thứ Hai**. **Tuần này**: từ thứ Hai của tuần chứa hôm nay đến hết hôm nay. **Tuần trước, tuần rồi**: **cả** tuần liền trước, thứ Hai đến Chủ nhật",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 31,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tuần | bắt đầu **thứ Hai**. **Tuần này**: từ thứ Hai của tuần chứa hôm nay đến hết hôm nay. **Tuần trước, tuần rồi**: **cả** tuần liền trước, thứ Hai đến Chủ nhật"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_TU_AU_NAM_TU_AU_NAM_TOI_NAY",
+    "category": "TEMPORAL",
+    "name": "Từ đầu năm, từ đầu năm tới nay",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Từ đầu năm, từ đầu năm tới nay | từ 01/01 của năm nay đến **hết hôm nay**"
+    },
+    "description": "từ 01/01 của năm nay đến **hết hôm nay**",
+    "trigger_keywords": [
+      "Từ đầu năm, từ đầu năm tới nay"
+    ],
+    "logic_intent": "từ 01/01 của năm nay đến **hết hôm nay**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 34,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Từ đầu năm, từ đầu năm tới nay | từ 01/01 của năm nay đến **hết hôm nay**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_2_THOI_GIAN_TU_X_EN_Y_NHOM_X_Y",
+    "category": "BUSINESS_LOGIC",
+    "name": "Từ X đến Y, nhóm X–Y",
+    "rulebook_origin": {
+      "section": "2. Thời gian",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Từ X đến Y, nhóm X–Y | gồm cả X và Y"
+    },
+    "description": "gồm cả X và Y",
+    "trigger_keywords": [
+      "Từ X đến Y, nhóm X–Y"
+    ],
+    "logic_intent": "gồm cả X và Y",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 28,
+    "other_origins": [
+      {
+        "section": "2. Thời gian",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Từ X đến Y, nhóm X–Y | gồm cả X và Y"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_BAN_CHAY",
+    "category": "TEMPORAL",
+    "name": "Bán chạy",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Bán chạy | theo **số lượng quy về đơn vị cơ bản**, không theo số dòng hay số tiền; bỏ đơn huỷ, trả. Mặt hàng khác đơn vị cơ bản vẫn xếp chung theo số đó. **Bán nhiều nhất**, **bán được nhiều nhất**, **hot nhất** cùng nghĩa với **bán chạy nhất**"
+    },
+    "description": "theo **số lượng quy về đơn vị cơ bản**, không theo số dòng hay số tiền; bỏ đơn huỷ, trả. Mặt hàng khác đơn vị cơ bản vẫn xếp chung theo số đó. **Bán nhiều nhất**, **bán được nhiều nhất**, **hot nhất** cùng nghĩa với **bán chạy nhất**",
+    "trigger_keywords": [
+      "Bán chạy",
+      "bán chạy nhất",
+      "bán nhiều nhất",
+      "hot nhất"
+    ],
+    "logic_intent": "theo **số lượng quy về đơn vị cơ bản**, không theo số dòng hay số tiền; bỏ đơn huỷ, trả. Mặt hàng khác đơn vị cơ bản vẫn xếp chung theo số đó. **Bán nhiều nhất**, **bán được nhiều nhất**, **hot nhất** cùng nghĩa với **bán chạy nhất**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 45,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Bán chạy | theo **số lượng quy về đơn vị cơ bản**, không theo số dòng hay số tiền; bỏ đơn huỷ, trả. Mặt hàng khác đơn vị cơ bản vẫn xếp chung theo số đó. **Bán nhiều nhất**, **bán được nhiều nhất**, **hot nhất** cùng nghĩa với **bán chạy nhất**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_BAN_UOC_BAO_NHIEU_ON_VI",
+    "category": "TEMPORAL",
+    "name": "Bán được bao nhiêu <đơn vị>",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Bán được bao nhiêu <đơn vị> | cộng số lượng quy về đơn vị cơ bản của các mặt hàng **có đơn vị cơ bản là <đơn vị>**, kể cả dòng bán theo đơn vị lớn; mặt hàng có đơn vị cơ bản khác không tính"
+    },
+    "description": "cộng số lượng quy về đơn vị cơ bản của các mặt hàng **có đơn vị cơ bản là <đơn vị>**, kể cả dòng bán theo đơn vị lớn; mặt hàng có đơn vị cơ bản khác không tính",
+    "trigger_keywords": [
+      "Bán được bao nhiêu <đơn vị>"
+    ],
+    "logic_intent": "cộng số lượng quy về đơn vị cơ bản của các mặt hàng **có đơn vị cơ bản là <đơn vị>**, kể cả dòng bán theo đơn vị lớn; mặt hàng có đơn vị cơ bản khác không tính",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 46,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Bán được bao nhiêu <đơn vị> | cộng số lượng quy về đơn vị cơ bản của các mặt hàng **có đơn vị cơ bản là <đơn vị>**, kể cả dòng bán theo đơn vị lớn; mặt hàng có đơn vị cơ bản khác không tính"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_GIA_TRI_TRUNG_BINH_MOT_ON",
+    "category": "CALCULATION",
+    "name": "Giá trị trung bình một đơn",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Giá trị trung bình một đơn | làm tròn về đồng, nửa đồng làm tròn lên"
+    },
+    "description": "làm tròn về đồng, nửa đồng làm tròn lên",
+    "trigger_keywords": [
+      "Giá trị trung bình một đơn"
+    ],
+    "logic_intent": "làm tròn về đồng, nửa đồng làm tròn lên",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 50,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Giá trị trung bình một đơn | làm tròn về đồng, nửa đồng làm tròn lên"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_GIO_CAO_IEM",
+    "category": "CALCULATION",
+    "name": "Giờ cao điểm",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Giờ cao điểm | khung **một giờ tròn** theo giờ tạo đơn (từ h giờ đến trước h + 1 giờ) có nhiều đơn nhất trong kỳ. Đáp án là **giờ bắt đầu khung**, type `number`"
+    },
+    "description": "khung **một giờ tròn** theo giờ tạo đơn (từ h giờ đến trước h + 1 giờ) có nhiều đơn nhất trong kỳ. Đáp án là **giờ bắt đầu khung**, type `number`",
+    "trigger_keywords": [
+      "Giờ cao điểm"
+    ],
+    "logic_intent": "khung **một giờ tròn** theo giờ tạo đơn (từ h giờ đến trước h + 1 giờ) có nhiều đơn nhất trong kỳ. Đáp án là **giờ bắt đầu khung**, type `number`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 57
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_HANG_LOI_NHAT",
+    "category": "CALCULATION",
+    "name": "Hàng lời nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Hàng lời nhất | theo **tổng lãi gộp** của mặt hàng (§5)"
+    },
+    "description": "theo **tổng lãi gộp** của mặt hàng (§5)",
+    "trigger_keywords": [
+      "Hàng lời nhất"
+    ],
+    "logic_intent": "theo **tổng lãi gộp** của mặt hàng (§5)",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 47,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Hàng lời nhất | theo **tổng lãi gộp** của mặt hàng (§5)"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_KHACH_HAY_OI_Y_NHAT",
+    "category": "CALCULATION",
+    "name": "Khách hay đổi ý nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Khách hay đổi ý nhất | khách có **nhiều đơn huỷ nhất** trong kỳ"
+    },
+    "description": "khách có **nhiều đơn huỷ nhất** trong kỳ",
+    "trigger_keywords": [
+      "Khách hay đổi ý nhất"
+    ],
+    "logic_intent": "khách có **nhiều đơn huỷ nhất** trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 53
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_KHACH_SOP_NHAT",
+    "category": "CALCULATION",
+    "name": "Khách sộp nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Khách sộp nhất | khách có **giá trị trung bình một đơn** cao nhất trong kỳ, chỉ xét khách có **từ 3 đơn trở lên** trong kỳ"
+    },
+    "description": "khách có **giá trị trung bình một đơn** cao nhất trong kỳ, chỉ xét khách có **từ 3 đơn trở lên** trong kỳ",
+    "trigger_keywords": [
+      "Khách sộp nhất"
+    ],
+    "logic_intent": "khách có **giá trị trung bình một đơn** cao nhất trong kỳ, chỉ xét khách có **từ 3 đơn trở lên** trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 52
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_KHACH_TRUNG_THANH_NHAT",
+    "category": "TEMPORAL",
+    "name": "Khách trung thành nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Khách trung thành nhất | khách (xác định như dòng Xác định khách) có **nhiều ngày có mua nhất** trong kỳ"
+    },
+    "description": "khách (xác định như dòng Xác định khách) có **nhiều ngày có mua nhất** trong kỳ",
+    "trigger_keywords": [
+      "Khách trung thành nhất"
+    ],
+    "logic_intent": "khách (xác định như dòng Xác định khách) có **nhiều ngày có mua nhất** trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 51
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_MAT_HANG",
+    "category": "CALCULATION",
+    "name": "Mặt hàng",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Mặt hàng | **Món**, hàng, sản phẩm cùng nghĩa với mặt hàng. Dòng **Phí phục vụ** không phải mặt hàng: không xếp hạng, không đếm. Vẫn tính vào doanh thu, kể cả mẫu số tỉ trọng nhóm hàng"
+    },
+    "description": "**Món**, hàng, sản phẩm cùng nghĩa với mặt hàng. Dòng **Phí phục vụ** không phải mặt hàng: không xếp hạng, không đếm. Vẫn tính vào doanh thu, kể cả mẫu số tỉ trọng nhóm hàng",
+    "trigger_keywords": [
+      "Mặt hàng"
+    ],
+    "logic_intent": "**Món**, hàng, sản phẩm cùng nghĩa với mặt hàng. Dòng **Phí phục vụ** không phải mặt hàng: không xếp hạng, không đếm. Vẫn tính vào doanh thu, kể cả mẫu số tỉ trọng nhóm hàng",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 43,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Mặt hàng | **Món**, hàng, sản phẩm cùng nghĩa với mặt hàng. Dòng **Phí phục vụ** không phải mặt hàng: không xếp hạng, không đếm. Vẫn tính vào doanh thu, kể cả mẫu số tỉ trọng nhóm hàng"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_MAT_HANG_UOC_UA_CHUONG_NHAT",
+    "category": "CALCULATION",
+    "name": "Mặt hàng được ưa chuộng nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Mặt hàng được ưa chuộng nhất | mặt hàng có mặt trong **nhiều đơn nhất** trong kỳ"
+    },
+    "description": "mặt hàng có mặt trong **nhiều đơn nhất** trong kỳ",
+    "trigger_keywords": [
+      "Mặt hàng được ưa chuộng nhất"
+    ],
+    "logic_intent": "mặt hàng có mặt trong **nhiều đơn nhất** trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 54
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_NGAY_AT_KHACH_NHAT",
+    "category": "TEMPORAL",
+    "name": "Ngày đắt khách nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Ngày đắt khách nhất | ngày có **nhiều đơn nhất** trong kỳ"
+    },
+    "description": "ngày có **nhiều đơn nhất** trong kỳ",
+    "trigger_keywords": [
+      "Ngày đắt khách nhất"
+    ],
+    "logic_intent": "ngày có **nhiều đơn nhất** trong kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 56
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_NHAN_VIEN_BAN_GIOI_NHAT",
+    "category": "LINGUISTIC",
+    "name": "Nhân viên bán giỏi nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nhân viên bán giỏi nhất | theo **doanh thu** (§1) của nhân viên trong kỳ, không theo số đơn"
+    },
+    "description": "theo **doanh thu** (§1) của nhân viên trong kỳ, không theo số đơn",
+    "trigger_keywords": [
+      "Nhân viên bán giỏi nhất"
+    ],
+    "logic_intent": "theo **doanh thu** (§1) của nhân viên trong kỳ, không theo số đơn",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 49,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nhân viên bán giỏi nhất | theo **doanh thu** (§1) của nhân viên trong kỳ, không theo số đơn"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_NHAN_VIEN_THO_CHAM_CHI_NHAT",
+    "category": "TEMPORAL",
+    "name": "Nhân viên, thợ chăm chỉ nhất",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nhân viên, thợ chăm chỉ nhất | người có **nhiều ngày làm việc nhất** trong kỳ; ngày làm việc là ngày có ít nhất một đơn, kể cả phiếu bảo hành, do người đó bán hoặc làm"
+    },
+    "description": "người có **nhiều ngày làm việc nhất** trong kỳ; ngày làm việc là ngày có ít nhất một đơn, kể cả phiếu bảo hành, do người đó bán hoặc làm",
+    "trigger_keywords": [
+      "Nhân viên, thợ chăm chỉ nhất"
+    ],
+    "logic_intent": "người có **nhiều ngày làm việc nhất** trong kỳ; ngày làm việc là ngày có ít nhất một đơn, kể cả phiếu bảo hành, do người đó bán hoặc làm",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 55
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_NHOM_HANG",
+    "category": "CALCULATION",
+    "name": "Nhóm hàng",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nhóm hàng | theo cột nhóm hàng, đúng tên nhóm câu hỏi nêu; không gộp nhóm khác tên dù tên gần nhau"
+    },
+    "description": "theo cột nhóm hàng, đúng tên nhóm câu hỏi nêu; không gộp nhóm khác tên dù tên gần nhau",
+    "trigger_keywords": [
+      "Nhóm hàng"
+    ],
+    "logic_intent": "theo cột nhóm hàng, đúng tên nhóm câu hỏi nêu; không gộp nhóm khác tên dù tên gần nhau",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 44,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nhóm hàng | theo cột nhóm hàng, đúng tên nhóm câu hỏi nêu; không gộp nhóm khác tên dù tên gần nhau"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_3_XEP_HANG_XAC_INH_KHACH",
+    "category": "LINGUISTIC",
+    "name": "Xác định khách",
+    "rulebook_origin": {
+      "section": "3. Xếp hạng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Xác định khách | Shop có mã khách: mỗi **mã khách** là một khách, hai mã trùng tên là hai khách; đơn không ghi mã (**khách lẻ**) không phải khách, không đếm và không xếp hạng. Shop không có mã khách: xác định khách theo **tên ghi trên đơn**: hai tên **chỉ khác cách viết** là cùng một khách, hai tên **khác chữ hoặc khác số** là hai khách; đơn **khách lẻ** không tính. Khách mua **nhiều tiền** nhất xếp theo doanh thu (§1)."
+    },
+    "description": "Shop có mã khách: mỗi **mã khách** là một khách, hai mã trùng tên là hai khách; đơn không ghi mã (**khách lẻ**) không phải khách, không đếm và không xếp hạng. Shop không có mã khách: xác định khách theo **tên ghi trên đơn**: hai tên **chỉ khác cách viết** là cùng một khách, hai tên **khác chữ hoặc khác số** là hai khách; đơn **khách lẻ** không tính. Khách mua **nhiều tiền** nhất xếp theo doanh thu (§1).",
+    "trigger_keywords": [
+      "Xác định khách"
+    ],
+    "logic_intent": "Shop có mã khách: mỗi **mã khách** là một khách, hai mã trùng tên là hai khách; đơn không ghi mã (**khách lẻ**) không phải khách, không đếm và không xếp hạng. Shop không có mã khách: xác định khách theo **tên ghi trên đơn**: hai tên **chỉ khác cách viết** là cùng một khách, hai tên **khác chữ hoặc khác số** là hai khách; đơn **khách lẻ** không tính. Khách mua **nhiều tiền** nhất xếp theo doanh thu (§1).",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 48,
+    "other_origins": [
+      {
+        "section": "3. Xếp hạng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Xác định khách | Shop có mã khách: mỗi **mã khách** là một khách, hai mã trùng tên là hai khách; đơn không ghi mã (**khách lẻ**) không phải khách, không đếm và không xếp hạng. Shop không có mã khách: xác định khách theo **tên ghi trên đơn**: hai tên **chỉ khác cách viết** là cùng một khách, hai tên **khác chữ hoặc khác số** là hai khách; đơn **khách lẻ** không tính. Khách mua **nhiều tiền** nhất xếp theo doanh thu (§1)."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_NO_MOT_ON_TAI_NGAY_X",
+    "category": "TEMPORAL",
+    "name": "Nợ một đơn tại ngày X",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nợ một đơn tại ngày X | phần chưa trả của **tổng đơn** (số khách phải trả cả đơn: đã trừ giảm giá trên cả đơn, **gồm phí giao**), tính các khoản trả đến hết ngày X. Còn nợ = cộng các đơn **còn nợ > 0**"
+    },
+    "description": "phần chưa trả của **tổng đơn** (số khách phải trả cả đơn: đã trừ giảm giá trên cả đơn, **gồm phí giao**), tính các khoản trả đến hết ngày X. Còn nợ = cộng các đơn **còn nợ > 0**",
+    "trigger_keywords": [
+      "Nợ một đơn tại ngày X"
+    ],
+    "logic_intent": "phần chưa trả của **tổng đơn** (số khách phải trả cả đơn: đã trừ giảm giá trên cả đơn, **gồm phí giao**), tính các khoản trả đến hết ngày X. Còn nợ = cộng các đơn **còn nợ > 0**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 63,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nợ một đơn tại ngày X | phần chưa trả của **tổng đơn** (số khách phải trả cả đơn: đã trừ giảm giá trên cả đơn, **gồm phí giao**), tính các khoản trả đến hết ngày X. Còn nợ = cộng các đơn **còn nợ > 0**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_NO_THEM_TRA_NO_THU_NO_TRONG_KY",
+    "category": "TEMPORAL",
+    "name": "Nợ thêm, trả nợ, thu nợ trong kỳ",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nợ thêm, trả nợ, thu nợ trong kỳ | chỉ đơn **ghi nợ**, không huỷ. **Nợ thêm**: phần tổng đơn chưa trả ngay trong ngày mua, của đơn đặt trong kỳ. **Trả nợ / thu nợ**: các khoản trả **sau ngày mua** có ngày trả trong kỳ, của mọi đơn ghi nợ (kể cả đơn kỳ trước, đơn trả hàng). Tiền trả cùng ngày mua là trả lúc mua. Hoàn tiền trả hàng không trừ"
+    },
+    "description": "chỉ đơn **ghi nợ**, không huỷ. **Nợ thêm**: phần tổng đơn chưa trả ngay trong ngày mua, của đơn đặt trong kỳ. **Trả nợ / thu nợ**: các khoản trả **sau ngày mua** có ngày trả trong kỳ, của mọi đơn ghi nợ (kể cả đơn kỳ trước, đơn trả hàng). Tiền trả cùng ngày mua là trả lúc mua. Hoàn tiền trả hàng không trừ",
+    "trigger_keywords": [
+      "Nợ thêm, trả nợ, thu nợ trong kỳ"
+    ],
+    "logic_intent": "chỉ đơn **ghi nợ**, không huỷ. **Nợ thêm**: phần tổng đơn chưa trả ngay trong ngày mua, của đơn đặt trong kỳ. **Trả nợ / thu nợ**: các khoản trả **sau ngày mua** có ngày trả trong kỳ, của mọi đơn ghi nợ (kể cả đơn kỳ trước, đơn trả hàng). Tiền trả cùng ngày mua là trả lúc mua. Hoàn tiền trả hàng không trừ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 67,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nợ thêm, trả nợ, thu nợ trong kỳ | chỉ đơn **ghi nợ**, không huỷ. **Nợ thêm**: phần tổng đơn chưa trả ngay trong ngày mua, của đơn đặt trong kỳ. **Trả nợ / thu nợ**: các khoản trả **sau ngày mua** có ngày trả trong kỳ, của mọi đơn ghi nợ (kể cả đơn kỳ trước, đơn trả hàng). Tiền trả cùng ngày mua là trả lúc mua. Hoàn tiền trả hàng không trừ"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_NO_THEO_KHACH",
+    "category": "BUSINESS_LOGIC",
+    "name": "Nợ theo khách",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nợ theo khách | xác định khách như §3. Đơn **khách lẻ** vẫn tính vào **tổng nợ**, nhưng không có dòng trong bảng nợ theo khách"
+    },
+    "description": "xác định khách như §3. Đơn **khách lẻ** vẫn tính vào **tổng nợ**, nhưng không có dòng trong bảng nợ theo khách",
+    "trigger_keywords": [
+      "Nợ theo khách",
+      "khách nợ",
+      "còn nợ",
+      "công nợ"
+    ],
+    "logic_intent": "xác định khách như §3. Đơn **khách lẻ** vẫn tính vào **tổng nợ**, nhưng không có dòng trong bảng nợ theo khách",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 64,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nợ theo khách | xác định khách như §3. Đơn **khách lẻ** vẫn tính vào **tổng nợ**, nhưng không có dòng trong bảng nợ theo khách"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_ON_COD_ON_BAN_QUA_SAN_TM_T",
+    "category": "BUSINESS_LOGIC",
+    "name": "Đơn COD, đơn bán qua sàn TMĐT",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn COD, đơn bán qua sàn TMĐT | **không phải khách nợ**, kể cả khi chưa thu được tiền; bỏ khỏi công nợ và tuổi nợ"
+    },
+    "description": "**không phải khách nợ**, kể cả khi chưa thu được tiền; bỏ khỏi công nợ và tuổi nợ",
+    "trigger_keywords": [
+      "Đơn COD, đơn bán qua sàn TMĐT"
+    ],
+    "logic_intent": "**không phải khách nợ**, kể cả khi chưa thu được tiền; bỏ khỏi công nợ và tuổi nợ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 65,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn COD, đơn bán qua sàn TMĐT | **không phải khách nợ**, kể cả khi chưa thu được tiền; bỏ khỏi công nợ và tuổi nợ"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_ON_UOC_TINH_VAO_NO",
+    "category": "BUSINESS_LOGIC",
+    "name": "Đơn được tính vào nợ",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đơn được tính vào nợ | đơn không huỷ; **đơn trả hàng vẫn tính** nếu còn nợ"
+    },
+    "description": "đơn không huỷ; **đơn trả hàng vẫn tính** nếu còn nợ",
+    "trigger_keywords": [
+      "Đơn được tính vào nợ"
+    ],
+    "logic_intent": "đơn không huỷ; **đơn trả hàng vẫn tính** nếu còn nợ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 62,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đơn được tính vào nợ | đơn không huỷ; **đơn trả hàng vẫn tính** nếu còn nợ"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_4_CONG_NO_TUOI_NO",
+    "category": "TEMPORAL",
+    "name": "Tuổi nợ",
+    "rulebook_origin": {
+      "section": "4. Công nợ",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tuổi nợ | số ngày tính từ **ngày đặt**, không từ hạn thanh toán. Đơn đặt hôm nay có tuổi nợ **0** ngày, đơn đặt hôm qua **1** ngày"
+    },
+    "description": "số ngày tính từ **ngày đặt**, không từ hạn thanh toán. Đơn đặt hôm nay có tuổi nợ **0** ngày, đơn đặt hôm qua **1** ngày",
+    "trigger_keywords": [
+      "Tuổi nợ"
+    ],
+    "logic_intent": "số ngày tính từ **ngày đặt**, không từ hạn thanh toán. Đơn đặt hôm nay có tuổi nợ **0** ngày, đơn đặt hôm qua **1** ngày",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 66,
+    "other_origins": [
+      {
+        "section": "4. Công nợ",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tuổi nợ | số ngày tính từ **ngày đặt**, không từ hạn thanh toán. Đơn đặt hôm nay có tuổi nợ **0** ngày, đơn đặt hôm qua **1** ngày"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_GIA_BAN_X_NGAY_D",
+    "category": "TEMPORAL",
+    "name": "Giá bán X ngày D",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "train/rulebook.md",
+      "exact_quote": "Giá bán X ngày D | đơn giá ghi trên dòng bán X của các đơn đặt ngày D, cho **một đơn vị cơ bản**, **trước** chiết khấu dòng; tính cả dòng của đơn huỷ, đơn trả"
+    },
+    "description": "đơn giá ghi trên dòng bán X của các đơn đặt ngày D, cho **một đơn vị cơ bản**, **trước** chiết khấu dòng; tính cả dòng của đơn huỷ, đơn trả",
+    "trigger_keywords": [
+      "Giá bán X ngày D"
+    ],
+    "logic_intent": "đơn giá ghi trên dòng bán X của các đơn đặt ngày D, cho **một đơn vị cơ bản**, **trước** chiết khấu dòng; tính cả dòng của đơn huỷ, đơn trả",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 70
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_GIA_NHAP_BINH_QUAN_MOT_MAT_HANG_TRONG_THANG",
+    "category": "TEMPORAL",
+    "name": "Giá nhập bình quân một mặt hàng trong tháng",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "train/rulebook.md",
+      "exact_quote": "Giá nhập bình quân một mặt hàng trong tháng | bình quân **theo số lượng nhập**, **không** phải trung bình cộng các mức giá nhập; theo đơn vị nhập, các phiếu có ngày phiếu trong tháng, bỏ phiếu huỷ"
+    },
+    "description": "bình quân **theo số lượng nhập**, **không** phải trung bình cộng các mức giá nhập; theo đơn vị nhập, các phiếu có ngày phiếu trong tháng, bỏ phiếu huỷ",
+    "trigger_keywords": [
+      "Giá nhập bình quân một mặt hàng trong tháng"
+    ],
+    "logic_intent": "bình quân **theo số lượng nhập**, **không** phải trung bình cộng các mức giá nhập; theo đơn vị nhập, các phiếu có ngày phiếu trong tháng, bỏ phiếu huỷ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 65
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_GIA_TRI_HANG_TON_KHO",
+    "category": "LINGUISTIC",
+    "name": "Giá trị hàng tồn kho",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Giá trị hàng tồn kho | tồn **hết hôm nay** của từng mặt hàng nhân **giá vốn một đơn vị cơ bản ghi trong danh mục hàng**; chỉ tính hàng còn tồn"
+    },
+    "description": "tồn **hết hôm nay** của từng mặt hàng nhân **giá vốn một đơn vị cơ bản ghi trong danh mục hàng**; chỉ tính hàng còn tồn",
+    "trigger_keywords": [
+      "Giá trị hàng tồn kho"
+    ],
+    "logic_intent": "tồn **hết hôm nay** của từng mặt hàng nhân **giá vốn một đơn vị cơ bản ghi trong danh mục hàng**; chỉ tính hàng còn tồn",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 75,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Giá trị hàng tồn kho | tồn **hết hôm nay** của từng mặt hàng nhân **giá vốn một đơn vị cơ bản ghi trong danh mục hàng**; chỉ tính hàng còn tồn"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_GIA_VON",
+    "category": "TEMPORAL",
+    "name": "Giá vốn",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Giá vốn | bình quân gia quyền theo lô nhập, tại thời điểm bán; không theo FIFO, không theo giá nhập lần cuối"
+    },
+    "description": "bình quân gia quyền theo lô nhập, tại thời điểm bán; không theo FIFO, không theo giá nhập lần cuối",
+    "trigger_keywords": [
+      "Giá vốn"
+    ],
+    "logic_intent": "bình quân gia quyền theo lô nhập, tại thời điểm bán; không theo FIFO, không theo giá nhập lần cuối",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 79,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Giá vốn | bình quân gia quyền theo lô nhập, tại thời điểm bán; không theo FIFO, không theo giá nhập lần cuối"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_HIEU_UNG_TANG_GIA",
+    "category": "TEMPORAL",
+    "name": "Hiệu ứng tăng giá",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Hiệu ứng tăng giá | lần tăng giá = ngày D giá mới cao hơn giá liền trước (theo bảng giá); tăng lên cùng một giá nhiều lần thì lấy lần đầu. So số lượng (đơn vị cơ bản) **N ngày kể từ D** (tính cả D) với **N ngày ngay trước D**; cả hai khoảng bỏ đơn huỷ và đơn trả"
+    },
+    "description": "lần tăng giá = ngày D giá mới cao hơn giá liền trước (theo bảng giá); tăng lên cùng một giá nhiều lần thì lấy lần đầu. So số lượng (đơn vị cơ bản) **N ngày kể từ D** (tính cả D) với **N ngày ngay trước D**; cả hai khoảng bỏ đơn huỷ và đơn trả",
+    "trigger_keywords": [
+      "Hiệu ứng tăng giá"
+    ],
+    "logic_intent": "lần tăng giá = ngày D giá mới cao hơn giá liền trước (theo bảng giá); tăng lên cùng một giá nhiều lần thì lấy lần đầu. So số lượng (đơn vị cơ bản) **N ngày kể từ D** (tính cả D) với **N ngày ngay trước D**; cả hai khoảng bỏ đơn huỷ và đơn trả",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 78,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Hiệu ứng tăng giá | lần tăng giá = ngày D giá mới cao hơn giá liền trước (theo bảng giá); tăng lên cùng một giá nhiều lần thì lấy lần đầu. So số lượng (đơn vị cơ bản) **N ngày kể từ D** (tính cả D) với **N ngày ngay trước D**; cả hai khoảng bỏ đơn huỷ và đơn trả"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_LAI_GOP",
+    "category": "LINGUISTIC",
+    "name": "Lãi gộp",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Lãi gộp | doanh thu (§1) trừ giá vốn của hàng đã bán. Giá vốn của mỗi dòng bán bằng số lượng nhân với **giá vốn ghi trên dòng bán** (cho **một đơn vị bán**, cùng đơn vị với đơn giá). Không tự tính lại giá vốn từ phiếu nhập hay từ lô"
+    },
+    "description": "doanh thu (§1) trừ giá vốn của hàng đã bán. Giá vốn của mỗi dòng bán bằng số lượng nhân với **giá vốn ghi trên dòng bán** (cho **một đơn vị bán**, cùng đơn vị với đơn giá). Không tự tính lại giá vốn từ phiếu nhập hay từ lô",
+    "trigger_keywords": [
+      "Lãi gộp"
+    ],
+    "logic_intent": "doanh thu (§1) trừ giá vốn của hàng đã bán. Giá vốn của mỗi dòng bán bằng số lượng nhân với **giá vốn ghi trên dòng bán** (cho **một đơn vị bán**, cùng đơn vị với đơn giá). Không tự tính lại giá vốn từ phiếu nhập hay từ lô",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 80,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Lãi gộp | doanh thu (§1) trừ giá vốn của hàng đã bán. Giá vốn của mỗi dòng bán bằng số lượng nhân với **giá vốn ghi trên dòng bán** (cho **một đơn vị bán**, cùng đơn vị với đơn giá). Không tự tính lại giá vốn từ phiếu nhập hay từ lô"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_LAI_RONG_MOT_THANG",
+    "category": "TEMPORAL",
+    "name": "Lãi ròng một tháng",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Lãi ròng một tháng | lãi gộp của tháng trừ **mọi khoản** ghi trong sổ chi phí của tháng đó, kể cả sửa chữa, thay thiết bị"
+    },
+    "description": "lãi gộp của tháng trừ **mọi khoản** ghi trong sổ chi phí của tháng đó, kể cả sửa chữa, thay thiết bị",
+    "trigger_keywords": [
+      "Lãi ròng một tháng"
+    ],
+    "logic_intent": "lãi gộp của tháng trừ **mọi khoản** ghi trong sổ chi phí của tháng đó, kể cả sửa chữa, thay thiết bị",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 81,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Lãi ròng một tháng | lãi gộp của tháng trừ **mọi khoản** ghi trong sổ chi phí của tháng đó, kể cả sửa chữa, thay thiết bị"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_MAT_HANG_HET_HANG_CUOI_NGAY",
+    "category": "TEMPORAL",
+    "name": "Mặt hàng hết hàng cuối ngày",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Mặt hàng hết hàng cuối ngày | mặt hàng **mua về để bán** (không tính món pha chế, chế biến tại chỗ) mà lúc **hết ngày** đó tồn kho bằng 0; hết giữa ngày nhưng nhập thêm trước cuối ngày thì không tính"
+    },
+    "description": "mặt hàng **mua về để bán** (không tính món pha chế, chế biến tại chỗ) mà lúc **hết ngày** đó tồn kho bằng 0; hết giữa ngày nhưng nhập thêm trước cuối ngày thì không tính",
+    "trigger_keywords": [
+      "Mặt hàng hết hàng cuối ngày"
+    ],
+    "logic_intent": "mặt hàng **mua về để bán** (không tính món pha chế, chế biến tại chỗ) mà lúc **hết ngày** đó tồn kho bằng 0; hết giữa ngày nhưng nhập thêm trước cuối ngày thì không tính",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 76,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Mặt hàng hết hàng cuối ngày | mặt hàng **mua về để bán** (không tính món pha chế, chế biến tại chỗ) mà lúc **hết ngày** đó tồn kho bằng 0; hết giữa ngày nhưng nhập thêm trước cuối ngày thì không tính"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_MAT_HANG_KHONG_BAN_UOC_TRONG_KY_E",
+    "category": "LINGUISTIC",
+    "name": "Mặt hàng không bán được trong kỳ (ế)",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Mặt hàng không bán được trong kỳ (ế) | mặt hàng cửa hàng **đã từng bán trước kỳ** (có trong đơn §1, không tính đơn huỷ, đơn trả) nhưng trong kỳ không có đơn nào (§1) mua mặt hàng đó"
+    },
+    "description": "mặt hàng cửa hàng **đã từng bán trước kỳ** (có trong đơn §1, không tính đơn huỷ, đơn trả) nhưng trong kỳ không có đơn nào (§1) mua mặt hàng đó",
+    "trigger_keywords": [
+      "Mặt hàng không bán được trong kỳ (ế)"
+    ],
+    "logic_intent": "mặt hàng cửa hàng **đã từng bán trước kỳ** (có trong đơn §1, không tính đơn huỷ, đơn trả) nhưng trong kỳ không có đơn nào (§1) mua mặt hàng đó",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 77,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Mặt hàng không bán được trong kỳ (ế) | mặt hàng cửa hàng **đã từng bán trước kỳ** (có trong đơn §1, không tính đơn huỷ, đơn trả) nhưng trong kỳ không có đơn nào (§1) mua mặt hàng đó"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_NHAP_TRU_BAN_CHENH_NHAP_VA_BAN",
+    "category": "TEMPORAL",
+    "name": "Nhập trừ bán, chênh nhập và bán",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nhập trừ bán, chênh nhập và bán | phần **bán** là số lượng của đơn tính vào doanh thu (§1), quy về cùng đơn vị với phần nhập"
+    },
+    "description": "phần **bán** là số lượng của đơn tính vào doanh thu (§1), quy về cùng đơn vị với phần nhập",
+    "trigger_keywords": [
+      "Nhập trừ bán, chênh nhập và bán"
+    ],
+    "logic_intent": "phần **bán** là số lượng của đơn tính vào doanh thu (§1), quy về cùng đơn vị với phần nhập",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 74,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Nhập trừ bán, chênh nhập và bán | phần **bán** là số lượng của đơn tính vào doanh thu (§1), quy về cùng đơn vị với phần nhập"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_NHA_CUNG_CAP_CHINH",
+    "category": "BUSINESS_LOGIC",
+    "name": "Nhà cung cấp chính",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Nhà cung cấp chính | nhà cung cấp có **nhiều phiếu nhập nhất** trong kỳ, bỏ phiếu huỷ. Khác nhà cung cấp nhập nhiều tiền nhất"
+    },
+    "description": "nhà cung cấp có **nhiều phiếu nhập nhất** trong kỳ, bỏ phiếu huỷ. Khác nhà cung cấp nhập nhiều tiền nhất",
+    "trigger_keywords": [
+      "Nhà cung cấp chính"
+    ],
+    "logic_intent": "nhà cung cấp có **nhiều phiếu nhập nhất** trong kỳ, bỏ phiếu huỷ. Khác nhà cung cấp nhập nhiều tiền nhất",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 73
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_TIEN_NHAP_HANG_TRONG_KY",
+    "category": "TEMPORAL",
+    "name": "Tiền nhập hàng trong kỳ",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tiền nhập hàng trong kỳ | tổng tiền các phiếu nhập có **ngày phiếu** trong kỳ, bỏ phiếu huỷ. Phiếu, dòng ghi **nhập đầu kỳ** là phiếu nhập như mọi phiếu khác: có ngày phiếu trong kỳ thì tính. Nhà cung cấp nhập nhiều nhất = nhà cung cấp có tiền nhập cao nhất"
+    },
+    "description": "tổng tiền các phiếu nhập có **ngày phiếu** trong kỳ, bỏ phiếu huỷ. Phiếu, dòng ghi **nhập đầu kỳ** là phiếu nhập như mọi phiếu khác: có ngày phiếu trong kỳ thì tính. Nhà cung cấp nhập nhiều nhất = nhà cung cấp có tiền nhập cao nhất",
+    "trigger_keywords": [
+      "Tiền nhập hàng trong kỳ"
+    ],
+    "logic_intent": "tổng tiền các phiếu nhập có **ngày phiếu** trong kỳ, bỏ phiếu huỷ. Phiếu, dòng ghi **nhập đầu kỳ** là phiếu nhập như mọi phiếu khác: có ngày phiếu trong kỳ thì tính. Nhà cung cấp nhập nhiều nhất = nhà cung cấp có tiền nhập cao nhất",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 72,
+    "other_origins": [
+      {
+        "section": "5. Kho, nhập hàng, giá vốn",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tiền nhập hàng trong kỳ | tổng tiền các phiếu nhập có **ngày phiếu** trong kỳ, bỏ phiếu huỷ. Phiếu, dòng ghi **nhập đầu kỳ** là phiếu nhập như mọi phiếu khác: có ngày phiếu trong kỳ thì tính. Nhà cung cấp nhập nhiều nhất = nhà cung cấp có tiền nhập cao nhất"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_5_KHO_NHAP_HANG_GIA_VON_TON_THEO_ON_VI_LON",
+    "category": "BUSINESS_LOGIC",
+    "name": "Tồn theo đơn vị lớn",
+    "rulebook_origin": {
+      "section": "5. Kho, nhập hàng, giá vốn",
+      "source_file": "train/rulebook.md",
+      "exact_quote": "Tồn theo đơn vị lớn | list 2 số `[số đơn vị lớn nguyên, số đơn vị cơ bản lẻ]`; không có phần lẻ thì số thứ hai là 0. Hàng nhiều cấp: phần lẻ vẫn tính bằng đơn vị cơ bản, không đổi sang đơn vị ở giữa"
+    },
+    "description": "list 2 số `[số đơn vị lớn nguyên, số đơn vị cơ bản lẻ]`; không có phần lẻ thì số thứ hai là 0. Hàng nhiều cấp: phần lẻ vẫn tính bằng đơn vị cơ bản, không đổi sang đơn vị ở giữa",
+    "trigger_keywords": [
+      "Tồn theo đơn vị lớn"
+    ],
+    "logic_intent": "list 2 số `[số đơn vị lớn nguyên, số đơn vị cơ bản lẻ]`; không có phần lẻ thì số thứ hai là 0. Hàng nhiều cấp: phần lẻ vẫn tính bằng đơn vị cơ bản, không đổi sang đơn vị ở giữa",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 66
+  },
+  {
+    "primitive_id": "PRIM_RULE_7_KHONG_TRA_LOI_UOC_CAU_KHONG_TRA_LOI_UOC_KHI_DU_LIEU_PHAT_HANH_KHONG_U_E_TRA_LOI_AP_AN_CHI_LAY",
+    "category": "GUARDRAIL",
+    "name": "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát",
+    "rulebook_origin": {
+      "section": "7. Không trả lời được",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát hành, không lấy từ hiểu biết bên ngoài. Nộp `{\"type\": \"unanswerable\", \"reason\": \"…\"}`."
+    },
+    "description": "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát hành, không lấy từ hiểu biết bên ngoài. Nộp `{\"type\": \"unanswerable\", \"reason\": \"…\"}`.",
+    "trigger_keywords": [
+      "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát"
+    ],
+    "logic_intent": "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát hành, không lấy từ hiểu biết bên ngoài. Nộp `{\"type\": \"unanswerable\", \"reason\": \"…\"}`.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 131,
+    "other_origins": [
+      {
+        "section": "7. Không trả lời được",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Câu **không trả lời được** khi dữ liệu phát hành không đủ để trả lời. Đáp án chỉ lấy từ dữ liệu phát hành, không lấy từ hiểu biết bên ngoài. Nộp `{\"type\": \"unanswerable\", \"reason\": \"…\"}`."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_7_KHONG_TRA_LOI_UOC_KHONG_CO_DU_LIEU_KHAC_VOI_BANG_0_KY_NAM_HOAN_TOAN_NGOAI_KHOANG_NGAY_CO_DU_LI",
+    "category": "GUARDRAIL",
+    "name": "Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc s",
+    "rulebook_origin": {
+      "section": "7. Không trả lời được",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc shop không ghi loại thông tin câu hỏi cần, thì không trả lời được, không phải 0."
+    },
+    "description": "Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc shop không ghi loại thông tin câu hỏi cần, thì không trả lời được, không phải 0.",
+    "trigger_keywords": [
+      "Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc s"
+    ],
+    "logic_intent": "Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc shop không ghi loại thông tin câu hỏi cần, thì không trả lời được, không phải 0.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 133,
+    "other_origins": [
+      {
+        "section": "7. Không trả lời được",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- Không có dữ liệu khác với bằng 0: kỳ nằm **hoàn toàn** ngoài khoảng ngày có dữ liệu của shop, hoặc shop không ghi loại thông tin câu hỏi cần, thì không trả lời được, không phải 0."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_7_KHONG_TRA_LOI_UOC_KY_CHI_CO_MOT_PHAN_NAM_TRONG_KHOANG_NGAY_CO_DU_LIEU_THI_TINH_TREN_PHAN_CO_DU",
+    "category": "GUARDRAIL",
+    "name": "Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu",
+    "rulebook_origin": {
+      "section": "7. Không trả lời được",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu."
+    },
+    "description": "Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu.",
+    "trigger_keywords": [
+      "Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu"
+    ],
+    "logic_intent": "Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 134,
+    "other_origins": [
+      {
+        "section": "7. Không trả lời được",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- Kỳ chỉ có một phần nằm trong khoảng ngày có dữ liệu thì tính trên phần có dữ liệu."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_7_KHONG_TRA_LOI_UOC_THONG_TIN_FILE_KHONG_GHI_THI_KHONG_SUY_RA_TU_COT_KHAC_TRU_KHI_RULEBOOK_GHI_C",
+    "category": "GUARDRAIL",
+    "name": "Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy",
+    "rulebook_origin": {
+      "section": "7. Không trả lời được",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy."
+    },
+    "description": "Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy.",
+    "trigger_keywords": [
+      "Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy"
+    ],
+    "logic_intent": "Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 132,
+    "other_origins": [
+      {
+        "section": "7. Không trả lời được",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- Thông tin file không ghi thì không suy ra từ cột khác, trừ khi rulebook ghi cách lấy."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_7_KHONG_TRA_LOI_UOC_TRUONG_REASON_KHONG_BAT_BUOC_VA_KHONG_CHAM_TU_ONG_NEU_CO_REASON_PHAI_LA_CHUO",
+    "category": "GUARDRAIL",
+    "name": "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reaso",
+    "rulebook_origin": {
+      "section": "7. Không trả lời được",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reason` không phải chuỗi không đọc được và tính như bỏ trống."
+    },
+    "description": "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reason` không phải chuỗi không đọc được và tính như bỏ trống.",
+    "trigger_keywords": [
+      "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reaso"
+    ],
+    "logic_intent": "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reason` không phải chuỗi không đọc được và tính như bỏ trống.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 136,
+    "other_origins": [
+      {
+        "section": "7. Không trả lời được",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Trường `reason` không bắt buộc và không chấm tự động. Nếu có, `reason` phải là chuỗi; dòng có `reason` không phải chuỗi không đọc được và tính như bỏ trống."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_BANG_KHONG_GHI_THEO_ON",
+    "category": "LINGUISTIC",
+    "name": "Bảng không ghi theo đơn",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Bảng không ghi theo đơn | mỗi dòng là một lần ghi; hai dòng giống nhau trong cùng file vẫn tính cả hai"
+    },
+    "description": "mỗi dòng là một lần ghi; hai dòng giống nhau trong cùng file vẫn tính cả hai",
+    "trigger_keywords": [
+      "Bảng không ghi theo đơn"
+    ],
+    "logic_intent": "mỗi dòng là một lần ghi; hai dòng giống nhau trong cùng file vẫn tính cả hai",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 146,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Bảng không ghi theo đơn | mỗi dòng là một lần ghi; hai dòng giống nhau trong cùng file vẫn tính cả hai"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_HAI_DONG_CUA_CUNG_MOT_ON_GIONG_NHAU_O_MOI_O",
+    "category": "LINGUISTIC",
+    "name": "Hai dòng của **cùng một đơn** giống nhau ở mọi ô",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Hai dòng của **cùng một đơn** giống nhau ở mọi ô | lỗi xuất file, tính một lần. Hai dòng giống nhau của hai đơn khác nhau là hai lần bán, tính cả hai"
+    },
+    "description": "lỗi xuất file, tính một lần. Hai dòng giống nhau của hai đơn khác nhau là hai lần bán, tính cả hai",
+    "trigger_keywords": [
+      "Hai dòng của **cùng một đơn** giống nhau ở mọi ô"
+    ],
+    "logic_intent": "lỗi xuất file, tính một lần. Hai dòng giống nhau của hai đơn khác nhau là hai lần bán, tính cả hai",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 145,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Hai dòng của **cùng một đơn** giống nhau ở mọi ô | lỗi xuất file, tính một lần. Hai dòng giống nhau của hai đơn khác nhau là hai lần bán, tính cả hai"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_NGAY_KHONG_GHI_NAM",
+    "category": "TEMPORAL",
+    "name": "Ngày không ghi năm",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Ngày không ghi năm | năm của sheet chứa dòng đó"
+    },
+    "description": "năm của sheet chứa dòng đó",
+    "trigger_keywords": [
+      "Ngày không ghi năm"
+    ],
+    "logic_intent": "năm của sheet chứa dòng đó",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 147,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Ngày không ghi năm | năm của sheet chứa dòng đó"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_O_E_TRONG_O_CAC_DONG_SAU_CUA_CUNG_MOT_NHOM_DONG",
+    "category": "LINGUISTIC",
+    "name": "Ô để trống ở các dòng sau của cùng một nhóm dòng",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Ô để trống ở các dòng sau của cùng một nhóm dòng | giống ô đó ở dòng đầu nhóm: khách, ghi chú, trạng thái của đơn áp cho mọi dòng của đơn. Không phải thiếu dữ liệu, không có nghĩa là khách lẻ hay đơn hoàn thành"
+    },
+    "description": "giống ô đó ở dòng đầu nhóm: khách, ghi chú, trạng thái của đơn áp cho mọi dòng của đơn. Không phải thiếu dữ liệu, không có nghĩa là khách lẻ hay đơn hoàn thành",
+    "trigger_keywords": [
+      "Ô để trống ở các dòng sau của cùng một nhóm dòng"
+    ],
+    "logic_intent": "giống ô đó ở dòng đầu nhóm: khách, ghi chú, trạng thái của đơn áp cho mọi dòng của đơn. Không phải thiếu dữ liệu, không có nghĩa là khách lẻ hay đơn hoàn thành",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 142,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Ô để trống ở các dòng sau của cùng một nhóm dòng | giống ô đó ở dòng đầu nhóm: khách, ghi chú, trạng thái của đơn áp cho mọi dòng của đơn. Không phải thiếu dữ liệu, không có nghĩa là khách lẻ hay đơn hoàn thành"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_SO_KHONG_CO_COT_TRANG_THAI",
+    "category": "LINGUISTIC",
+    "name": "Sổ không có cột trạng thái",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Sổ không có cột trạng thái | trạng thái đơn ghi ở cột Ghi chú. Ghi chú không nhắc trạng thái là đơn hoàn thành"
+    },
+    "description": "trạng thái đơn ghi ở cột Ghi chú. Ghi chú không nhắc trạng thái là đơn hoàn thành",
+    "trigger_keywords": [
+      "Sổ không có cột trạng thái"
+    ],
+    "logic_intent": "trạng thái đơn ghi ở cột Ghi chú. Ghi chú không nhắc trạng thái là đơn hoàn thành",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 143
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_TEN_GOI_NHAN",
+    "category": "LINGUISTIC",
+    "name": "Tên gọi, nhãn",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tên gọi, nhãn | các tên cùng chỉ một thứ, trong file hay trong câu hỏi, là cùng một thứ. File có mã thì theo mã"
+    },
+    "description": "các tên cùng chỉ một thứ, trong file hay trong câu hỏi, là cùng một thứ. File có mã thì theo mã",
+    "trigger_keywords": [
+      "Tên gọi, nhãn"
+    ],
+    "logic_intent": "các tên cùng chỉ một thứ, trong file hay trong câu hỏi, là cùng một thứ. File có mã thì theo mã",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 141,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Tên gọi, nhãn | các tên cùng chỉ một thứ, trong file hay trong câu hỏi, là cùng một thứ. File có mã thì theo mã"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_8_CACH_GHI_TRONG_FILE_TRANG_THAI_ON",
+    "category": "LINGUISTIC",
+    "name": "Trạng thái đơn",
+    "rulebook_origin": {
+      "section": "8. Cách ghi trong file",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Trạng thái đơn | mỗi đơn có đúng một trong bốn trạng thái: **hoàn thành**, **huỷ**, **trả hàng**, **đang giao**"
+    },
+    "description": "mỗi đơn có đúng một trong bốn trạng thái: **hoàn thành**, **huỷ**, **trả hàng**, **đang giao**",
+    "trigger_keywords": [
+      "Trạng thái đơn"
+    ],
+    "logic_intent": "mỗi đơn có đúng một trong bốn trạng thái: **hoàn thành**, **huỷ**, **trả hàng**, **đang giao**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 144,
+    "other_origins": [
+      {
+        "section": "8. Cách ghi trong file",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Trạng thái đơn | mỗi đơn có đúng một trong bốn trạng thái: **hoàn thành**, **huỷ**, **trả hàng**, **đang giao**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_BANG_MOI_DONG_MOT_OI_TUONG_COT_AU_LA_TEN_OI_TUONG_CAC_COT_SAU_LA_SO_O_THEO_U",
+    "category": "BUSINESS_LOGIC",
+    "name": "Bảng: mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Bảng:** mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ tự câu hỏi nêu**. Cột so theo tên; tên không khớp thì so theo vị trí, nên ghi đúng thứ tự cột. Thứ tự các dòng không ảnh hưởng kết quả chấm."
+    },
+    "description": "Bảng: mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ tự câu hỏi nêu**. Cột so theo tên; tên không khớp thì so theo vị trí, nên ghi đúng thứ tự cột. Thứ tự các dòng không ảnh hưởng kết quả chấm.",
+    "trigger_keywords": [
+      "Bảng: mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ"
+    ],
+    "logic_intent": "Bảng: mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ tự câu hỏi nêu**. Cột so theo tên; tên không khớp thì so theo vị trí, nên ghi đúng thứ tự cột. Thứ tự các dòng không ảnh hưởng kết quả chấm.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 171,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Bảng:** mỗi dòng một đối tượng; cột **đầu** là tên đối tượng, các cột **sau** là số đo theo **đúng thứ tự câu hỏi nêu**. Cột so theo tên; tên không khớp thì so theo vị trí, nên ghi đúng thứ tự cột. Thứ tự các dòng không ảnh hưởng kết quả chấm."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_BANG_NHAU_HAI_OI_TUONG_BANG_NHAU_O_TIEU_CHI_CAU_HOI_THI_XEP_THEO_MA_TANG_DAN",
+    "category": "BUSINESS_LOGIC",
+    "name": "Bằng nhau: hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Bằng nhau:** hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo tên). Câu hỏi một đối tượng lấy đối tượng đứng đầu theo thứ tự đó."
+    },
+    "description": "Bằng nhau: hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo tên). Câu hỏi một đối tượng lấy đối tượng đứng đầu theo thứ tự đó.",
+    "trigger_keywords": [
+      "Bằng nhau: hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo"
+    ],
+    "logic_intent": "Bằng nhau: hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo tên). Câu hỏi một đối tượng lấy đối tượng đứng đầu theo thứ tự đó.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 170,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Bằng nhau:** hai đối tượng bằng nhau ở tiêu chí câu hỏi thì xếp theo mã tăng dần (không có mã thì theo tên). Câu hỏi một đối tượng lấy đối tượng đứng đầu theo thứ tự đó."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_BOOLEAN",
+    "category": "BUSINESS_LOGIC",
+    "name": "boolean",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "boolean | `true` / `false` | `true` | `\"có\"`, `1`"
+    },
+    "description": "`true` / `false` | `true` | `\"có\"`, `1`",
+    "trigger_keywords": [
+      "boolean"
+    ],
+    "logic_intent": "`true` / `false` | `true` | `\"có\"`, `1`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 159,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "boolean | `true` / `false` | `true` | `\"có\"`, `1`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_CHUOI_KHONG_PHAN_BIET_HOA_THUONG_KHOANG_TRANG_DAU_CAU_NHAN_MOI_CACH_VIET_TEN",
+    "category": "LINGUISTIC",
+    "name": "Chuỗi: không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file c",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Chuỗi:** không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file của shop, hoặc **mã**. Tên khách chép kèm số điện thoại như trong file cũng được nhận. Ngoài các cách viết đó, dấu tiếng Việt phải đúng."
+    },
+    "description": "Chuỗi: không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file của shop, hoặc **mã**. Tên khách chép kèm số điện thoại như trong file cũng được nhận. Ngoài các cách viết đó, dấu tiếng Việt phải đúng.",
+    "trigger_keywords": [
+      "Chuỗi: không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file c"
+    ],
+    "logic_intent": "Chuỗi: không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file của shop, hoặc **mã**. Tên khách chép kèm số điện thoại như trong file cũng được nhận. Ngoài các cách viết đó, dấu tiếng Việt phải đúng.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 168,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Chuỗi:** không phân biệt hoa thường, khoảng trắng, dấu câu. Nhận **mọi cách viết** tên có trong file của shop, hoặc **mã**. Tên khách chép kèm số điện thoại như trong file cũng được nhận. Ngoài các cách viết đó, dấu tiếng Việt phải đúng."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_DANH_SACH_UNG_CA_TAP_VA_THU_TU_TOP_K_XEP_THEO_TIEU_CHI_CAU_HOI_GIAM_DAN_CAU",
+    "category": "TEMPORAL",
+    "name": "Danh sách: đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Danh sách:** đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo thì số đo giảm dần, cùng số đo thì theo **mã** tăng dần; liệt kê hàng theo hạn dùng thì hạn sớm nhất của mặt hàng trước, cùng hạn thì theo mã; còn lại (chỉ lọc theo điều kiện, không có số đo) theo mã tăng dần."
+    },
+    "description": "Danh sách: đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo thì số đo giảm dần, cùng số đo thì theo **mã** tăng dần; liệt kê hàng theo hạn dùng thì hạn sớm nhất của mặt hàng trước, cùng hạn thì theo mã; còn lại (chỉ lọc theo điều kiện, không có số đo) theo mã tăng dần.",
+    "trigger_keywords": [
+      "Danh sách: đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo"
+    ],
+    "logic_intent": "Danh sách: đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo thì số đo giảm dần, cùng số đo thì theo **mã** tăng dần; liệt kê hàng theo hạn dùng thì hạn sớm nhất của mặt hàng trước, cùng hạn thì theo mã; còn lại (chỉ lọc theo điều kiện, không có số đo) theo mã tăng dần.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 169,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Danh sách:** đúng cả tập và thứ tự. Top k xếp theo tiêu chí câu hỏi, giảm dần. Câu \"liệt kê\": có số đo thì số đo giảm dần, cùng số đo thì theo **mã** tăng dần; liệt kê hàng theo hạn dùng thì hạn sớm nhất của mặt hàng trước, cùng hạn thì theo mã; còn lại (chỉ lọc theo điều kiện, không có số đo) theo mã tăng dần."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_DATE",
+    "category": "TEMPORAL",
+    "name": "date",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "date | `\"YYYY-MM-DD\"`; câu hỏi theo tháng: `\"YYYY-MM\"` | `\"2026-08-15\"`, `\"2025-09\"` | `\"15/08/2026\"`, `\"tháng 9/2025\"`"
+    },
+    "description": "`\"YYYY-MM-DD\"`; câu hỏi theo tháng: `\"YYYY-MM\"` | `\"2026-08-15\"`, `\"2025-09\"` | `\"15/08/2026\"`, `\"tháng 9/2025\"`",
+    "trigger_keywords": [
+      "date"
+    ],
+    "logic_intent": "`\"YYYY-MM-DD\"`; câu hỏi theo tháng: `\"YYYY-MM\"` | `\"2026-08-15\"`, `\"2025-09\"` | `\"15/08/2026\"`, `\"tháng 9/2025\"`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 158,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "date | `\"YYYY-MM-DD\"`; câu hỏi theo tháng: `\"YYYY-MM\"` | `\"2026-08-15\"`, `\"2025-09\"` | `\"15/08/2026\"`, `\"tháng 9/2025\"`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_LAM_TRON_TIEN_RA_SO_LE_LAM_TRON_VE_ONG_TRUNG_BINH_CUA_MOT_KHOAN_TIEN_CUNG_LA",
+    "category": "CALCULATION",
+    "name": "Làm tròn: tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồ",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Làm tròn:** tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồng. Phần trăm và số trung bình khác làm tròn 2 chữ số thập phân, trừ khi một luật khác trong rulebook ghi khác."
+    },
+    "description": "Làm tròn: tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồng. Phần trăm và số trung bình khác làm tròn 2 chữ số thập phân, trừ khi một luật khác trong rulebook ghi khác.",
+    "trigger_keywords": [
+      "Làm tròn: tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồ"
+    ],
+    "logic_intent": "Làm tròn: tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồng. Phần trăm và số trung bình khác làm tròn 2 chữ số thập phân, trừ khi một luật khác trong rulebook ghi khác.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 167,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Làm tròn:** tiền ra số lẻ làm tròn về đồng; trung bình của một khoản tiền cũng là tiền, làm tròn về đồng. Phần trăm và số trung bình khác làm tròn 2 chữ số thập phân, trừ khi một luật khác trong rulebook ghi khác."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_LIST",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "list",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "list | mảng JSON, có thứ tự; một phần tử vẫn là mảng | `[\"Cà phê sữa\"]`, `[3, 10]` | `\"Cà phê sữa, Bạc xỉu\"`, `\"3 thùng 10 chai\"`"
+    },
+    "description": "mảng JSON, có thứ tự; một phần tử vẫn là mảng | `[\"Cà phê sữa\"]`, `[3, 10]` | `\"Cà phê sữa, Bạc xỉu\"`, `\"3 thùng 10 chai\"`",
+    "trigger_keywords": [
+      "list"
+    ],
+    "logic_intent": "mảng JSON, có thứ tự; một phần tử vẫn là mảng | `[\"Cà phê sữa\"]`, `[3, 10]` | `\"Cà phê sữa, Bạc xỉu\"`, `\"3 thùng 10 chai\"`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 161,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "list | mảng JSON, có thứ tự; một phần tử vẫn là mảng | `[\"Cà phê sữa\"]`, `[3, 10]` | `\"Cà phê sữa, Bạc xỉu\"`, `\"3 thùng 10 chai\"`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_MOI_DONG_SUBMISSION_JSONL_ID_TYPE_ANSWER_UNG_1_SAI_1",
+    "category": "GUARDRAIL",
+    "name": "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**,",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**, bỏ trống (`{\"type\": \"abstain\"}` hoặc không có dòng) **0**."
+    },
+    "description": "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**, bỏ trống (`{\"type\": \"abstain\"}` hoặc không có dòng) **0**.",
+    "trigger_keywords": [
+      "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**,"
+    ],
+    "logic_intent": "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**, bỏ trống (`{\"type\": \"abstain\"}` hoặc không có dòng) **0**.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 150,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Mỗi dòng `submission.jsonl`: `{\"id\": \"...\", \"type\": \"...\", \"answer\": ...}`. Đúng **+1**, sai **−1**, bỏ trống (`{\"type\": \"abstain\"}` hoặc không có dòng) **0**."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_MOI_TYPE_CO_MOT_FORMAT_DUY_NHAT_SAI_FORMAT_LA_SAI_AP_AN_CHI_GHI_GIA_TRI_SO_K",
+    "category": "LINGUISTIC",
+    "name": "Mỗi type có một format duy nhất; sai format là sai. Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "**Mỗi type có một format duy nhất; sai format là sai.** Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn vị hay ký hiệu %; tên lấy nguyên từ dữ liệu, không kèm tên cột hay nhãn nhóm. Câu hỏi nhiều số thì ghi list theo đúng thứ tự câu hỏi nêu."
+    },
+    "description": "Mỗi type có một format duy nhất; sai format là sai. Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn vị hay ký hiệu %; tên lấy nguyên từ dữ liệu, không kèm tên cột hay nhãn nhóm. Câu hỏi nhiều số thì ghi list theo đúng thứ tự câu hỏi nêu.",
+    "trigger_keywords": [
+      "Mỗi type có một format duy nhất; sai format là sai. Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn"
+    ],
+    "logic_intent": "Mỗi type có một format duy nhất; sai format là sai. Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn vị hay ký hiệu %; tên lấy nguyên từ dữ liệu, không kèm tên cột hay nhãn nhóm. Câu hỏi nhiều số thì ghi list theo đúng thứ tự câu hỏi nêu.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 152,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "**Mỗi type có một format duy nhất; sai format là sai.** Đáp án chỉ ghi **giá trị**: số không kèm chữ đơn vị hay ký hiệu %; tên lấy nguyên từ dữ liệu, không kèm tên cột hay nhãn nhóm. Câu hỏi nhiều số thì ghi list theo đúng thứ tự câu hỏi nêu."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_NUMBER",
+    "category": "LINGUISTIC",
+    "name": "number",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "number | JSON number, không đơn vị, không dấu phân cách nghìn. Tiền là số nguyên VND | `4820000`, `18.6` | `\"4,82 triệu\"`, `\"4.820.000\"`, `\"4820K\"`, `\"4820000\"`"
+    },
+    "description": "JSON number, không đơn vị, không dấu phân cách nghìn. Tiền là số nguyên VND | `4820000`, `18.6` | `\"4,82 triệu\"`, `\"4.820.000\"`, `\"4820K\"`, `\"4820000\"`",
+    "trigger_keywords": [
+      "number"
+    ],
+    "logic_intent": "JSON number, không đơn vị, không dấu phân cách nghìn. Tiền là số nguyên VND | `4820000`, `18.6` | `\"4,82 triệu\"`, `\"4.820.000\"`, `\"4820K\"`, `\"4820000\"`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 156,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "number | JSON number, không đơn vị, không dấu phân cách nghìn. Tiền là số nguyên VND | `4820000`, `18.6` | `\"4,82 triệu\"`, `\"4.820.000\"`, `\"4820K\"`, `\"4820000\"`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_PERCENT",
+    "category": "CALCULATION",
+    "name": "percent",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "percent | JSON number là **số phần trăm**: 12,4 % ghi `12.4`, không kèm ký hiệu % | `12.4` | `\"12,4%\"`, `0.124`"
+    },
+    "description": "JSON number là **số phần trăm**: 12,4 % ghi `12.4`, không kèm ký hiệu % | `12.4` | `\"12,4%\"`, `0.124`",
+    "trigger_keywords": [
+      "percent"
+    ],
+    "logic_intent": "JSON number là **số phần trăm**: 12,4 % ghi `12.4`, không kèm ký hiệu % | `12.4` | `\"12,4%\"`, `0.124`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 157,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "percent | JSON number là **số phần trăm**: 12,4 % ghi `12.4`, không kèm ký hiệu % | `12.4` | `\"12,4%\"`, `0.124`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_SO_PHAN_TRAM_KHOP_TUYET_OI_TIEN_UNG_TUNG_ONG_SO_EM_UNG_TUNG_ON_VI_PHAN_TRAM",
+    "category": "LINGUISTIC",
+    "name": "Số, phần trăm: khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "- **Số, phần trăm:** khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số thập phân. Chỉ bỏ qua sai số dấu phẩy động."
+    },
+    "description": "Số, phần trăm: khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số thập phân. Chỉ bỏ qua sai số dấu phẩy động.",
+    "trigger_keywords": [
+      "Số, phần trăm: khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số"
+    ],
+    "logic_intent": "Số, phần trăm: khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số thập phân. Chỉ bỏ qua sai số dấu phẩy động.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 166,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "- **Số, phần trăm:** khớp tuyệt đối. Tiền đúng từng đồng, số đếm đúng từng đơn vị, phần trăm đúng 2 chữ số thập phân. Chỉ bỏ qua sai số dấu phẩy động."
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_STRING",
+    "category": "LINGUISTIC",
+    "name": "string",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "string | tên như trong dữ liệu, đủ dấu tiếng Việt | `\"Sting dâu 330ml\"` | `\"Sting dầu 330ml\"` (sai dấu, file không có cách viết này), `[\"Sting dâu 330ml\"]`"
+    },
+    "description": "tên như trong dữ liệu, đủ dấu tiếng Việt | `\"Sting dâu 330ml\"` | `\"Sting dầu 330ml\"` (sai dấu, file không có cách viết này), `[\"Sting dâu 330ml\"]`",
+    "trigger_keywords": [
+      "string"
+    ],
+    "logic_intent": "tên như trong dữ liệu, đủ dấu tiếng Việt | `\"Sting dâu 330ml\"` | `\"Sting dầu 330ml\"` (sai dấu, file không có cách viết này), `[\"Sting dâu 330ml\"]`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 160,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "string | tên như trong dữ liệu, đủ dấu tiếng Việt | `\"Sting dâu 330ml\"` | `\"Sting dầu 330ml\"` (sai dấu, file không có cách viết này), `[\"Sting dâu 330ml\"]`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_TABLE",
+    "category": "BUSINESS_LOGIC",
+    "name": "table",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "table | `{\"columns\": [...], \"rows\": [[...], ...]}`, ô số là JSON number | `{\"columns\": [\"khach_hang\", \"so_tien_no\"], \"rows\": [[\"Chị Lan\", 3200000]]}` | ô `\"3.200.000đ\"`"
+    },
+    "description": "`{\"columns\": [...], \"rows\": [[...], ...]}`, ô số là JSON number | `{\"columns\": [\"khach_hang\", \"so_tien_no\"], \"rows\": [[\"Chị Lan\", 3200000]]}` | ô `\"3.200.000đ\"`",
+    "trigger_keywords": [
+      "table"
+    ],
+    "logic_intent": "`{\"columns\": [...], \"rows\": [[...], ...]}`, ô số là JSON number | `{\"columns\": [\"khach_hang\", \"so_tien_no\"], \"rows\": [[\"Chị Lan\", 3200000]]}` | ô `\"3.200.000đ\"`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 162,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "table | `{\"columns\": [...], \"rows\": [[...], ...]}`, ô số là JSON number | `{\"columns\": [\"khach_hang\", \"so_tien_no\"], \"rows\": [[\"Chị Lan\", 3200000]]}` | ô `\"3.200.000đ\"`"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_UNANSWERABLE",
+    "category": "GUARDRAIL",
+    "name": "unanswerable",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "unanswerable | `{\"type\": \"unanswerable\", \"reason\": \"...\"}` |  | "
+    },
+    "description": "`{\"type\": \"unanswerable\", \"reason\": \"...\"}`",
+    "trigger_keywords": [
+      "unanswerable"
+    ],
+    "logic_intent": "`{\"type\": \"unanswerable\", \"reason\": \"...\"}`",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 163,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "unanswerable | `{\"type\": \"unanswerable\", \"reason\": \"...\"}` |  | "
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_9_AP_AN_VA_CHAM_IEM_UNG_FORMAT_ROI_MOI_SO_GIA_TRI",
+    "category": "LINGUISTIC",
+    "name": "Đúng format rồi mới so giá trị:",
+    "rulebook_origin": {
+      "section": "9. Đáp án và chấm điểm",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Đúng format rồi mới so giá trị:"
+    },
+    "description": "Đúng format rồi mới so giá trị:",
+    "trigger_keywords": [
+      "Đúng format rồi mới so giá trị:"
+    ],
+    "logic_intent": "Đúng format rồi mới so giá trị:",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 1,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 165,
+    "other_origins": [
+      {
+        "section": "9. Đáp án và chấm điểm",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Đúng format rồi mới so giá trị:"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_CA_PHE_SIZE_M_SIZE_L",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Size M, size L",
+    "rulebook_origin": {
+      "section": "Cà phê",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Size M, size L | món có tên kết thúc bằng `(M)` hoặc `(L)`, **không phân biệt hoa thường**"
+    },
+    "description": "món có tên kết thúc bằng `(M)` hoặc `(L)`, **không phân biệt hoa thường**",
+    "trigger_keywords": [
+      "Size M, size L"
+    ],
+    "logic_intent": "món có tên kết thúc bằng `(M)` hoặc `(L)`, **không phân biệt hoa thường**",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "F&B"
+    ],
+    "source_line": 89,
+    "other_origins": [
+      {
+        "section": "Cà phê",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Size M, size L | món có tên kết thúc bằng `(M)` hoặc `(L)`, **không phân biệt hoa thường**"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_CA_PHE_TOPPING_GHI_CHUNG_O_VOI_MON",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Topping ghi chung ô với món",
+    "rulebook_origin": {
+      "section": "Cà phê",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Topping ghi chung ô với món | món và topping là **hai** mặt hàng bán: số lượng, tiền của topping tính vào mặt hàng topping (cùng mặt hàng với topping ghi dòng riêng), không tính vào món"
+    },
+    "description": "món và topping là **hai** mặt hàng bán: số lượng, tiền của topping tính vào mặt hàng topping (cùng mặt hàng với topping ghi dòng riêng), không tính vào món",
+    "trigger_keywords": [
+      "Topping ghi chung ô với món"
+    ],
+    "logic_intent": "món và topping là **hai** mặt hàng bán: số lượng, tiền của topping tính vào mặt hàng topping (cùng mặt hàng với topping ghi dòng riêng), không tính vào món",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "F&B"
+    ],
+    "source_line": 90
+  },
+  {
+    "primitive_id": "PRIM_RULE_CUA_HANG_IEN_THOAI_BAO_HANH",
+    "category": "TEMPORAL",
+    "name": "Bảo hành",
+    "rulebook_origin": {
+      "section": "Cửa hàng điện thoại",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Bảo hành | **Tỉ lệ bảo hành** của một quý bằng số **lượt** bảo hành có ngày nhận trong quý, chia cho số máy bán trong quý (bỏ đơn huỷ, đơn trả). Lượt bảo hành của máy bán từ quý trước vẫn tính."
+    },
+    "description": "**Tỉ lệ bảo hành** của một quý bằng số **lượt** bảo hành có ngày nhận trong quý, chia cho số máy bán trong quý (bỏ đơn huỷ, đơn trả). Lượt bảo hành của máy bán từ quý trước vẫn tính.",
+    "trigger_keywords": [
+      "Bảo hành"
+    ],
+    "logic_intent": "**Tỉ lệ bảo hành** của một quý bằng số **lượt** bảo hành có ngày nhận trong quý, chia cho số máy bán trong quý (bỏ đơn huỷ, đơn trả). Lượt bảo hành của máy bán từ quý trước vẫn tính.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 127,
+    "other_origins": [
+      {
+        "section": "Sửa xe",
+        "source_file": "public_test/rulebook.md",
+        "exact_quote": "Bảo hành | **Tỉ lệ bảo hành** bằng số phiếu bảo hành có ngày trong kỳ, chia cho số phiếu có thu tiền trong cùng kỳ; phiếu bảo hành của xe sửa từ kỳ trước vẫn tính"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_CUA_HANG_IEN_THOAI_DONG_MAY_HANG",
+    "category": "LINGUISTIC",
+    "name": "Dòng máy, hãng",
+    "rulebook_origin": {
+      "section": "Cửa hàng điện thoại",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Dòng máy, hãng | **dòng máy** = phần tên hàng đứng trước dung lượng `…GB`; tên không có phần `…GB` thì dòng máy là cả tên (`Nokia 105 4G`: `4G` là mạng, không phải dung lượng). **Hãng** = chữ đầu tên hàng; máy `iPhone` là hãng Apple. Máy khách mang tới đổi không phải máy bán"
+    },
+    "description": "**dòng máy** = phần tên hàng đứng trước dung lượng `…GB`; tên không có phần `…GB` thì dòng máy là cả tên (`Nokia 105 4G`: `4G` là mạng, không phải dung lượng). **Hãng** = chữ đầu tên hàng; máy `iPhone` là hãng Apple. Máy khách mang tới đổi không phải máy bán",
+    "trigger_keywords": [
+      "Dòng máy, hãng"
+    ],
+    "logic_intent": "**dòng máy** = phần tên hàng đứng trước dung lượng `…GB`; tên không có phần `…GB` thì dòng máy là cả tên (`Nokia 105 4G`: `4G` là mạng, không phải dung lượng). **Hãng** = chữ đầu tên hàng; máy `iPhone` là hãng Apple. Máy khách mang tới đổi không phải máy bán",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 128
+  },
+  {
+    "primitive_id": "PRIM_RULE_CUA_HANG_IEN_THOAI_THU_MAY_CU",
+    "category": "CALCULATION",
+    "name": "Thu máy cũ",
+    "rulebook_origin": {
+      "section": "Cửa hàng điện thoại",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Thu máy cũ | **Khách phải trả** là tiền của đơn sau bớt và sau trừ máy cũ, gồm cả phần còn nợ. Tiền thu máy cũ **không** trừ vào doanh thu. Tổng khách phải trả, tiền thu máy cũ của một kỳ chỉ tính đơn không huỷ, không trả (§1)"
+    },
+    "description": "**Khách phải trả** là tiền của đơn sau bớt và sau trừ máy cũ, gồm cả phần còn nợ. Tiền thu máy cũ **không** trừ vào doanh thu. Tổng khách phải trả, tiền thu máy cũ của một kỳ chỉ tính đơn không huỷ, không trả (§1)",
+    "trigger_keywords": [
+      "Thu máy cũ"
+    ],
+    "logic_intent": "**Khách phải trả** là tiền của đơn sau bớt và sau trừ máy cũ, gồm cả phần còn nợ. Tiền thu máy cũ **không** trừ vào doanh thu. Tổng khách phải trả, tiền thu máy cũ của một kỳ chỉ tính đơn không huỷ, không trả (§1)",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 125
+  },
+  {
+    "primitive_id": "PRIM_RULE_CUA_HANG_IEN_THOAI_TRA_GOP",
+    "category": "TEMPORAL",
+    "name": "Trả góp",
+    "rulebook_origin": {
+      "section": "Cửa hàng điện thoại",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Trả góp | Đơn trả góp là đơn **ghi nợ** (§4): phần góp chưa trả là tiền khách còn nợ, tiền góp mỗi kỳ là tiền khách trả nợ (tính vào thu nợ). Tiền góp không tính vào doanh thu, vì doanh thu đã tính đủ giá máy vào ngày mua; tiền trả trước không phải tiền góp. Câu hỏi khách nợ, mua chịu, trả nợ, thu nợ gồm cả đơn trả góp, dù shop ghi sổ góp riêng với sổ nợ. Kỳ góp có hạn **trước** ngày hỏi mà chưa góp đủ là **quá hạn**; kỳ có hạn đúng ngày hỏi thì chưa quá hạn."
+    },
+    "description": "Đơn trả góp là đơn **ghi nợ** (§4): phần góp chưa trả là tiền khách còn nợ, tiền góp mỗi kỳ là tiền khách trả nợ (tính vào thu nợ). Tiền góp không tính vào doanh thu, vì doanh thu đã tính đủ giá máy vào ngày mua; tiền trả trước không phải tiền góp. Câu hỏi khách nợ, mua chịu, trả nợ, thu nợ gồm cả đơn trả góp, dù shop ghi sổ góp riêng với sổ nợ. Kỳ góp có hạn **trước** ngày hỏi mà chưa góp đủ là **quá hạn**; kỳ có hạn đúng ngày hỏi thì chưa quá hạn.",
+    "trigger_keywords": [
+      "Trả góp"
+    ],
+    "logic_intent": "Đơn trả góp là đơn **ghi nợ** (§4): phần góp chưa trả là tiền khách còn nợ, tiền góp mỗi kỳ là tiền khách trả nợ (tính vào thu nợ). Tiền góp không tính vào doanh thu, vì doanh thu đã tính đủ giá máy vào ngày mua; tiền trả trước không phải tiền góp. Câu hỏi khách nợ, mua chịu, trả nợ, thu nợ gồm cả đơn trả góp, dù shop ghi sổ góp riêng với sổ nợ. Kỳ góp có hạn **trước** ngày hỏi mà chưa góp đủ là **quá hạn**; kỳ có hạn đúng ngày hỏi thì chưa quá hạn.",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "ALL"
+    ],
+    "source_line": 126
+  },
+  {
+    "primitive_id": "PRIM_RULE_ME_VA_BE_KHACH_THANH_VIEN_MOI_TRONG_THANG",
+    "category": "TEMPORAL",
+    "name": "Khách thành viên mới trong tháng",
+    "rulebook_origin": {
+      "section": "Mẹ và bé",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Khách thành viên mới trong tháng | số khách có **Ngày đăng ký** trong tháng đó, kể cả khách chưa mua lần nào"
+    },
+    "description": "số khách có **Ngày đăng ký** trong tháng đó, kể cả khách chưa mua lần nào",
+    "trigger_keywords": [
+      "Khách thành viên mới trong tháng"
+    ],
+    "logic_intent": "số khách có **Ngày đăng ký** trong tháng đó, kể cả khách chưa mua lần nào",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Mother & Baby"
+    ],
+    "source_line": 110
+  },
+  {
+    "primitive_id": "PRIM_RULE_ME_VA_BE_SO_SUA_SIZE_BIM",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Số sữa, size bỉm",
+    "rulebook_origin": {
+      "section": "Mẹ và bé",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Số sữa, size bỉm | lấy theo cột Số / Size của danh mục: hàng để trống cột Số / Size thì không xếp vào số, size nào, dù tên hàng có số. Phần trăm của một size hay một hãng chia cho tổng số bịch mọi hàng **bỉm tã** cùng kỳ"
+    },
+    "description": "lấy theo cột Số / Size của danh mục: hàng để trống cột Số / Size thì không xếp vào số, size nào, dù tên hàng có số. Phần trăm của một size hay một hãng chia cho tổng số bịch mọi hàng **bỉm tã** cùng kỳ",
+    "trigger_keywords": [
+      "Số sữa, size bỉm"
+    ],
+    "logic_intent": "lấy theo cột Số / Size của danh mục: hàng để trống cột Số / Size thì không xếp vào số, size nào, dù tên hàng có số. Phần trăm của một size hay một hãng chia cho tổng số bịch mọi hàng **bỉm tã** cùng kỳ",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "Mother & Baby"
+    ],
+    "source_line": 109
+  },
+  {
+    "primitive_id": "PRIM_RULE_ME_VA_BE_TIEN_GIAM_VOUCHER_TIEN_GIAM_NHO_DUNG_IEM_PHI_SHIP",
+    "category": "TEMPORAL",
+    "name": "Tiền giảm voucher, tiền giảm nhờ dùng điểm, phí ship",
+    "rulebook_origin": {
+      "section": "Mẹ và bé",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Tiền giảm voucher, tiền giảm nhờ dùng điểm, phí ship | trả **số dương**; cộng theo **ngày của hoá đơn**; chỉ tính hoá đơn không huỷ, không trả"
+    },
+    "description": "trả **số dương**; cộng theo **ngày của hoá đơn**; chỉ tính hoá đơn không huỷ, không trả",
+    "trigger_keywords": [
+      "Tiền giảm voucher, tiền giảm nhờ dùng điểm, phí ship"
+    ],
+    "logic_intent": "trả **số dương**; cộng theo **ngày của hoá đơn**; chỉ tính hoá đơn không huỷ, không trả",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Mother & Baby"
+    ],
+    "source_line": 108
+  },
+  {
+    "primitive_id": "PRIM_RULE_NHA_THUOC_DOANH_THU_THEO_HOAT_CHAT",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Doanh thu theo hoạt chất",
+    "rulebook_origin": {
+      "section": "Nhà thuốc",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Doanh thu theo hoạt chất | doanh thu (§1) các thuốc có hoạt chất ghi **đúng như vậy** trong danh mục thuốc. Thuốc phối hợp nhiều hoạt chất là **một loại riêng**, không tính vào từng hoạt chất trong đó"
+    },
+    "description": "doanh thu (§1) các thuốc có hoạt chất ghi **đúng như vậy** trong danh mục thuốc. Thuốc phối hợp nhiều hoạt chất là **một loại riêng**, không tính vào từng hoạt chất trong đó",
+    "trigger_keywords": [
+      "Doanh thu theo hoạt chất",
+      "bán được bao nhiêu tiền",
+      "thu về bao nhiêu tiền",
+      "tiền hàng",
+      "tiền bán"
+    ],
+    "logic_intent": "doanh thu (§1) các thuốc có hoạt chất ghi **đúng như vậy** trong danh mục thuốc. Thuốc phối hợp nhiều hoạt chất là **một loại riêng**, không tính vào từng hoạt chất trong đó",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Pharmacy"
+    ],
+    "source_line": 97,
+    "other_origins": [
+      {
+        "section": "Nhà thuốc",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Doanh thu theo hoạt chất | doanh thu (§1) các thuốc có hoạt chất ghi **đúng như vậy** trong danh mục thuốc. Thuốc phối hợp nhiều hoạt chất là **một loại riêng**, không tính vào từng hoạt chất trong đó"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_NHA_THUOC_HANG_HET_HAN_TRONG_N_NGAY_TOI",
+    "category": "TEMPORAL",
+    "name": "Hàng hết hạn trong N ngày tới",
+    "rulebook_origin": {
+      "section": "Nhà thuốc",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Hàng hết hạn trong N ngày tới | tính tại hôm nay D: lô còn tồn có hạn dùng từ D đến hết ngày D + N. **Tiền vốn** là giá trị phần **còn tồn** của lô, theo giá nhập của chính lô đó quy về đơn vị cơ bản, không theo giá vốn bình quân"
+    },
+    "description": "tính tại hôm nay D: lô còn tồn có hạn dùng từ D đến hết ngày D + N. **Tiền vốn** là giá trị phần **còn tồn** của lô, theo giá nhập của chính lô đó quy về đơn vị cơ bản, không theo giá vốn bình quân",
+    "trigger_keywords": [
+      "Hàng hết hạn trong N ngày tới"
+    ],
+    "logic_intent": "tính tại hôm nay D: lô còn tồn có hạn dùng từ D đến hết ngày D + N. **Tiền vốn** là giá trị phần **còn tồn** của lô, theo giá nhập của chính lô đó quy về đơn vị cơ bản, không theo giá vốn bình quân",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "Pharmacy"
+    ],
+    "source_line": 96,
+    "other_origins": [
+      {
+        "section": "Nhà thuốc",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Hàng hết hạn trong N ngày tới | tính tại hôm nay D: lô còn tồn có hạn dùng từ D đến hết ngày D + N. **Tiền vốn** là giá trị phần **còn tồn** của lô, theo giá nhập của chính lô đó quy về đơn vị cơ bản, không theo giá vốn bình quân"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_NHA_THUOC_LO_GAN_HET_HAN_NHAT_CUA_MOT_THUOC",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Lô gần hết hạn nhất của một thuốc",
+    "rulebook_origin": {
+      "section": "Nhà thuốc",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Lô gần hết hạn nhất của một thuốc | trong các lô còn tồn chưa quá hạn tại hôm nay, lô có hạn sớm nhất"
+    },
+    "description": "trong các lô còn tồn chưa quá hạn tại hôm nay, lô có hạn sớm nhất",
+    "trigger_keywords": [
+      "Lô gần hết hạn nhất của một thuốc"
+    ],
+    "logic_intent": "trong các lô còn tồn chưa quá hạn tại hôm nay, lô có hạn sớm nhất",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "Pharmacy"
+    ],
+    "source_line": 98,
+    "other_origins": [
+      {
+        "section": "Nhà thuốc",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Lô gần hết hạn nhất của một thuốc | trong các lô còn tồn chưa quá hạn tại hôm nay, lô có hạn sớm nhất"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_NHA_THUOC_THUOC_KE_ON",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Thuốc kê đơn",
+    "rulebook_origin": {
+      "section": "Nhà thuốc",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Thuốc kê đơn | **Thuốc kê đơn** = sản phẩm ghi kê đơn trong danh mục thuốc; mọi sản phẩm còn lại là **hàng không kê đơn**. Tỉ lệ kê đơn tính theo doanh thu"
+    },
+    "description": "**Thuốc kê đơn** = sản phẩm ghi kê đơn trong danh mục thuốc; mọi sản phẩm còn lại là **hàng không kê đơn**. Tỉ lệ kê đơn tính theo doanh thu",
+    "trigger_keywords": [
+      "Thuốc kê đơn"
+    ],
+    "logic_intent": "**Thuốc kê đơn** = sản phẩm ghi kê đơn trong danh mục thuốc; mọi sản phẩm còn lại là **hàng không kê đơn**. Tỉ lệ kê đơn tính theo doanh thu",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Pharmacy"
+    ],
+    "source_line": 95,
+    "other_origins": [
+      {
+        "section": "Nhà thuốc",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Thuốc kê đơn | **Thuốc kê đơn** = sản phẩm ghi kê đơn trong danh mục thuốc; mọi sản phẩm còn lại là **hàng không kê đơn**. Tỉ lệ kê đơn tính theo doanh thu"
+      }
+    ]
+  },
+  {
+    "primitive_id": "PRIM_RULE_SUA_XE_DONG_XE_BIEN_SO",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Dòng xe, biển số",
+    "rulebook_origin": {
+      "section": "Sửa xe",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Dòng xe, biển số | Tên dòng xe chỉ khác hoa/thường hoặc ghi tắt là cùng một dòng. **Số chiếc xe** mang tới = số biển số khác nhau, tính cả xe chỉ tới bảo hành"
+    },
+    "description": "Tên dòng xe chỉ khác hoa/thường hoặc ghi tắt là cùng một dòng. **Số chiếc xe** mang tới = số biển số khác nhau, tính cả xe chỉ tới bảo hành",
+    "trigger_keywords": [
+      "Dòng xe, biển số"
+    ],
+    "logic_intent": "Tên dòng xe chỉ khác hoa/thường hoặc ghi tắt là cùng một dòng. **Số chiếc xe** mang tới = số biển số khác nhau, tính cả xe chỉ tới bảo hành",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Auto Repair"
+    ],
+    "source_line": 117
+  },
+  {
+    "primitive_id": "PRIM_RULE_SUA_XE_KHACH_QUEN_XE_TOI_NHIEU_LAN",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Khách quen, xe tới nhiều lần",
+    "rulebook_origin": {
+      "section": "Sửa xe",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Khách quen, xe tới nhiều lần | xác định xe theo **biển số**. Chỉ đếm phiếu **có thu tiền**: phiếu bảo hành không tính là một lần tới. **Xe khách quen** = xe có từ 2 phiếu có thu tiền trong kỳ. Câu hỏi **xe nào** thì trả lời bằng biển số"
+    },
+    "description": "xác định xe theo **biển số**. Chỉ đếm phiếu **có thu tiền**: phiếu bảo hành không tính là một lần tới. **Xe khách quen** = xe có từ 2 phiếu có thu tiền trong kỳ. Câu hỏi **xe nào** thì trả lời bằng biển số",
+    "trigger_keywords": [
+      "Khách quen, xe tới nhiều lần"
+    ],
+    "logic_intent": "xác định xe theo **biển số**. Chỉ đếm phiếu **có thu tiền**: phiếu bảo hành không tính là một lần tới. **Xe khách quen** = xe có từ 2 phiếu có thu tiền trong kỳ. Câu hỏi **xe nào** thì trả lời bằng biển số",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Auto Repair"
+    ],
+    "source_line": 120
+  },
+  {
+    "primitive_id": "PRIM_RULE_SUA_XE_LUOT_XE_PHIEU",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Lượt xe, phiếu",
+    "rulebook_origin": {
+      "section": "Sửa xe",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Lượt xe, phiếu | mỗi dòng sổ sửa xe là **một lượt xe** (một phiếu), kể cả phiếu bảo hành; một xe tới hai lần là hai lượt. **Số phiếu, số lượt xe** của tiệm hay của một thợ tính cả phiếu bảo hành. Tiền trung bình một phiếu chia cho số phiếu **có thu tiền** (không tính phiếu bảo hành)"
+    },
+    "description": "mỗi dòng sổ sửa xe là **một lượt xe** (một phiếu), kể cả phiếu bảo hành; một xe tới hai lần là hai lượt. **Số phiếu, số lượt xe** của tiệm hay của một thợ tính cả phiếu bảo hành. Tiền trung bình một phiếu chia cho số phiếu **có thu tiền** (không tính phiếu bảo hành)",
+    "trigger_keywords": [
+      "Lượt xe, phiếu"
+    ],
+    "logic_intent": "mỗi dòng sổ sửa xe là **một lượt xe** (một phiếu), kể cả phiếu bảo hành; một xe tới hai lần là hai lượt. **Số phiếu, số lượt xe** của tiệm hay của một thợ tính cả phiếu bảo hành. Tiền trung bình một phiếu chia cho số phiếu **có thu tiền** (không tính phiếu bảo hành)",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Auto Repair"
+    ],
+    "source_line": 115
+  },
+  {
+    "primitive_id": "PRIM_RULE_SUA_XE_THO_LAM_NHIEU_NHAT",
+    "category": "DOMAIN_SPECIFIC",
+    "name": "Thợ làm nhiều nhất",
+    "rulebook_origin": {
+      "section": "Sửa xe",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Thợ làm nhiều nhất | theo **số lượt xe**, kể cả phiếu bảo hành thợ đó làm"
+    },
+    "description": "theo **số lượt xe**, kể cả phiếu bảo hành thợ đó làm",
+    "trigger_keywords": [
+      "Thợ làm nhiều nhất"
+    ],
+    "logic_intent": "theo **số lượt xe**, kể cả phiếu bảo hành thợ đó làm",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 3,
+    "compatible_industries": [
+      "Auto Repair"
+    ],
+    "source_line": 118
+  },
+  {
+    "primitive_id": "PRIM_RULE_SUA_XE_VIEC_GHI_TRONG_O_LAM_GI",
+    "category": "TEMPORAL",
+    "name": "Việc ghi trong ô Làm gì",
+    "rulebook_origin": {
+      "section": "Sửa xe",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Việc ghi trong ô Làm gì | lượt xe có làm một việc = phiếu có việc đó, tính một lượt. `Nhớt` ghi trơn là nhớt máy, không phải nhớt láp; `ruột` ghi trơn là thay ruột mới, không phải vá. **Sửa điện** không gồm thay bóng đèn, thay ắc quy. **Phiếu bảo hành** **không** tính là lượt làm việc đó"
+    },
+    "description": "lượt xe có làm một việc = phiếu có việc đó, tính một lượt. `Nhớt` ghi trơn là nhớt máy, không phải nhớt láp; `ruột` ghi trơn là thay ruột mới, không phải vá. **Sửa điện** không gồm thay bóng đèn, thay ắc quy. **Phiếu bảo hành** **không** tính là lượt làm việc đó",
+    "trigger_keywords": [
+      "Việc ghi trong ô Làm gì"
+    ],
+    "logic_intent": "lượt xe có làm một việc = phiếu có việc đó, tính một lượt. `Nhớt` ghi trơn là nhớt máy, không phải nhớt láp; `ruột` ghi trơn là thay ruột mới, không phải vá. **Sửa điện** không gồm thay bóng đèn, thay ắc quy. **Phiếu bảo hành** **không** tính là lượt làm việc đó",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Auto Repair"
+    ],
+    "source_line": 116
+  },
+  {
+    "primitive_id": "PRIM_RULE_VAT_LIEU_XAY_DUNG_GIAO_NHIEU_OT",
+    "category": "TEMPORAL",
+    "name": "Giao nhiều đợt",
+    "rulebook_origin": {
+      "section": "Vật liệu xây dựng",
+      "source_file": "public_test/rulebook.md",
+      "exact_quote": "Giao nhiều đợt | tính đến hết hôm nay. **Số đợt giao trong tháng X** = số đợt có ngày giao trong tháng X; **mỗi đợt của mỗi đơn tính một đợt**, kể cả đợt của đơn sau đó trả hàng. Đợt đã chở vẫn tính dù đơn sau đó trả hàng"
+    },
+    "description": "tính đến hết hôm nay. **Số đợt giao trong tháng X** = số đợt có ngày giao trong tháng X; **mỗi đợt của mỗi đơn tính một đợt**, kể cả đợt của đơn sau đó trả hàng. Đợt đã chở vẫn tính dù đơn sau đó trả hàng",
+    "trigger_keywords": [
+      "Giao nhiều đợt"
+    ],
+    "logic_intent": "tính đến hết hôm nay. **Số đợt giao trong tháng X** = số đợt có ngày giao trong tháng X; **mỗi đợt của mỗi đơn tính một đợt**, kể cả đợt của đơn sau đó trả hàng. Đợt đã chở vẫn tính dù đơn sau đó trả hàng",
+    "sql_hint": "Derive the required filters, grouping, ordering, and date bounds from this rule and the shop schema; no fixed SQL can be inferred without that schema.",
+    "difficulty_weight": 2,
+    "compatible_industries": [
+      "Construction"
+    ],
+    "source_line": 103,
+    "other_origins": [
+      {
+        "section": "Vật liệu xây dựng",
+        "source_file": "train/rulebook.md",
+        "exact_quote": "Giao nhiều đợt | **Số đợt giao trong tháng X** = số đợt có ngày giao trong tháng X; **mỗi đợt của mỗi đơn tính một đợt**, kể cả đợt của đơn sau đó trả hàng"
+      }
+    ]
+  }
+]
